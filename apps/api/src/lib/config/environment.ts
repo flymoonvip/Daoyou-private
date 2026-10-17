@@ -39,6 +39,11 @@ const environmentSchema = z
     NATS_SERVERS: z.string().trim().min(1),
     NATS_USER: z.string().trim().min(1),
     NATS_PASSWORD: z.string().min(1),
+    // 跨站 SSO：登录身份统一由原神市场账号提供。
+    // GENSHIN_MARKET_SSO_BASE_URL 为原神市场 API 基址（服务端直连，不经浏览器）；
+    // SSO_INTERNAL_SECRET 为两侧共享的内部密钥，用于兑换一次性票据。
+    GENSHIN_MARKET_SSO_BASE_URL: z.url().optional(),
+    SSO_INTERNAL_SECRET: z.string().min(32).optional(),
     CRON_SECRET: z.string().optional(),
     TRANSFER_SERVER_ID: z.string().trim().regex(/^[A-Za-z0-9._-]{1,160}$/).optional(),
     TRANSFER_SIGNING_PRIVATE_KEY_B64: z.string().optional(),
@@ -64,6 +69,21 @@ const environmentSchema = z
       ctx.addIssue({
         code: 'custom',
         path: ['CRON_SECRET'],
+        message: 'is required in production',
+      });
+    }
+    const ssoValues = [env.GENSHIN_MARKET_SSO_BASE_URL, env.SSO_INTERNAL_SECRET];
+    if (ssoValues.some(Boolean) && !ssoValues.every(Boolean)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['GENSHIN_MARKET_SSO_BASE_URL'],
+        message: '跨站 SSO 的基址与内部密钥必须同时配置',
+      });
+    }
+    if (env.NODE_ENV === 'production' && !ssoValues.every(Boolean)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['SSO_INTERNAL_SECRET'],
         message: 'is required in production',
       });
     }

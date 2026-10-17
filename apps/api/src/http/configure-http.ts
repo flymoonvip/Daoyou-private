@@ -1,12 +1,11 @@
 import type { NestExpressApplication } from '@nestjs/platform-express';
-import { handleAuthRequest } from '@server/lib/auth/handler.js';
 import { runWithContext } from '@server/lib/http/context.js';
 import { apiCorsOptions } from '@server/lib/http/cors.js';
 import { isAllowedWriteOrigin } from '@server/lib/http/originPolicy.js';
 import { getRequestIp } from '@server/lib/http/requestIp.js';
 import { checkApiIpRateLimit } from '@server/lib/redis/apiIpRateLimiter.js';
 import { LlmByokConfigSchema } from '@daoyou/contracts/llm/config';
-import { fromNodeHeaders, toNodeHandler } from 'better-auth/node';
+import { fromNodeHeaders } from 'better-auth/node';
 import cors from 'cors';
 import type { NextFunction, Response } from 'express';
 import { readRequestBody } from './json-body.js';
@@ -123,16 +122,8 @@ export function configureHttp(app: NestExpressApplication): void {
       next();
     },
   );
-  const authHandler = toNodeHandler(handleAuthRequest);
-  app.use((request: GameRequest, response: Response, next: NextFunction) => {
-    if (request.path.startsWith('/api/auth/')) {
-      const done = work.begin();
-      return authHandler(request, response).catch(next).finally(done);
-    }
-    next();
-  });
-  // Better Auth owns its body. Business bodies are read by JsonBody after
-  // guards; only the webhook has a route-specific transport limit.
+  // Business bodies are read by JsonBody after guards; only the webhook has a
+  // route-specific transport limit.
   app.use(
     async (request: GameRequest, response: Response, next: NextFunction) => {
       if (
