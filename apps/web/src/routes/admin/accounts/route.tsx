@@ -1,7 +1,7 @@
 import { apiFetch } from '@app/lib/api/fetch';
 import { useInkUI } from '@app/components/providers/InkUIProvider';
 import { InkButton, InkInput, InkSelect } from '@app/components/ui';
-import { authClient } from '@app/lib/auth/client';
+import { useSession } from '@app/lib/auth/useSession';
 import type {
   AdminAccountBanDuration,
   AdminAccountErrorResponse,
@@ -51,8 +51,8 @@ async function readPayload<T>(response: Response): Promise<T> {
 
 export default function AdminAccountsPage() {
   const { openDialog, pushToast } = useInkUI();
-  const sessionState = authClient.useSession();
-  const operatorUserId = sessionState.data?.user.id;
+  const sessionState = useSession();
+  const operatorUserId = sessionState.data?.user?.id;
 
   const [accounts, setAccounts] = useState<AdminAccountListItem[]>([]);
   const [total, setTotal] = useState(0);

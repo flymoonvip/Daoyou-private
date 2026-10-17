@@ -21,6 +21,9 @@ export const authUsers = authSchema.table('user', {
     .primaryKey(),
   name: text('name').notNull(),
   email: text('email').notNull().unique('user_email_key'),
+  // 外部身份来源（原神市场账号）的唯一标识：登录入口收敛到跨站 SSO 后，
+  // Daoyou 不再自建账号密码，用户按此列与外部身份一一对应。
+  externalAuthId: text('externalAuthId').unique('user_externalAuthId_key'),
   emailVerified: boolean('emailVerified').notNull(),
   image: text('image'),
   role: text('role'),

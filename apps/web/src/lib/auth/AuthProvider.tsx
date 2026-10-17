@@ -1,175 +1,32 @@
 import type { ReactNode } from 'react';
 import {
   AuthContext,
-  getCaptchaFetchOptions,
-  getDefaultGameRedirectUrl,
-  getDefaultResetRedirectUrl,
-  normalizeEmail,
   toAuthActionError,
   type AuthContextType,
 } from './authState';
-import { authClient } from './client';
-
-function accountNameFromEmail(email: string) {
-  const [prefix] = email.split('@');
-  return prefix?.trim() || '玩家';
-}
+import { signOutSession } from './session';
+import { useSession } from './useSession';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const sessionState = authClient.useSession();
-  const session = sessionState.data?.session ?? null;
+  const sessionState = useSession();
   const user = sessionState.data?.user ?? null;
 
-  const syncSessionState = async () => {
-    await sessionState.refetch();
-  };
-
-  const signUpWithPassword: AuthContextType['signUpWithPassword'] = async (
-    email,
-    password,
-    captchaPayload,
-  ) => {
-    const normalizedEmail = normalizeEmail(email);
-    const { error } = await authClient.signUp.email({
-      name: accountNameFromEmail(normalizedEmail),
-      email: normalizedEmail,
-      password,
-      callbackURL: getDefaultGameRedirectUrl(),
-      fetchOptions: getCaptchaFetchOptions(captchaPayload),
-    });
-
-    if (!error) {
-      await syncSessionState();
-    }
-
-    return {
-      error: toAuthActionError(error),
-    };
-  };
-
-  const signInWithPassword: AuthContextType['signInWithPassword'] = async (
-    email,
-    password,
-    captchaPayload,
-  ) => {
-    const { error } = await authClient.signIn.email({
-      email: normalizeEmail(email),
-      password,
-      callbackURL: getDefaultGameRedirectUrl(),
-      fetchOptions: getCaptchaFetchOptions(captchaPayload),
-    });
-
-    if (!error) {
-      await syncSessionState();
-    }
-
-    return {
-      error: toAuthActionError(error),
-    };
-  };
-
-  const signInWithEmailOtp: AuthContextType['signInWithEmailOtp'] = async (
-    email,
-    captchaPayload,
-  ) => {
-    const { error } = await authClient.emailOtp.sendVerificationOtp({
-      email: normalizeEmail(email),
-      type: 'sign-in',
-      fetchOptions: getCaptchaFetchOptions(captchaPayload),
-    });
-
-    return {
-      error: toAuthActionError(error),
-    };
-  };
-
-  const verifyEmailOtp: AuthContextType['verifyEmailOtp'] = async (
-    email,
-    otp,
-  ) => {
-    const { error } = await authClient.signIn.emailOtp({
-      email: normalizeEmail(email),
-      otp: otp.trim(),
-    });
-
-    if (!error) {
-      await syncSessionState();
-    }
-
-    return {
-      error: toAuthActionError(error),
-    };
-  };
-
-  const signInWithGitHub: AuthContextType['signInWithGitHub'] = async (
-    callbackURL = '/game',
-  ) => {
-    const { error } = await authClient.signIn.social({
-      provider: 'github',
-      callbackURL,
-      errorCallbackURL: '/login',
-    });
-
-    return {
-      error: toAuthActionError(error),
-    };
-  };
-
-  const requestPasswordReset: AuthContextType['requestPasswordReset'] = async (
-    email,
-    captchaPayload,
-    redirectTo,
-  ) => {
-    const { error } = await authClient.requestPasswordReset({
-      email: normalizeEmail(email),
-      redirectTo: redirectTo || getDefaultResetRedirectUrl(),
-      fetchOptions: getCaptchaFetchOptions(captchaPayload),
-    });
-
-    return {
-      error: toAuthActionError(error),
-    };
-  };
-
-  const resetPassword: AuthContextType['resetPassword'] = async (
-    token,
-    newPassword,
-  ) => {
-    const { error } = await authClient.resetPassword({
-      token,
-      newPassword,
-    });
-
-    return {
-      error: toAuthActionError(error),
-    };
-  };
-
   const signOut: AuthContextType['signOut'] = async () => {
-    const { error } = await authClient.signOut();
+    try {
+      await signOutSession();
+      await sessionState.refetch();
 
-    if (!error) {
-      await syncSessionState();
+      return { error: null };
+    } catch (error) {
+      return { error: toAuthActionError(error) };
     }
-
-    return {
-      error: toAuthActionError(error),
-    };
   };
 
   return (
     <AuthContext.Provider
       value={{
-        session,
         user,
         isLoading: sessionState.isPending,
-        signUpWithPassword,
-        signInWithPassword,
-        signInWithEmailOtp,
-        verifyEmailOtp,
-        signInWithGitHub,
-        requestPasswordReset,
-        resetPassword,
         signOut,
       }}
     >

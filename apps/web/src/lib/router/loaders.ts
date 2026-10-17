@@ -1,14 +1,11 @@
 import { apiFetch } from '@app/lib/api/fetch';
-import { authClient } from '@app/lib/auth/client';
+import { getSession, type SessionSnapshot } from '@app/lib/auth/session';
 import { replace, type LoaderFunctionArgs } from 'react-router';
 import type {
   AdminLoaderData,
   AuthLoaderData,
   UserLoaderData,
 } from './routeData';
-
-type SessionResult = Awaited<ReturnType<typeof authClient.getSession>>;
-type SessionData = SessionResult['data'];
 
 type AdminSessionResponse = {
   success?: boolean;
@@ -23,11 +20,6 @@ type AuthAnnouncementResponse = {
   error?: string;
 };
 
-const PASSWORD_RECOVERY_PATHS = new Set([
-  '/forgot-password',
-  '/reset-password',
-]);
-
 async function hasAuthenticatedUser(request: Request) {
   const session = await resolveSessionData(request);
 
@@ -36,20 +28,18 @@ async function hasAuthenticatedUser(request: Request) {
 
 async function resolveSessionData(
   request: Request,
-): Promise<SessionData | null> {
+): Promise<SessionSnapshot | null> {
   try {
-    const result = await authClient.getSession({
-      fetchOptions: {
-        cache: 'no-store',
-        signal: request.signal,
-      },
+    const result = await getSession({
+      cache: 'no-store',
+      signal: request.signal,
     });
 
     if (result.error) {
-      throw result.error;
+      throw new Error(result.error.message);
     }
 
-    return result.data ?? null;
+    return result.data;
   } catch (error) {
     if (request.signal.aborted) throw error;
     throw new Error('会话校验暂时失败，请刷新页面重试。', { cause: error });
@@ -69,11 +59,7 @@ export async function guestOnlyLoader({ request }: LoaderFunctionArgs) {
 export async function authLayoutLoader({
   request,
 }: LoaderFunctionArgs): Promise<AuthLoaderData | Response> {
-  const pathname = new URL(request.url).pathname;
-  if (
-    !PASSWORD_RECOVERY_PATHS.has(pathname) &&
-    (await hasAuthenticatedUser(request))
-  ) {
+  if (await hasAuthenticatedUser(request)) {
     return replace('/game');
   }
 

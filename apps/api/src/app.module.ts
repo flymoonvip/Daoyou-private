@@ -2,7 +2,6 @@ import { allowsLocalDevTools } from '@daoyou/contracts/dev-tools-access';
 import { Module } from '@nestjs/common';
 import { APP_FILTER } from '@nestjs/core';
 import { getRuntimeEnvironment } from '@server/lib/config/environment.js';
-import { AccountModule } from './account/account.module.js';
 import { AdminModule } from './admin/admin.module.js';
 import { AlchemyModule } from './alchemy/alchemy.module.js';
 import { ArenaModule } from './arena/arena.module.js';
@@ -66,7 +65,6 @@ import { WandererModule } from './wanderer/wanderer.module.js';
     CommunityModule,
     EnemiesModule,
     RankingsModule,
-    AccountModule,
     AdminModule,
     AuctionModule,
     BlackMarketModule,
