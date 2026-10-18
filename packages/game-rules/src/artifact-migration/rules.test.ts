@@ -38,10 +38,10 @@ describe('旧法宝兑换', () => {
             metadata: { anchorRealm, anchorRealmStage: '圆满' },
           }).equipmentLevel,
       ),
-    ).toEqual([10, 30, 50, 70, 90, 90, 90, 90, 90]);
+    ).toEqual([10, 30, 50, 70, 90]);
     expect(
-      artifactMigrationRealm({ metadata: { anchorRealm: '渡劫' } }),
-    ).toMatchObject({ anchorRealm: '渡劫', realm: '化神', fallback: false });
+      artifactMigrationRealm({ metadata: { anchorRealm: '化神' } }),
+    ).toMatchObject({ anchorRealm: '化神', realm: '化神', fallback: false });
   });
   it('缺失或非法锚定境界统一回退金丹', () => {
     for (const productModel of [
@@ -73,7 +73,7 @@ describe('旧法宝兑换', () => {
     const plan = artifactMigrationPlan({
       quality: '神品',
       score: 4200,
-      productModel: { metadata: { anchorRealm: '合体' } },
+      productModel: { metadata: { anchorRealm: '化神' } },
     });
     for (let i = 0; i < 6; i++) {
       const grants = drawArtifactBlueprints(plan, () => (i + 0.5) / 6);

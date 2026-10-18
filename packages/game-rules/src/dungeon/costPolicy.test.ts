@@ -12,28 +12,18 @@ describe('dungeon cost policy', () => {
     const costs = DUNGEON_COST_RANK_VALUES.map((rank) =>
       calculateDungeonResourceCost({
         type: 'lifespan',
-        realm: '渡劫',
+        realm: '化神',
         difficulty: 'boss',
         rank,
       }),
     );
 
-    expect(costs).toEqual([32, 63, 110]);
+    expect(costs).toEqual([7, 14, 25]);
     expect(costs[2]).toBeLessThanOrEqual(DUNGEON_LIFESPAN_COST_MAX);
   });
 
   it('never produces an excessive lifespan cost', () => {
-    const realms = [
-      '炼气',
-      '筑基',
-      '金丹',
-      '元婴',
-      '化神',
-      '炼虚',
-      '合体',
-      '大乘',
-      '渡劫',
-    ] as const;
+    const realms = ['炼气', '筑基', '金丹', '元婴', '化神'] as const;
     const difficulties = ['easy', 'normal', 'hard', 'elite', 'boss'] as const;
 
     for (const realm of realms) {
@@ -61,13 +51,13 @@ describe('dungeon cost policy', () => {
     });
     const boss = calculateDungeonResourceCost({
       type: 'spirit_stones',
-      realm: '渡劫',
+      realm: '化神',
       difficulty: 'boss',
       rank: 'standard',
     });
 
     expect(easy).toBe(200);
-    expect(boss).toBe(115_200);
+    expect(boss).toBe(7_200);
   });
 
   it('derives material quantity and quality instead of accepting LLM values', () => {
@@ -80,11 +70,11 @@ describe('dungeon cost policy', () => {
     ).toEqual({ requiredQuality: '凡品', value: 1 });
     expect(
       calculateDungeonMaterialCost({
-        realm: '渡劫',
+        realm: '化神',
         difficulty: 'boss',
         rank: 'major',
       }),
-    ).toEqual({ requiredQuality: '仙品', value: 3 });
+    ).toEqual({ requiredQuality: '地品', value: 3 });
   });
 
   it('caps proportional hp and mp losses', () => {
@@ -97,10 +87,10 @@ describe('dungeon cost policy', () => {
     ).toBe(0.02);
     expect(
       calculateDungeonStatLoss({
-        realm: '渡劫',
+        realm: '化神',
         difficulty: 'boss',
         rank: 'major',
       }),
-    ).toBe(0.15);
+    ).toBe(0.14);
   });
 });

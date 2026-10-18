@@ -117,8 +117,8 @@ describe('野外寻觅配置与个体生成', () => {
   });
 });
 
-it('二十六个节点覆盖全部物种，地图名称、境界与关联配置一致', () => {
-  expect(raw.regions).toHaveLength(26);
+it('十个节点覆盖全部物种，地图名称、境界与关联配置一致', () => {
+  expect(raw.regions).toHaveLength(10);
   expect(
     new Set(raw.regions.flatMap((r) => r.species.map((s) => s.speciesId))),
   ).toEqual(new Set(BEAST_SPECIES.map((s) => s.id)));
@@ -177,7 +177,7 @@ it('稀有池必须配置概率、保留普通池，概率不得越界或引用�
 
 it('稀有概率逐位置独立控制，普通低阶物种使用栖息地等级', () => {
   const pack = loadWildPack(raw);
-  const region = pack.regions.find((r) => r.realmRequirement === '合体')!;
+  const region = pack.regions.find((r) => r.rareChance !== undefined)!;
   pack.encounter.minCount = pack.encounter.maxCount = 3;
   pack.encounter.cubChance = pack.encounter.mutantChance = 0;
   for (const chance of [0, 1]) {
@@ -185,8 +185,8 @@ it('稀有概率逐位置独立控制，普通低阶物种使用栖息地等级'
     for (let seed = 0; seed < 100; seed++) {
       for (const c of generateWildEncounter(region.nodeId, seed, pack)) {
         expect(BEAST_RARE_SPECIES_IDS.has(c.speciesId)).toBe(chance === 1);
-        expect(c.level).toBeGreaterThanOrEqual(125);
-        expect(c.level).toBeLessThanOrEqual(135);
+        expect(c.level).toBeGreaterThanOrEqual(5);
+        expect(c.level).toBeLessThanOrEqual(15);
       }
     }
   }

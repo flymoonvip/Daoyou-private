@@ -52,7 +52,7 @@ describe('resolveDungeonMapConfig', () => {
     expect(resolveDungeonEnemyDifficulty('炼气', 'easy')).toBe(10);
     expect(resolveDungeonEnemyDifficulty('筑基', 'normal')).toBe(24);
     expect(resolveDungeonEnemyDifficulty('元婴', 'hard')).toBe(50);
-    expect(resolveDungeonEnemyDifficulty('渡劫', 'boss')).toBe(96);
+    expect(resolveDungeonEnemyDifficulty('化神', 'boss')).toBe(90);
   });
 
   it('clamps enemy realm stage by dungeon tier', () => {
@@ -127,7 +127,7 @@ describe('resolveDungeonMapConfig', () => {
     ).toBe('凶险');
     expect(
       resolveDungeonMapConfig(
-        satelliteNodes.find((node) => node.id === 'SAT_DJ_02')!,
+        satelliteNodes.find((node) => node.id === 'SAT_ZMG_01')!,
       ).difficultyLabel,
     ).toBe('绝境');
   });
@@ -139,8 +139,8 @@ describe('resolveDungeonMapConfig', () => {
       lingxiao: 'TN_YW_01',
       tianyan: 'DJ_KW_01',
       wuxiang: 'DJ_SOUTH_01',
-      youdu: 'DJ_VOID_01',
-      jiujie: 'DJ_TRIB_01',
+      youdu: 'DJ_CENTRAL_01',
+      jiujie: 'DJ_KW_01',
     };
 
     expect(landmarks).toHaveLength(PRODUCTION_SECT_IDS.length);

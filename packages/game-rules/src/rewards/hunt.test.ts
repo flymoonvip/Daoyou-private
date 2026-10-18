@@ -16,21 +16,21 @@ import {
 } from './hunt.js';
 
 describe('讨伐奖励', () => {
-  it('奖励档位跟随目标境界；渡劫目标不会降为金丹档奖励', () => {
+  it('奖励档位跟随目标境界；化神目标不会降为金丹档奖励', () => {
     const events = huntEventsAt(Date.parse('2026-09-30T12:00:00+08:00'));
     const gold = planHuntReward(
       events.find((e) => e.realm === '金丹')!,
       () => () => 0.5,
     );
-    const tribulation = planHuntReward(
-      events.find((e) => e.realm === '渡劫')!,
+    const ascended = planHuntReward(
+      events.find((e) => e.realm === '化神')!,
       () => () => 0.5,
     );
-    expect(tribulation.experience).toBeGreaterThan(gold.experience);
-    expect(tribulation.spiritStones).toBeGreaterThan(gold.spiritStones);
+    expect(ascended.experience).toBeGreaterThan(gold.experience);
+    expect(ascended.spiritStones).toBeGreaterThan(gold.spiritStones);
     // Insight and the common item pool do not scale with realm.
-    expect(tribulation.insight).toBe(gold.insight);
-    expect(tribulation.items).toEqual(gold.items);
+    expect(ascended.insight).toBe(gold.insight);
+    expect(ascended.items).toEqual(gold.items);
   });
   it.each(HUNT_REALMS)(
     '%s 的灵石感悟仍按六小时挂机，修为按讨伐日预算',
@@ -102,7 +102,7 @@ describe('讨伐奖励', () => {
         ),
       ).toBeCloseTo(1);
     }
-    expect(DUNGEON_MATERIAL_QUALITY_CHANCE_BY_REALM['渡劫'].凡品).toBe(0);
+    expect(DUNGEON_MATERIAL_QUALITY_CHANCE_BY_REALM['化神'].凡品).toBe(0);
     expect(DUNGEON_MATERIAL_QUALITY_CHANCE_BY_REALM['金丹'].神品).toBe(0);
   });
 });

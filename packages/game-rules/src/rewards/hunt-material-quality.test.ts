@@ -29,13 +29,15 @@ describe('讨伐材料综合概率', () => {
       }
     },
   );
-  it('渡劫最低品质约33%，仙品与神品仍各占一成以上', () => {
-    const rates = HUNT_MATERIAL_QUALITY_CHANCE_BY_REALM.渡劫;
-    expect(rates.真品).toBeCloseTo(0.3278, 4);
-    expect(rates.地品).toBeCloseTo(0.2458, 4);
-    expect(rates.天品).toBeCloseTo(0.1844, 4);
-    expect(rates.仙品).toBeCloseTo(0.1383, 4);
-    expect(rates.神品).toBeCloseTo(0.1037, 4);
+  it('化神最低品质约37.9%，仙品约4.4%且无神品', () => {
+    const rates = HUNT_MATERIAL_QUALITY_CHANCE_BY_REALM.化神;
+    expect(rates.灵品).toBeCloseTo(0.3785, 4);
+    expect(rates.玄品).toBeCloseTo(0.2461, 4);
+    expect(rates.真品).toBeCloseTo(0.1599, 4);
+    expect(rates.地品).toBeCloseTo(0.104, 4);
+    expect(rates.天品).toBeCloseTo(0.0676, 4);
+    expect(rates.仙品).toBeCloseTo(0.0439, 4);
+    expect(rates.神品).toBe(0);
   });
   it('境界提升时每个品质门槛的累计概率不会倒挂', () => {
     for (let i = 1; i < HUNT_REALMS.length; i++) {

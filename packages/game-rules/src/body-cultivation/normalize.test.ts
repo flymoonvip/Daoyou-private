@@ -184,7 +184,7 @@ describe('body cultivation normalization and advancement', () => {
     condition.tracks.bodyCultivation!.realm = 'dao_body';
     expect(() =>
       breakthroughBodyCultivationRealm(condition, {
-        cultivatorRealm: '渡劫' as RealmType,
+        cultivatorRealm: '化神' as RealmType,
       }),
     ).toThrow('肉身已达最高阶位');
   });

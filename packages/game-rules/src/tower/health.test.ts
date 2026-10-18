@@ -125,15 +125,15 @@ describe('输出预算定标的战斗节奏', () => {
   }
 });
 
-it('满炼体均衡渡劫角色的三段暴击不能直接击杀满血末层首领', () => {
-  const player = towerReferenceBuild('lingxiao', '渡劫');
+it('满炼体均衡化神角色的三段暴击不能直接击杀满血末层首领', () => {
+  const player = towerReferenceBuild('lingxiao', '化神');
   player.cultivator.attributes = {
-    vitality: 322,
-    strength: 322,
-    spirit: 322,
-    endurance: 322,
-    speed: 321,
-    willpower: 321,
+    vitality: 175,
+    strength: 175,
+    spirit: 175,
+    endurance: 175,
+    speed: 175,
+    willpower: 175,
   };
   const actor = projectTowerPlayer(player, { physical_power: 3 }).unit;
   for (const candidate of TOWER_ENCOUNTERS.filter((e) =>
@@ -145,7 +145,7 @@ it('满炼体均衡渡劫角色的三段暴击不能直接击杀满血末层首�
         row.floor === 20 ? { ...row, ...candidate } : row,
       ),
     };
-    const encounter = compileTowerEncounter('渡劫', 20, selected);
+    const encounter = compileTowerEncounter('化神', 20, selected);
     const boss = encounter.units[0];
     // The opening burst includes the encounter's living guards. Removing them
     // first costs earlier actions and is not an opening one-action kill.

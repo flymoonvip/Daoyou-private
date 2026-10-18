@@ -22,24 +22,26 @@ describe('副本材料品质概率', () => {
   });
 
   it('高境界的仙品及神品合计概率逐级上升', () => {
-    const realms = ['炼虚', '合体', '大乘', '渡劫'] as const;
-    const highQualityChances = realms.map((realm) => {
+    const highQualityChances = REALM_VALUES.map((realm) => {
       const chances = DUNGEON_MATERIAL_QUALITY_CHANCE_BY_REALM[realm];
       return chances.仙品 + chances.神品;
     });
-    [0.4, 0.45, 0.5, 0.6].forEach((expected, index) => {
+    [0, 0, 0, 0, 0.05].forEach((expected, index) => {
       expect(highQualityChances[index]).toBeCloseTo(expected);
     });
   });
 
-  it('渡劫材料最低真品，神品率为 30%', () => {
-    const chances = DUNGEON_MATERIAL_QUALITY_CHANCE_BY_REALM.渡劫;
+  it('化神材料最低灵品，仙品率为 5%', () => {
+    const chances = DUNGEON_MATERIAL_QUALITY_CHANCE_BY_REALM.化神;
     expect(chances).toMatchObject({
-      真品: 0.1,
-      地品: 0.15,
-      天品: 0.15,
-      仙品: 0.3,
-      神品: 0.3,
+      凡品: 0,
+      灵品: 0.05,
+      玄品: 0.2,
+      真品: 0.25,
+      地品: 0.25,
+      天品: 0.2,
+      仙品: 0.05,
+      神品: 0,
     });
     const rankAt = (roll: number) => {
       const values = [roll, 0.5, 0.5];
@@ -49,9 +51,9 @@ describe('副本材料品质概率', () => {
         () => values.shift() ?? 0.5,
       )[0].rank;
     };
-    expect(rankAt(0)).toBe('真品');
-    expect(rankAt(0.1)).toBe('地品');
-    expect(rankAt(0.5)).toBe('仙品');
-    expect(rankAt(0.9)).toBe('神品');
+    expect(rankAt(0)).toBe('灵品');
+    expect(rankAt(0.1)).toBe('玄品');
+    expect(rankAt(0.5)).toBe('地品');
+    expect(rankAt(0.9)).toBe('天品');
   });
 });

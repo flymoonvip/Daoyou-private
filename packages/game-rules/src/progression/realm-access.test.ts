@@ -8,6 +8,6 @@ describe('hasReachedLateQiRefining', () => {
     expect(hasReachedLateQiRefining('炼气', '后期')).toBe(true);
     expect(hasReachedLateQiRefining('炼气', '圆满')).toBe(true);
     expect(hasReachedLateQiRefining('筑基', '初期')).toBe(true);
-    expect(hasReachedLateQiRefining('渡劫', '圆满')).toBe(true);
+    expect(hasReachedLateQiRefining('化神', '圆满')).toBe(true);
   });
 });

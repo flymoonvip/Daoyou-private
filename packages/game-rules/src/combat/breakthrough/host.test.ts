@@ -325,7 +325,7 @@ describe('突破试炼普通 V6 战斗', () => {
   it('普通回合上限为百回合，双方未胜时返回平局', () => {
     const initial = createBreakthroughHost(
       player('player'),
-      'tribulation_body',
+      'law_insight_void',
       true,
       9,
     ).runtimeSnapshot();

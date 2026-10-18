@@ -177,16 +177,16 @@ describe('sect task requirement generation', () => {
       }
   });
 
-  it('keeps high-realm 仙品 requirements uncommon', () => {
+  it('keeps high-realm 天品 requirements uncommon', () => {
     const samples = 10_000;
-    const immortalCount = Array.from({ length: samples }, (_, index) =>
+    const topCount = Array.from({ length: samples }, (_, index) =>
       pickSectTaskMinimumQuality(
-        '渡劫',
-        new SectTaskRandomSource(`渡劫:${index}`),
+        '化神',
+        new SectTaskRandomSource(`化神:${index}`),
       ),
-    ).filter((quality) => quality === '仙品').length;
-    expect(immortalCount / samples).toBeGreaterThan(0.055);
-    expect(immortalCount / samples).toBeLessThan(0.085);
+    ).filter((quality) => quality === '天品').length;
+    expect(topCount / samples).toBeGreaterThan(0.055);
+    expect(topCount / samples).toBeLessThan(0.085);
   });
 
   it('derives difficulty from the final requirement', () => {
@@ -303,7 +303,7 @@ it('generates craftable equipment tiers without quality or rare affix requiremen
   expect(
     generateSectDeliveryRequirement({
       kind: 'equipment',
-      realm: '渡劫',
+      realm: '化神',
       realmStage: '圆满',
       seed: 'a',
     }),

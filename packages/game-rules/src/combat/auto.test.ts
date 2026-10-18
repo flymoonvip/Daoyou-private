@@ -1016,9 +1016,9 @@ describe('当前场次托管', () => {
     pet.attrs.mp = 79;
     expect(choosePet().type).toBe('attack');
   });
-  it('大乘红尘正常构筑会进攻，而不是反复施放剑意增益', () => {
-    const lingxiao = towerReferenceBuild('lingxiao', '大乘');
-    const youdu = towerReferenceBuild('youdu', '大乘');
+  it('化神红尘正常构筑会进攻，而不是反复施放剑意增益', () => {
+    const lingxiao = towerReferenceBuild('lingxiao', '化神');
+    const youdu = towerReferenceBuild('youdu', '化神');
     youdu.cultivator.id = '00000000-0000-4000-8000-000000000003';
     youdu.beasts = undefined;
     const input = compileRankingBattle([lingxiao, youdu], 42);
@@ -1684,7 +1684,7 @@ for (const definition of Object.values(COMBAT_V6_SECT_DEFINITIONS)) {
         cultivator: {
           id,
           name: id,
-          realm: '渡劫',
+          realm: '化神',
           realm_stage: '圆满',
           attributes: {
             vitality: 50,

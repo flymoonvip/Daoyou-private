@@ -31,10 +31,10 @@ describe('副本混合物品奖励', () => {
     [45, '金丹'],
     [65, '元婴'],
     [85, '化神'],
-    [105, '炼虚'],
-    [125, '合体'],
-    [145, '大乘'],
-    [165, '渡劫'],
+    [105, '化神'],
+    [125, '化神'],
+    [145, '化神'],
+    [165, '化神'],
   ])('等级%s的材料使用%s品质分布，不随图纸开放上限截断', (level, realm) => {
     const pack = structuredClone(originalPack);
     pack.sources.completion.weights = { material: 1, blueprint: 0, book: 0 };
@@ -344,8 +344,8 @@ describe('秘境分环节资源奖励', () => {
 
   it('高境界、危险度和地图难度提高收益，同一种子与来源保持确定', () => {
     const high = {
-      mapRealm: '渡劫' as const,
-      playerRealm: '渡劫' as const,
+      mapRealm: '化神' as const,
+      playerRealm: '化神' as const,
       dangerScore: 100,
       difficultyTier: 'boss' as const,
     };
@@ -362,7 +362,7 @@ describe('秘境分环节资源奖励', () => {
     expect(first).toEqual(
       planDungeonStepResources(9, 'battle:1', 'battle', high),
     );
-    expect(first.experience).toBe(12474);
+    expect(first.experience).toBe(2673);
     expect(lowDanger.experience).toBeGreaterThan(
       planDungeonStepResources(9, 'battle:1', 'battle', context).experience,
     );

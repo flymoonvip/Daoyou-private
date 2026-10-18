@@ -18,15 +18,14 @@ describe('sect spirit mining rewards', () => {
     ).toEqual(['凡品', '凡品', '灵品', '灵品', '灵品']);
     expect(
       ['D', 'C', 'B', 'A', 'S'].map((tier) =>
-        miningRewardQuality('炼虚', tier as 'D' | 'C' | 'B' | 'A' | 'S'),
+        miningRewardQuality('化神', tier as 'D' | 'C' | 'B' | 'A' | 'S'),
       ),
-    ).toEqual(['玄品', '真品', '地品', '天品', '仙品']);
-    expect(miningRewardQualityPreference('炼虚', 'B')).toEqual([
+    ).toEqual(['玄品', '真品', '地品', '地品', '天品']);
+    expect(miningRewardQualityPreference('化神', 'B')).toEqual([
       '地品',
       '真品',
       '天品',
       '玄品',
-      '仙品',
     ]);
     expect(MINING_TIER_MATERIAL_QUANTITY).toEqual({
       D: 1,

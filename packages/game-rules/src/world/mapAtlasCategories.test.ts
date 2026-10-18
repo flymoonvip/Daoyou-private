@@ -34,10 +34,10 @@ describe('atlas single-purpose locations', () => {
     }
     expect(
       nodes.filter((node) => getAtlasCategory(node) === 'wild'),
-    ).toHaveLength(26);
+    ).toHaveLength(10);
     expect(
       nodes.filter((node) => getAtlasCategory(node) === 'dungeon'),
-    ).toHaveLength(31);
+    ).toHaveLength(22);
     expect(
       nodes.filter((node) => getAtlasCategory(node) === 'market'),
     ).toHaveLength(9);
@@ -56,7 +56,7 @@ describe('atlas single-purpose locations', () => {
       getAtlasLocations().filter((node) =>
         matchesAtlasCategories(node, ['wild', 'dungeon']),
       ),
-    ).toHaveLength(57);
+    ).toHaveLength(32);
   });
 
   it('uses actual dungeon entrances rather than lore tags or dangerous names', () => {

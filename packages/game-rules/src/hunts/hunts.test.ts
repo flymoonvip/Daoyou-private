@@ -163,7 +163,7 @@ describe('世界讨伐准入与刷新', () => {
       b = { ...team(3), id: 'b' },
       full = { ...team(4), id: 'full' };
     expect(selectHuntTeam([a, b, full], '金丹', now)?.id).toBe('b');
-    expect(selectHuntTeam([a, b], '渡劫', now)).toBeUndefined();
+    expect(selectHuntTeam([a, b], '化神', now)).toBeUndefined();
     b.status = 'starting';
     expect(selectHuntTeam([b, a], '金丹', now)?.id).toBe('a');
     const loose = { ...team(3), id: 'loose', event: null };
