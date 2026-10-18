@@ -11,13 +11,17 @@ import {
   saveTempCharacter,
   saveTempFates,
 } from '@server/lib/repositories/redisCultivatorRepository.js';
-import { createCultivatorFromTemp } from '@server/genesis/application/CultivatorCreationApplicationService.js';
+import {
+  createCultivatorFromTemp,
+  findCultivatorCreationBlock,
+} from '@server/genesis/application/CultivatorCreationApplicationService.js';
 import { FATE_REROLL_LIMIT, FATE_SLOT_COUNT } from '@server/reshape/application/FateConfig.js';
 import { FateEngine } from '@server/reshape/application/FateEngine.js';
 import { toPlayerStateMutationResponse } from '@server/player/application/state/ResourceMutationResponse.js';
 import { CharacterGenerator } from '@server/lib/generation/CharacterGenerator.js';
 import { normalizeFreeformLlmInput } from '@server/utils/llmPayload.js';
 import {
+  CHARACTER_CREATION_BLOCKED_CODE,
   CHARACTER_GENERATION_LIMIT_REACHED_CODE,
   type CharacterGenerationQuota,
   type CharacterGenerationQuotaResponse,
@@ -169,6 +173,21 @@ export class GenesisService {
         { success: false, error: '请求参数格式错误' },
         400,
       );
+    // 已有道身或原角色转服未完成时直接拦截：不进入推演，避免消耗每日建号额度。
+    const block = await findCultivatorCreationBlock(user.id);
+    if (block) {
+      throw new HttpException(
+        {
+          success: false,
+          code: CHARACTER_CREATION_BLOCKED_CODE,
+          error:
+            block === 'active_cultivator'
+              ? '您已经拥有一位道身，无需重新推演。'
+              : '原角色转服尚未完成，暂不可创建新角色。',
+        },
+        409,
+      );
+    }
     const userInput =
       normalizeFreeformLlmInput(parsed.data.userInput ?? '') ||
       INITIAL_CHARACTER_PROMPT;

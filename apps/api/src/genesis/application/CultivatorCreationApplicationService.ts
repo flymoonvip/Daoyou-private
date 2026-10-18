@@ -68,6 +68,27 @@ export async function executeCultivatorCreationCommand(
 
 export class CultivatorCreationCommandError extends Error {}
 
+export type CultivatorCreationBlock = 'active_cultivator' | 'transfer_pending';
+
+/**
+ * 建号前置校验：判断当前账号是否可以创建新道身。
+ * 供建号接口在消耗每日推演额度之前调用，避免「已有角色仍扣额度」。
+ */
+export async function findCultivatorCreationBlock(
+  userId: string,
+): Promise<CultivatorCreationBlock | null> {
+  if (await hasActiveCultivator(userId)) return 'active_cultivator';
+  const pendingTransfer = await db.query.cultivators.findFirst({
+    columns: { id: true },
+    where: and(
+      eq(schema.cultivators.userId, userId),
+      eq(schema.cultivators.status, 'transfer_pending'),
+    ),
+  });
+  if (pendingTransfer) return 'transfer_pending';
+  return null;
+}
+
 export function createCultivatorFromTemp(args: {
   userId: string;
   tempCultivatorId: string;
@@ -81,16 +102,17 @@ export function createCultivatorFromTemp(args: {
       retries: 0,
     },
     async () => {
-      if (await hasActiveCultivator(args.userId)) {
+      const block = await findCultivatorCreationBlock(args.userId);
+      if (block === 'active_cultivator') {
         throw new CultivatorCreationCommandError(
           '您已经拥有一位道身，无法创建新的道身',
         );
       }
-      const pendingTransfer = await db.query.cultivators.findFirst({
-        columns: { id: true },
-        where: and(eq(schema.cultivators.userId, args.userId), eq(schema.cultivators.status, 'transfer_pending')),
-      });
-      if (pendingTransfer) throw new CultivatorCreationCommandError('原角色转服尚未完成，暂不可创建新角色');
+      if (block === 'transfer_pending') {
+        throw new CultivatorCreationCommandError(
+          '原角色转服尚未完成，暂不可创建新角色',
+        );
+      }
       const [cultivator, fates] = await Promise.all([
         getTempCharacter(args.tempCultivatorId),
         getTempFates(args.tempCultivatorId),
