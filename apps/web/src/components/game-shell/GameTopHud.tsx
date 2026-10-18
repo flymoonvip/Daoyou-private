@@ -119,6 +119,10 @@ export function GameTopHud({ snapshot }: { snapshot: GameHudSnapshot | null }) {
       value: snapshot.bodyCultivation.realm.label,
       onClick: openBodyCultivationInfo,
     },
+    {
+      key: 'world-date',
+      value: snapshot.worldDateLabel,
+    },
   ];
 
   return (

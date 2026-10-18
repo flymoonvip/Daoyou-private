@@ -48,6 +48,7 @@ export function createBackgroundCommandHandlers(
     'sponsorship.deep-reconcile': () => jobs.sponsorshipDeepReconcile(),
     'sponsorship.cleanup': () => jobs.sponsorshipCleanup(),
     'sponsorship.admin-digest': () => jobs.sponsorshipAdminDigest(),
+    'world.aging.tick': () => jobs.worldAgingTick(),
   };
 }
 

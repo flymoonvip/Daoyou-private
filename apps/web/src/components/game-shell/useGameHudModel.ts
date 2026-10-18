@@ -8,6 +8,7 @@ import {
   useCultivatorProgress,
   useUnreadMailCount,
 } from '@app/lib/resources/player';
+import { useRecoveryClock } from '@app/lib/resources/recoveryClock';
 import { type CultivatorDisplayInput, type CultivatorDisplaySnapshot } from '@daoyou/game-domain/character';
 import type { Cultivator } from '@daoyou/game-domain/character';
 import {
@@ -32,6 +33,7 @@ import {
   getMarrowWashSummary,
   type MarrowWashSummary,
 } from '@daoyou/game-rules/body-cultivation/training';
+import { formatHumanRealmDate } from '@daoyou/game-rules/world/calendar';
 import type { ConditionStatusKey } from '@daoyou/game-domain/condition';
 import { RealmType } from '@daoyou/constants/realms';
 
@@ -92,6 +94,8 @@ export interface GameHudSnapshot {
   pillToxicity: GameHudPillToxicityDetail;
   bodyCultivation: BodyCultivationSummary;
   marrowWash: MarrowWashSummary;
+  /** 人界纪年法展示文案，如「人界3年7月12日」 */
+  worldDateLabel: string;
 }
 
 type HudCultivatorView = CultivatorDisplayInput &
@@ -260,6 +264,7 @@ export function buildGameHudSnapshot(input: {
     },
     bodyCultivation,
     marrowWash,
+    worldDateLabel: formatHumanRealmDate(now),
     cultivationProgress: {
       current: cultivationExp,
       cap: cultivationCap,
@@ -323,6 +328,7 @@ export function useGameHudModel() {
         }
       : null;
   const unreadMailCount = useUnreadMailCount();
+  const nowMs = useRecoveryClock(true);
 
   return unreadMailCount === undefined
     ? null
@@ -330,6 +336,6 @@ export function useGameHudModel() {
         cultivator,
         display: projection.data?.display ?? null,
         unreadMailCount,
-        now: projection.data?.now,
+        now: new Date(nowMs),
       });
 }

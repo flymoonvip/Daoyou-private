@@ -13,6 +13,8 @@ const SPONSORSHIP_RECONCILE_SCHEDULE = '*/10 * * * *';
 const SPONSORSHIP_DEEP_RECONCILE_SCHEDULE = '15 19 * * *';
 const SPONSORSHIP_CLEANUP_SCHEDULE = '30 19 * * *';
 const SPONSORSHIP_ADMIN_DIGEST_SCHEDULE = '0 1 * * *';
+// 现实时间驱动角色衰老：每 10 分钟扫描一次活跃角色（12 小时 = 1 游戏年）
+const WORLD_AGING_TICK_SCHEDULE = '*/10 * * * *';
 
 export const BACKGROUND_SCHEDULES = [
   { type: 'chat.maintenance', expression: '* * * * *' },
@@ -38,4 +40,5 @@ export const BACKGROUND_SCHEDULES = [
     type: 'sponsorship.admin-digest',
     expression: SPONSORSHIP_ADMIN_DIGEST_SCHEDULE,
   },
+  { type: 'world.aging.tick', expression: WORLD_AGING_TICK_SCHEDULE },
 ] satisfies ReadonlyArray<{ type: BackgroundCommandType; expression: string }>;

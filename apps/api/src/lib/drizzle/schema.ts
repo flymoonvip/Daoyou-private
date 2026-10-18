@@ -78,6 +78,7 @@ export const cultivators = pgTable(
     realm_stage: varchar('realm_stage', { length: 10 }).notNull(), // 初期 | 中期 | 后期 | 圆满
     age: integer('age').notNull().default(18),
     lifespan: integer('lifespan').notNull().default(100),
+    agingSyncedAt: timestamp('aging_synced_at').notNull().defaultNow(),
     closedDoorYearsTotal: integer('closed_door_years_total').default(0),
     status: varchar('status', { length: 20 }).notNull().default('active'),
     diedAt: timestamp('died_at'),

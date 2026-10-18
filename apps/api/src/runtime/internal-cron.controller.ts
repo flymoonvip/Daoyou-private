@@ -61,4 +61,8 @@ export class InternalCronController {
   sponsorshipAdminDigest() {
     return this.jobs.sponsorshipAdminDigest();
   }
+  @Get('world-aging-tick')
+  worldAgingTick() {
+    return this.jobs.worldAgingTick();
+  }
 }
