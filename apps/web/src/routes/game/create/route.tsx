@@ -3,6 +3,9 @@ import { GameLoadingState } from '@app/components/game-shell/GameLoadingState';
 import { InkButton, InkNotice } from '@app/components/ui';
 import { consumeResourceMutation } from '@app/lib/resources/mutations';
 import { usePlayerSession } from '@app/lib/resources/player';
+import { CHARACTER_CREATION_BLOCKED_CODE } from '@daoyou/contracts/character-generation';
+import type { ApiFailure } from '@daoyou/contracts/http';
+import type { PlayerStateMutationResponse } from '@daoyou/contracts/player';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 
@@ -51,7 +54,21 @@ export default function CreatePage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(prompt ? { userInput: prompt } : {}),
         });
-        await consumeResourceMutation(response);
+        const payload = (await response.json().catch(() => null)) as
+          | PlayerStateMutationResponse<unknown>
+          | ApiFailure
+          | null;
+        if (!response.ok || !payload || !payload.success) {
+          const failure = payload && !payload.success ? payload : null;
+          // 账号已有道身（或转服未完成）时服务端不会消耗建号额度，直接回到主界面即可。
+          if (failure?.code === CHARACTER_CREATION_BLOCKED_CODE) {
+            finishedRef.current = true;
+            navigate('/game', { replace: true });
+            return;
+          }
+          throw new Error(failure?.error ?? '建号失败，请重试。');
+        }
+        await consumeResourceMutation(payload);
         finishedRef.current = true;
         navigate('/game/story', { replace: true });
       } catch (err) {

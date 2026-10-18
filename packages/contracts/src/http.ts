@@ -7,6 +7,8 @@ export type ApiSuccess<TData, TMeta = undefined> = {
 export type ApiFailure = {
   success: false;
   error: string;
+  /** 机器可读的失败原因，供前端按类型分流处理 */
+  code?: string;
   details?: unknown;
 };
 
