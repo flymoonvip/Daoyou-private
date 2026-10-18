@@ -8,6 +8,7 @@ import {
 } from '@daoyou/contracts/resources';
 import { HttpException, Inject, Injectable } from '@nestjs/common';
 import { DRIZZLE_DATABASE } from '@server/database/database.service.js';
+import { authUsers } from '@server/lib/auth/schema.js';
 import type { DbClient } from '@server/lib/drizzle/db.js';
 import { cultivators, sectMemberships } from '@server/lib/drizzle/schema.js';
 import { listPlayerJournal } from '@server/lib/repositories/playerJournalRepository.js';
@@ -21,9 +22,72 @@ import {
 } from '@server/player/application/PlayerResourceReaderService.js';
 import { and, eq } from 'drizzle-orm';
 
+/** 供主站（原神市场）活动页展示的道友角色简介快照 */
+export type ExternalCultivatorProfile = {
+  name: string;
+  title: string | null;
+  gender: string | null;
+  origin: string | null;
+  personality: string | null;
+  background: string | null;
+  realm: string;
+  realm_stage: string;
+  age: number;
+};
+
 @Injectable()
 export class PlayerService {
   constructor(@Inject(DRIZZLE_DATABASE) private readonly database: DbClient) {}
+
+  /**
+   * 按主站用户 ID 读取其当前道友角色的简介。
+   * 主站用户经跨站 SSO 建档时以 externalAuthId 一一对应；尚未进入过道友
+   * （无映射）或尚无活跃角色时返回 null，由调用方决定如何展示。
+   */
+  async externalProfileByExternalAuthId(
+    externalUserId: string,
+  ): Promise<ExternalCultivatorProfile | null> {
+    const [user] = await this.database
+      .select({ id: authUsers.id })
+      .from(authUsers)
+      .where(eq(authUsers.externalAuthId, externalUserId))
+      .limit(1);
+    if (!user) return null;
+
+    const [row] = await this.database
+      .select({
+        name: cultivators.name,
+        title: cultivators.title,
+        gender: cultivators.gender,
+        origin: cultivators.origin,
+        personality: cultivators.personality,
+        background: cultivators.background,
+        realm: cultivators.realm,
+        realm_stage: cultivators.realm_stage,
+        age: cultivators.age,
+      })
+      .from(cultivators)
+      .where(
+        and(
+          eq(cultivators.userId, user.id),
+          eq(cultivators.status, 'active'),
+        ),
+      )
+      .limit(1);
+    if (!row) return null;
+
+    return {
+      name: row.name,
+      title: row.title ?? null,
+      gender: row.gender ?? null,
+      origin: row.origin ?? null,
+      personality: row.personality ?? null,
+      background: row.background ?? null,
+      realm: row.realm,
+      realm_stage: row.realm_stage,
+      age: row.age,
+    };
+  }
 
   async journal(
     cultivatorId: string,
