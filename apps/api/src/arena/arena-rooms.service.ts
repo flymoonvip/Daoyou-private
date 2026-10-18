@@ -1,5 +1,5 @@
 import type { ArenaRoomV1 } from '@daoyou/contracts/arena';
-import { REALM_STAGE_VALUES, REALM_VALUES } from '@daoyou/constants/realms';
+import { ALL_REALM_STAGE_VALUES, REALM_VALUES } from '@daoyou/constants/realms';
 import { HttpException, Inject, Injectable } from '@nestjs/common';
 import { DRIZZLE_DATABASE } from '@server/database/database.service.js';
 import type { ActiveCultivatorRef } from '@server/lib/auth/types.js';
@@ -68,7 +68,7 @@ export class ArenaRoomsService {
     });
     if (!row) throw new HttpException({ error: '当前没有可用的活跃角色' }, 404);
     const realm = z.enum(REALM_VALUES).safeParse(row.realm);
-    const realmStage = z.enum(REALM_STAGE_VALUES).safeParse(row.realm_stage);
+    const realmStage = z.enum(ALL_REALM_STAGE_VALUES).safeParse(row.realm_stage);
     if (!realm.success || !realmStage.success)
       throw new HttpException({ error: '当前角色境界数据无效' }, 500);
     return {

@@ -38,7 +38,7 @@ import {
 import { type DungeonBattleSnapshot } from '@daoyou/game-domain/combat/challenges';
 import { carryDungeonBeastResources, createDungeonHost, DungeonHost } from '@daoyou/game-rules/combat/dungeon/host';
 import { projectCharacterToCombatV6 } from '@daoyou/game-rules/combat/projection';
-import { getRealmStageLevel as combatCharacterLevel } from '@daoyou/game-domain/progression';
+import { getRealmEntryLevel, getRealmStageLevel as combatCharacterLevel } from '@daoyou/game-domain/progression';
 import { evaluateFateContext } from '@daoyou/game-rules/character/fates';
 import { getMapNode } from '@daoyou/game-content/world/map';
 import { resolveDungeonMapConfig } from '@daoyou/game-rules/world/dungeon';
@@ -96,7 +96,7 @@ export async function dungeonPlayer(owner: string, tx: DbExecutor = db) {
 export function dungeonLevel(mapId: string) {
   const map = getMapNode(mapId);
   if (!map || !('realm_requirement' in map)) throw new Error('秘境地图无效');
-  return combatCharacterLevel(map.realm_requirement as RealmType, '初期');
+  return getRealmEntryLevel(map.realm_requirement as RealmType);
 }
 export async function prepareDungeonEncounter(
   state: DungeonState,

@@ -5,7 +5,7 @@ import {
 } from '@daoyou/game-domain/inventory';
 import { ELEMENT_VALUES } from '@daoyou/constants/elements';
 import { QUALITY_VALUES } from '@daoyou/constants/qualities';
-import { REALM_STAGE_VALUES, REALM_VALUES } from '@daoyou/constants/realms';
+import { ALL_REALM_STAGE_VALUES, REALM_VALUES } from '@daoyou/constants/realms';
 import {
   ALCHEMY_COMPOUND_TIER_VALUES,
   ALCHEMY_PROPERTY_KEY_VALUES,
@@ -260,7 +260,7 @@ export const artifactSchema = z
     battleRuntimeMeta: z
       .object({
         anchorRealm: z.enum(REALM_VALUES).optional(),
-        anchorRealmStage: z.enum(REALM_STAGE_VALUES).optional(),
+        anchorRealmStage: z.enum(ALL_REALM_STAGE_VALUES).optional(),
       })
       .strict()
       .optional(),

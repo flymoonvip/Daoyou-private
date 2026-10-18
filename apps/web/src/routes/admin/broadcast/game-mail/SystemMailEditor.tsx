@@ -6,7 +6,7 @@ import {
 } from '@daoyou/game-domain/mail';
 import { SystemMailInputSchema, formatMailTime, systemMailConditionSummary } from '@daoyou/game-rules/mail';
 import { SPONSORSHIP_TIER_IDS, SPONSORSHIP_TIER_META, type SponsorshipTierId } from '@daoyou/game-domain/sponsorship';
-import { REALM_STAGE_VALUES, REALM_VALUES } from '@daoyou/constants/realms';
+import { REALM_STAGES, REALM_VALUES } from '@daoyou/constants/realms';
 import { useRef, useState } from 'react';
 import { AdminDialog } from '../../_components/AdminDialog';
 import { AdminSteps } from '../../_components/AdminPage';
@@ -23,7 +23,7 @@ import {
 } from './systemMailUi';
 
 const realmOptions = REALM_VALUES.flatMap((realm) =>
-  REALM_STAGE_VALUES.map((stage) => ({ realm, stage })),
+  REALM_STAGES[realm].map((stage) => ({ realm, stage })),
 );
 const realmKey = (realm?: MailRealm) =>
   realm ? `${realm.realm}/${realm.stage}` : '';

@@ -7,7 +7,7 @@ import type {
   BreakthroughChallengeId,
   BreakthroughSnapshot,
 } from '@daoyou/game-domain/combat/challenges';
-import { getRealmStageLevel } from '@daoyou/game-domain/progression';
+import { getRealmLastLevel } from '@daoyou/game-domain/progression';
 
 import { playerAppearances } from '../unit-appearance.js';
 
@@ -96,7 +96,7 @@ export function createBreakthroughHost(
   });
   if (!projected.ok) throw new Error('请先完成新版宗门构筑并恢复气血');
   const spec = BREAKTHROUGH_CHALLENGES[challengeId];
-  const level = getRealmStageLevel(spec.fromRealm, '圆满');
+  const level = getRealmLastLevel(spec.fromRealm);
   const attrs = presetEnemyAttrs(level, 'boss');
   const mindFactor =
     challengeId === 'heart_demon_nascent' && !clearMind ? 1.1 : 1;

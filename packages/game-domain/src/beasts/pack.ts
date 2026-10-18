@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { getRealmStageLevel } from '../progression/realms.js';
+import { getRealmEntryLevel } from '../progression/realms.js';
 import { REALM_VALUES } from '@daoyou/constants/realms';
 
 const identity = {
@@ -432,7 +432,7 @@ export function loadBeastPacks(
   if (species.generation.minBirthSkills > species.generation.maxBirthSkills)
     issue('species.json', 'generation', '技能格下界不得超过上界');
   species.species.forEach((s) => {
-    if (s.carryLevel !== getRealmStageLevel(s.realm, '初期'))
+    if (s.carryLevel !== getRealmEntryLevel(s.realm))
       issue(
         'species.json',
         `[${s.id}].carryLevel`,

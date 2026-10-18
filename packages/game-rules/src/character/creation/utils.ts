@@ -3,7 +3,7 @@ import { ELEMENT_VALUES, type ElementType } from '@daoyou/constants/elements';
 import type { Attributes, SpiritualRoot } from '@daoyou/game-domain/character';
 
 export function generateAttributes(): Attributes {
-  const naturalValue = getRealmStageNaturalAttributeValue('炼气', '初期');
+  const naturalValue = getRealmStageNaturalAttributeValue('炼气', '一层');
   return {
     vitality: naturalValue,
     strength: naturalValue,

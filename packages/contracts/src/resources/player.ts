@@ -5,7 +5,7 @@ import {
   SPIRITUAL_ROOT_GRADE_VALUES,
 } from '@daoyou/game-domain/character';
 import { QUALITY_VALUES } from '@daoyou/constants/qualities';
-import { REALM_STAGE_VALUES, REALM_VALUES } from '@daoyou/constants/realms';
+import { ALL_REALM_STAGE_VALUES, REALM_VALUES } from '@daoyou/constants/realms';
 import {
   StoryViewSchema,
   type StoryView,
@@ -204,7 +204,7 @@ export const profileCultivatorSchema = z
     origin: z.string().optional(),
     personality: z.string().optional(),
     realm: z.enum(REALM_VALUES),
-    realm_stage: z.enum(REALM_STAGE_VALUES),
+    realm_stage: z.enum(ALL_REALM_STAGE_VALUES),
     age: z.number(),
     lifespan: z.number(),
     status: z.enum(['active', 'dead']).optional(),

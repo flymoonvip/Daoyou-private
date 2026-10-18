@@ -4,7 +4,7 @@ import { SectTaskRewardSnapshotSchema } from '@daoyou/game-domain/sects/tasks';
 
 import type { createInventorySchemas } from '@daoyou/game-domain/inventory';
 
-import { REALM_STAGE_VALUES, REALM_VALUES } from '@daoyou/constants/realms';
+import { ALL_REALM_STAGE_VALUES, REALM_VALUES } from '@daoyou/constants/realms';
 
 import { z } from 'zod';
 
@@ -83,7 +83,7 @@ export function createSectResourceSchemas({
           name: z.string(),
           description: z.string(),
           realm: z.enum(REALM_VALUES),
-          realmStage: z.enum(REALM_STAGE_VALUES),
+          realmStage: z.enum(ALL_REALM_STAGE_VALUES),
           sectId: z.string().optional(),
           sectName: z.string().optional(),
         })

@@ -7,6 +7,7 @@ import {
   getAttributeInfo,
 } from '@daoyou/game-content/presentation/concepts';
 import type { Attributes } from '@daoyou/game-domain/character';
+import { getRealmLastStage } from '@daoyou/game-domain/progression';
 import { getNextMajorRealm } from '@daoyou/game-rules/consumables/breakthrough';
 import { format } from 'd3-format';
 import { useMemo } from 'react';
@@ -159,8 +160,9 @@ function BreakthroughResultContent({
       : '';
   const majorGateReady =
     summary.success &&
-    summary.toStage === '圆满' &&
-    Boolean(summary.toRealm && getNextMajorRealm(summary.toRealm));
+    summary.toRealm !== undefined &&
+    summary.toStage === getRealmLastStage(summary.toRealm) &&
+    Boolean(getNextMajorRealm(summary.toRealm));
 
   const attributeGrowthText = useMemo(() => {
     if (!summary.attributeGrowth) return '';

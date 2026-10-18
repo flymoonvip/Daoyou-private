@@ -21,6 +21,7 @@ import {
 } from '@daoyou/game-content/cultivation';
 import { getGameConceptLabel } from '@daoyou/game-content/presentation/concepts';
 import { QI_ACTION_COSTS } from '@daoyou/game-content/qi/config';
+import { getRealmLastStage } from '@daoyou/game-domain/progression';
 import { getNextMajorRealm } from '@daoyou/game-rules/consumables/breakthrough';
 import { getNextStage } from '@daoyou/game-rules/cultivation';
 import { useState } from 'react';
@@ -325,8 +326,9 @@ export function RetreatView({ sectContext }: RetreatViewProps) {
   const majorGateKey =
     retreatResult && isSuccessfulBreakthrough(retreatResult)
       ? 'toStage' in retreatResult.summary &&
-        retreatResult.summary.toStage === '圆满' &&
         retreatResult.summary.toRealm &&
+        retreatResult.summary.toStage ===
+          getRealmLastStage(retreatResult.summary.toRealm) &&
         getNextMajorRealm(retreatResult.summary.toRealm)
         ? `${retreatResult.summary.fromRealm}${retreatResult.summary.fromStage}-${retreatResult.summary.toRealm}`
         : null

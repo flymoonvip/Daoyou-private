@@ -6,7 +6,7 @@ import { rollDrops } from '../drops/index.js';
 import { SeededRng } from '@daoyou/combat-core/rng';
 import { isOpenEquipmentLevel } from '@daoyou/game-domain/equipment';
 import { equipmentRealm } from '../equipment/realm.js';
-import { getRealmStageLevel as combatCharacterLevel } from '@daoyou/game-domain/progression';
+import { getRealmEntryLevel } from '@daoyou/game-domain/progression';
 import { itemDefinition } from '../inventory/index.js';
 import { hashTowerSeed } from '../tower/helpers.js';
 import type { RealmType } from '@daoyou/constants/realms';
@@ -21,7 +21,7 @@ function eligibleRewardItems(
     drop.source.kind === 'item'
       ? [drop.source.definitionId]
       : pack.pools[drop.source.poolId].entries;
-  const level = combatCharacterLevel(realm, '初期');
+  const level = getRealmEntryLevel(realm);
   return ids.filter((id) => {
     const item = itemDefinition(id);
     return (
@@ -40,7 +40,7 @@ export function towerRewardPreviews(
     .map((row) => ({
       floor: row.floor,
       spiritStones:
-        combatCharacterLevel(realm, '初期') * row.spiritStonesPerLevel,
+        getRealmEntryLevel(realm) * row.spiritStonesPerLevel,
       reputation: row.reputation,
       drops: row.drops.map((drop) => ({
         id: drop.id,
@@ -69,7 +69,7 @@ export function planTowerReward(
 ): TowerReward {
   const row = pack.floors.find((row) => row.floor === floor);
   if (!row) throw new Error('无效的幻境奖励楼层');
-  const level = combatCharacterLevel(realm, '初期');
+  const level = getRealmEntryLevel(realm);
   const items: TowerReward['items'] = [];
   if (row.drops.length) {
     const result = rollDrops(

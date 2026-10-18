@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { SectBattleOpponent } from './sect-battle.js';
-import { REALM_STAGE_VALUES, REALM_VALUES } from '@daoyou/constants/realms';
+import { ALL_REALM_STAGE_VALUES, REALM_VALUES } from '@daoyou/constants/realms';
 
 export const SectV6TargetSchema = z
   .object({
@@ -10,7 +10,7 @@ export const SectV6TargetSchema = z
     name: z.string().min(1),
     description: z.string().min(1),
     realm: z.enum(REALM_VALUES),
-    realmStage: z.enum(REALM_STAGE_VALUES),
+    realmStage: z.enum(ALL_REALM_STAGE_VALUES),
     sourceCultivatorId: z.uuid().optional(),
     sourceSectId: z.string().optional(),
     sourceSectName: z.string().optional(),

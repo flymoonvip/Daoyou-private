@@ -8,6 +8,7 @@ import {
 import {
   getLevelRealmStage,
   getRealmStageLevel as combatCharacterLevel,
+  getRealmEntryStage,
 } from '@daoyou/game-domain/progression';
 
 import {
@@ -364,7 +365,10 @@ export function generateSectDeliveryRequirement(input: {
             level <=
             Math.max(
               10,
-              combatCharacterLevel(input.realm, input.realmStage ?? '初期'),
+              combatCharacterLevel(
+                input.realm,
+                input.realmStage ?? getRealmEntryStage(input.realm),
+              ),
             ),
         ),
       ),

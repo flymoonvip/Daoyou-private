@@ -4,7 +4,7 @@ import type { createInventorySchemas } from '../items/inventory.js';
 
 import { ENEMY_RACE_VALUES } from '../character.js';
 
-import { REALM_STAGE_VALUES } from '@daoyou/constants/realms';
+import { ALL_REALM_STAGE_VALUES } from '@daoyou/constants/realms';
 
 import { z } from 'zod';
 
@@ -22,7 +22,7 @@ const DUNGEON_QUALITY_VALUES = [
 
 const DungeonBattleMetadataSchema = z.object({
   race: z.enum(ENEMY_RACE_VALUES).describe('敌人种族'),
-  realm_stage: z.enum(REALM_STAGE_VALUES).describe('敌人境界阶段'),
+  realm_stage: z.enum(ALL_REALM_STAGE_VALUES).describe('敌人境界阶段'),
   enemy_name: z.string().optional().describe('敌人名称'),
   background: z.string().optional().describe('敌人背景'),
   description: z.string().optional().describe('敌人描述'),

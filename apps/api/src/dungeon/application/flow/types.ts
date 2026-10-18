@@ -2,7 +2,7 @@ import type { ResourceOperation } from '@daoyou/game-domain/resources';
 import { ItemGrantSchema } from '@daoyou/game-rules/inventory';
 import { DUNGEON_COST_RANK_VALUES } from '@daoyou/game-domain/dungeon';
 import { ENEMY_RACE_VALUES } from '@daoyou/game-domain/character';
-import { REALM_STAGE_VALUES } from '@daoyou/constants/realms';
+import { ALL_REALM_STAGE_VALUES } from '@daoyou/constants/realms';
 import { z } from 'zod';
 
 // === AI Interaction Schemas ===
@@ -25,7 +25,7 @@ const RoundNarrativeSchema = z.string().trim().min(300).max(900);
 
 const DungeonBattleMetadataSchema = z.object({
   race: z.enum(ENEMY_RACE_VALUES).describe('敌人种族'),
-  realm_stage: z.enum(REALM_STAGE_VALUES).describe('敌人境界阶段'),
+  realm_stage: z.enum(ALL_REALM_STAGE_VALUES).describe('敌人境界阶段'),
   enemy_name: z.string().optional().describe('敌人名称'),
   background: z.string().optional().describe('敌人背景'),
   description: z.string().optional().describe('敌人描述'),
@@ -219,7 +219,7 @@ export const DungeonRoundSchema = z.object({
 const DungeonBattleMetadataLlmSchema = z.object({
   race: z.enum(ENEMY_RACE_VALUES).describe('敌人种族内部枚举'),
   realm_stage: z
-    .enum(REALM_STAGE_VALUES)
+    .enum(ALL_REALM_STAGE_VALUES)
     .describe('敌人境界阶段，不包含炼气、筑基等境界名称'),
   enemy_name: ShortTextSchema.max(20).describe('面向玩家的敌人名称'),
   background: NarrativeSchema.max(80)

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { COMPREHENSION_INSIGHT_CAP } from '@daoyou/game-content/cultivation';
+import { QI_LAYER_VALUES } from '@daoyou/constants/realms';
+import { COMPREHENSION_INSIGHT_CAP, EXP_CAP_TABLE } from '@daoyou/game-content/cultivation';
 import type {
   Cultivator,
   FateEffectEntry,
@@ -483,6 +484,7 @@ describe('CultivationEngine cultivation boost', () => {
   it('uses the canonical 95 percent cap for modifiers and the actual roll', () => {
     const cultivator = createCultivator();
     cultivator.realm = '炼气';
+    cultivator.realm_stage = '一层';
     cultivator.cultivation_progress!.cultivation_exp = 100_000;
     cultivator.cultivation_progress!.comprehension_insight = 100;
 
@@ -640,5 +642,21 @@ describe('retired legacy manual retreat multiplier', () => {
         baseline.summary,
       );
     }
+  });
+});
+
+describe('炼气十三层修为上限', () => {
+  it('十三层 cap 合计守恒为 3100，且逐层非线性递增', () => {
+    const caps = QI_LAYER_VALUES.map(
+      (layer) => EXP_CAP_TABLE['炼气'][layer]!,
+    );
+    expect(caps).toHaveLength(13);
+    // 总数值守恒：旧四阶段 500 + 600 + 800 + 1200 = 3100 全部分摊到十三层
+    expect(caps.reduce((sum, cap) => sum + cap, 0)).toBe(3_100);
+    // 非线性：相邻层增量严格递增（加速成长），而非均分
+    const deltas = caps.slice(1).map((cap, index) => cap - caps[index]!);
+    deltas.forEach((delta, index) => {
+      if (index > 0) expect(delta).toBeGreaterThan(deltas[index - 1]!);
+    });
   });
 });

@@ -4,7 +4,7 @@ import { SPIRIT_FIELD_CARE_ACTIONS } from '../spirit-field/types.js';
 
 import { QUALITY_VALUES } from '@daoyou/constants/qualities';
 
-import { REALM_STAGE_VALUES, REALM_VALUES } from '@daoyou/constants/realms';
+import { ALL_REALM_STAGE_VALUES, REALM_VALUES } from '@daoyou/constants/realms';
 
 import { ALCHEMY_MODE_VALUES } from '../consumable.js';
 
@@ -179,9 +179,9 @@ export function createDomainEventDataSchemas({
         actionInstanceId: z.uuid(),
         cultivatorName: z.string().min(1).max(100),
         fromRealm: z.enum(REALM_VALUES),
-        fromStage: z.enum(REALM_STAGE_VALUES),
+        fromStage: z.enum(ALL_REALM_STAGE_VALUES),
         toRealm: z.enum(REALM_VALUES),
-        toStage: z.enum(REALM_STAGE_VALUES),
+        toStage: z.enum(ALL_REALM_STAGE_VALUES),
         major: z.boolean(),
       })
       .strict(),
@@ -246,7 +246,7 @@ export function createDomainEventDataSchemas({
       cultivatorId: z.uuid(),
       cultivatorName: z.string().min(1).max(100),
       realm: z.enum(REALM_VALUES),
-      realmStage: z.enum(REALM_STAGE_VALUES),
+      realmStage: z.enum(ALL_REALM_STAGE_VALUES),
       direction: z.enum(['departed', 'arrived', 'returned']),
     }),
     'sponsorship.order.received': z

@@ -1,4 +1,4 @@
-import type { RealmStage, RealmType } from '@daoyou/constants/realms';
+import type { BaseRealmStage, RealmType } from '@daoyou/constants/realms';
 
 /**
  * 各境界的目标完成天数。
@@ -46,13 +46,16 @@ export const REALM_DAILY_EXP_BUDGET = {
 } satisfies Record<RealmType, number>;
 
 /**
- * 境界内四个阶段的经验权重。
+ * 筑基及以上大境界内四个阶段的经验权重。
  *
  * 设计含义：每个境界的总经验按该权重拆成初期/中期/后期/圆满四段。
  * 推导单阶段 cap 时使用：
  *   阶段 cap ≈ REALM_TARGET_DAYS[realm]
  *            × REALM_DAILY_EXP_BUDGET[realm]
  *            × STAGE_EXP_WEIGHT[stage]
+ *
+ * 炼气已细分为十三层，其单层 cap 不按本权重推导，而由 EXP_CAP_TABLE 直接给出
+ * 非线性递增序列（合计守恒 3100）。
  *
  * 当前突破成功会扣除当前阶段 cap，并把溢出的 cultivation_exp 带入下一阶段，
  * 因此 EXP_CAP_TABLE 是“单阶段经验成本”，不是累计经验。
@@ -62,7 +65,7 @@ export const STAGE_EXP_WEIGHT = {
   中期: 0.2,
   后期: 0.25,
   圆满: 0.4,
-} satisfies Record<RealmStage, number>;
+} satisfies Record<BaseRealmStage, number>;
 
 /**
  * 闭关修炼基础预算。

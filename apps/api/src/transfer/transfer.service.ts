@@ -1,4 +1,4 @@
-import { REALM_STAGE_VALUES, REALM_VALUES } from '@daoyou/constants/realms';
+import { ALL_REALM_STAGE_VALUES, REALM_VALUES } from '@daoyou/constants/realms';
 import { TRANSFER_FORMAT_VERSION, TransferPackageHeaderSchema, type TransferChallenge } from '@daoyou/contracts/transfer';
 import { HttpException, Inject, Injectable } from '@nestjs/common';
 import { DRIZZLE_DATABASE } from '@server/database/database.service.js';
@@ -33,7 +33,7 @@ async function recordBoundaryCrossing(
     deduplicationKey: string;
   },
 ) {
-  if (!listed(REALM_VALUES, input.realm) || !listed(REALM_STAGE_VALUES, input.realmStage)) return;
+  if (!listed(REALM_VALUES, input.realm) || !listed(ALL_REALM_STAGE_VALUES, input.realmStage)) return;
   await createDomainEvent({
     type: 'cultivator.boundary.crossed',
     aggregate: { type: 'cultivator', id: input.cultivatorId },

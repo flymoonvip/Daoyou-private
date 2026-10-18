@@ -920,7 +920,7 @@ describe('当前场次托管', () => {
             ).toBe(true);
         }
         const early = projectCharacterToCombatV6({
-          ...towerReferenceBuild(definition.id, '炼气', '中期', index as 0 | 1),
+          ...towerReferenceBuild(definition.id, '炼气', '五层', index as 0 | 1),
           side: 0,
           slot: 0,
           resourcePolicy: 'full',

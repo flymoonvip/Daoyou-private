@@ -10,6 +10,7 @@ import {
   useCultivatorIdentity,
   usePlayerSession,
 } from '@app/lib/resources/player';
+import { getRealmLastStage } from '@daoyou/game-domain/progression';
 import { getNextMajorRealm } from '@daoyou/game-rules/consumables/breakthrough';
 
 export function TasksView() {
@@ -62,9 +63,11 @@ export function TasksView() {
               {profile.data?.cultivator &&
               !getNextMajorRealm(profile.data.cultivator.realm)
                 ? '已至当前道途之巅，无需再领取破境卷宗。'
-                : profile.data?.cultivator?.realm_stage === '圆满'
+                : profile.data?.cultivator &&
+                    profile.data.cultivator.realm_stage ===
+                      getRealmLastStage(profile.data.cultivator.realm)
                   ? '卷宗尚未送达，请点击「核对进度」重新领取。'
-                  : '当前境界尚未圆满。继续修行至圆满，便会自动收到下一境的破境卷宗。'}
+                  : '当前境界尚未修至本境末层。继续修行至本境末层，便会自动收到下一境的破境卷宗。'}
             </p>
           ) : (
             <div className="space-y-4">

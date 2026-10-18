@@ -11,7 +11,7 @@ const input: CharacterCombatInput = {
     id: 'a1',
     name: '装配基线',
     realm: '炼气',
-    realm_stage: '后期',
+    realm_stage: '九层',
     attributes: {
       vitality: 10,
       strength: 20,

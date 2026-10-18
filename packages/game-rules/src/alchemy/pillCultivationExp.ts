@@ -7,6 +7,7 @@ import {
 import { QUALITY_ORDER } from '@daoyou/constants/qualities';
 import type { Quality } from '@daoyou/constants/qualities';
 import type { RealmStage, RealmType } from '@daoyou/constants/realms';
+import { getRealmEntryStage } from '@daoyou/game-domain/progression';
 
 export interface PillCultivationExpInput {
   realm: RealmType;
@@ -26,9 +27,9 @@ function resolvePillExpCap(input: PillCultivationExpInput): number {
     return Math.floor(input.expCap);
   }
 
-  const realmStage = input.realmStage ?? '初期';
+  const realmStage = input.realmStage ?? getRealmEntryStage(input.realm);
   return (
-    EXP_CAP_TABLE[input.realm]?.[realmStage] ?? EXP_CAP_TABLE['炼气']['初期']
+    EXP_CAP_TABLE[input.realm]?.[realmStage] ?? EXP_CAP_TABLE['炼气']['一层']!
   );
 }
 

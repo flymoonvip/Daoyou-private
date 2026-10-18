@@ -37,7 +37,7 @@ export function resolveLiveExpCap(
   realm: RealmType,
   realm_stage: RealmStage,
 ): number {
-  return EXP_CAP_TABLE[realm]?.[realm_stage] ?? EXP_CAP_TABLE['炼气']['初期'];
+  return EXP_CAP_TABLE[realm]?.[realm_stage] ?? EXP_CAP_TABLE['炼气']['一层']!;
 }
 
 /**

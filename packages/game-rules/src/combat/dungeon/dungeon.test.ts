@@ -59,7 +59,7 @@ function player(sectId: CombatV6SectId) {
       id: 'player',
       name: '初入道途',
       realm: '炼气' as const,
-      realm_stage: '初期' as const,
+      realm_stage: '一层' as const,
       attributes: {
         vitality: 10,
         strength: 10,

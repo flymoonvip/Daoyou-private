@@ -6,7 +6,7 @@ import { ELEMENT_VALUES } from '@daoyou/constants/elements';
 
 import { QUALITY_VALUES } from '@daoyou/constants/qualities';
 
-import { REALM_STAGE_VALUES, REALM_VALUES } from '@daoyou/constants/realms';
+import { ALL_REALM_STAGE_VALUES, REALM_VALUES } from '@daoyou/constants/realms';
 
 export function createDevCultivatorPatchSchema({
   comprehensionInsightCap,
@@ -71,7 +71,7 @@ export function createDevCultivatorPatchSchema({
         .max(3)
         .optional(),
       realm: z.enum(REALM_VALUES).optional(),
-      realmStage: z.enum(REALM_STAGE_VALUES).optional(),
+      realmStage: z.enum(ALL_REALM_STAGE_VALUES).optional(),
       attributes: z
         .object({
           vitality: attribute.optional(),

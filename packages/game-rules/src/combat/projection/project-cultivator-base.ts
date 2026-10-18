@@ -1,4 +1,4 @@
-import { REALM_STAGE_VALUES, REALM_VALUES } from '@daoyou/constants/realms';
+import { REALM_STAGES, REALM_VALUES } from '@daoyou/constants/realms';
 import type { Attributes } from '@daoyou/game-domain/character';
 import { UnitKind } from '@daoyou/combat-core/enums';
 import { type LineupUnit } from '@daoyou/combat-core/types';
@@ -76,7 +76,7 @@ export function projectCultivatorBaseToCombatV6(
       ),
     );
   }
-  if (!REALM_STAGE_VALUES.includes(cultivator.realm_stage)) {
+  if (!REALM_STAGES[cultivator.realm]?.includes(cultivator.realm_stage)) {
     diagnostics.push(
       diagnostic(
         'error',

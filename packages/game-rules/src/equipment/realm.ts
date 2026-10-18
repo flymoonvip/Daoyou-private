@@ -1,11 +1,11 @@
 import { isOpenEquipmentLevel } from '@daoyou/game-domain/equipment';
-import { getLevelRealmStage, getRealmStageLevel } from '@daoyou/game-domain/progression';
+import { getLevelRealmStage, getRealmEntryLevel } from '@daoyou/game-domain/progression';
 
 
 /** 器阶只决定属性档位；同一大境界的道装均在初期开放。 */
 export function equipmentRealm(level: number) {
   const { realm } = getLevelRealmStage(level);
-  return { realm, requiredLevel: getRealmStageLevel(realm, '初期') };
+  return { realm, requiredLevel: getRealmEntryLevel(realm) };
 }
 
 

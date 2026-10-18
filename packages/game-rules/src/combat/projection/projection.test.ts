@@ -48,7 +48,7 @@ function cultivator(
     id: "cultivator-a",
     name: "甲",
     realm: "炼气",
-    realm_stage: "初期",
+    realm_stage: "一层",
     attributes: { ...BASE_ATTRIBUTES },
     ...overrides,
   }

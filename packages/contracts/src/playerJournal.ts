@@ -4,7 +4,7 @@ import type {
   CultivationResult,
 } from '@daoyou/game-domain/cultivation';
 
-import { REALM_STAGE_VALUES, REALM_VALUES } from '@daoyou/constants/realms';
+import { ALL_REALM_STAGE_VALUES, REALM_VALUES } from '@daoyou/constants/realms';
 
 import { z } from 'zod';
 
@@ -28,9 +28,9 @@ const breakthroughSummary = z.object({
   chance: z.number(),
   roll: z.number(),
   fromRealm: z.enum(REALM_VALUES),
-  fromStage: z.enum(REALM_STAGE_VALUES),
+  fromStage: z.enum(ALL_REALM_STAGE_VALUES),
   toRealm: z.enum(REALM_VALUES).optional(),
-  toStage: z.enum(REALM_STAGE_VALUES).optional(),
+  toStage: z.enum(ALL_REALM_STAGE_VALUES).optional(),
   lifespanGained: amount,
   attributeGrowth: z.object({
     vitality: z.number().optional(),

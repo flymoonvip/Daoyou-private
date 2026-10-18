@@ -1,4 +1,4 @@
-import { REALM_STAGE_VALUES, REALM_VALUES } from '@daoyou/constants/realms';
+import { ALL_REALM_STAGE_VALUES, REALM_VALUES } from '@daoyou/constants/realms';
 import { TransferPackageHeaderSchema } from '@daoyou/contracts/transfer';
 import { BeastLineupSchema } from '@daoyou/game-domain/beasts';
 import { DAO_EQUIPMENT_SLOTS } from '@daoyou/game-domain/equipment';
@@ -45,7 +45,7 @@ export const TransferSnapshotSchema = z.strictObject({
     playerRace: z.string().max(32),
     raceNarrative: z.string().nullable(),
     realm: z.enum(REALM_VALUES),
-    realmStage: z.enum(REALM_STAGE_VALUES),
+    realmStage: z.enum(ALL_REALM_STAGE_VALUES),
     age: nonnegative,
     lifespan: nonnegative,
     closedDoorYearsTotal: nonnegative,

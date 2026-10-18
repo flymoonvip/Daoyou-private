@@ -13,7 +13,7 @@ describe('public V6 build', () => {
     id: 'public-character',
     name: '道友',
     realm: '炼气' as const,
-    realm_stage: '后期' as const,
+    realm_stage: '九层' as const,
     attributes: {
       vitality: 20,
       strength: 20,

@@ -1,5 +1,5 @@
 import type { DailyTaskDifficulty } from '@daoyou/game-domain/cultivation';
-import { REALM_STAGE_VALUES, REALM_VALUES } from '@daoyou/constants/realms';
+import { ALL_REALM_STAGE_VALUES, REALM_VALUES } from '@daoyou/constants/realms';
 import type { RealmStage, RealmType } from '@daoyou/constants/realms';
 import { z } from 'zod';
 import { MINING_SCORE_TIERS } from '../mining/MiningGameRules.js';
@@ -15,7 +15,7 @@ export const SectTaskOfferSnapshotSchema = z
     schemaVersion: z.literal(2),
     rulesVersion: z.number().int().positive(),
     anchorRealm: z.enum(REALM_VALUES),
-    anchorRealmStage: z.enum(REALM_STAGE_VALUES),
+    anchorRealmStage: z.enum(ALL_REALM_STAGE_VALUES),
     periodKey: z.string().min(1).max(32),
     executorKey: z.string().min(1).max(128),
     requirement: SectDeliveryRequirementSchema.optional(),

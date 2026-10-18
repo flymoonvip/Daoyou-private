@@ -8,7 +8,7 @@ import { ELEMENT_VALUES } from '@daoyou/constants/elements';
 
 import { QUALITY_VALUES } from '@daoyou/constants/qualities';
 
-import { REALM_STAGE_VALUES, REALM_VALUES } from '@daoyou/constants/realms';
+import { ALL_REALM_STAGE_VALUES, REALM_VALUES } from '@daoyou/constants/realms';
 
 import {
   ALCHEMY_PROPERTY_KEY_VALUES,
@@ -176,7 +176,7 @@ export const ArtifactEditorConfigSchema = z.object({
   element: z.enum(ELEMENT_VALUES),
   quality: z.enum(QUALITY_VALUES).optional(),
   realm: z.enum(REALM_VALUES).optional(),
-  realmStage: z.enum(REALM_STAGE_VALUES).optional(),
+  realmStage: z.enum(ALL_REALM_STAGE_VALUES).optional(),
   affixIds: z.array(z.string().min(1)).min(1),
 });
 

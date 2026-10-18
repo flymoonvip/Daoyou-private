@@ -42,7 +42,7 @@ function player(id: string): CombatV6TrainingPlayerInput {
       id,
       name: id,
       realm: '炼气',
-      realm_stage: '后期',
+      realm_stage: '九层',
       attributes: {
         vitality: 10,
         strength: 10,
@@ -89,7 +89,7 @@ describe('宗门任务原生 V6 Host', () => {
       name: '矿兽',
       description: '矿脉妖兽',
       realm: '炼气',
-      realmStage: '后期',
+      realmStage: '九层',
       lockedAt: '2026-09-08T00:00:00.000Z',
       seed: 1,
       contentVersion: 'combat-v6-sect-task-v1',

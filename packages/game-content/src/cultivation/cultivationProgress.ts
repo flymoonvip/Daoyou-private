@@ -6,7 +6,13 @@ import type { RealmStage, RealmType } from '@daoyou/constants/realms';
  * 注意：突破成功后会扣除当前阶段 cap，并把溢出的 cultivation_exp
  * 带入下一阶段，因此这里不是累计 cap，而是每个阶段的独立经验成本。
  *
- * 推导公式：
+ * 炼气：原四阶段（初期 500 / 中期 600 / 后期 800 / 圆满 1200，合计 3100）
+ * 细分为十三层，总修为守恒仍为 3100，但层间 cap 按几何节奏（约 1.2 倍）非线性递增，
+ * 越往后单层所需修为越多：
+ *   64 → 77 → 92 → 110 → 132 → 159 → 191 → 229 → 275 → 330 → 396 → 475 → 570
+ * 十三层合计恰好 3100。
+ *
+ * 筑基及以上大境界仍按四阶段，推导公式：
  *   阶段 cap ≈ REALM_TARGET_DAYS[realm]
  *            × REALM_DAILY_EXP_BUDGET[realm]
  *            × STAGE_EXP_WEIGHT[stage]
@@ -21,16 +27,25 @@ import type { RealmStage, RealmType } from '@daoyou/constants/realms';
  * - 想改整体成长周期：优先调整 cultivationExpGain.ts 的目标天数/每日预算，
  *   再按公式重算本表。
  * - 想只改变某个阶段长短：调整本表对应阶段，同时确认阶段权重测试是否需要同步。
- *
- * 节奏来源：./cultivationExpGain.ts 中的 REALM_TARGET_DAYS、
- * REALM_DAILY_EXP_BUDGET 和 STAGE_EXP_WEIGHT。
  */
-export const EXP_CAP_TABLE: Record<RealmType, Record<RealmStage, number>> = {
+export const EXP_CAP_TABLE: Record<
+  RealmType,
+  Partial<Record<RealmStage, number>>
+> = {
   炼气: {
-    初期: 500,
-    中期: 600,
-    后期: 800,
-    圆满: 1_200,
+    一层: 64,
+    二层: 77,
+    三层: 92,
+    四层: 110,
+    五层: 132,
+    六层: 159,
+    七层: 191,
+    八层: 229,
+    九层: 275,
+    十层: 330,
+    十一层: 396,
+    十二层: 475,
+    十三层: 570,
   },
   筑基: {
     初期: 1_900,
@@ -57,3 +72,6 @@ export const EXP_CAP_TABLE: Record<RealmType, Record<RealmStage, number>> = {
     圆满: 250_000,
   },
 };
+
+/** 炼气十三层修为上限合计，供守恒测试断言使用。 */
+export const QI_LAYER_EXP_TOTAL = 3_100;

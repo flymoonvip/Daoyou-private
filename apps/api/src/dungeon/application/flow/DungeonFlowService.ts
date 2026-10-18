@@ -13,7 +13,7 @@ import {
   dungeonRewardItemName,
 } from '@daoyou/game-rules/rewards/dungeon';
 import type { CultivatorCondition } from '@daoyou/game-domain/condition';
-import { REALM_STAGE_VALUES, REALM_VALUES, RealmType, type RealmStage } from '@daoyou/constants/realms';
+import { ALL_REALM_STAGE_VALUES, REALM_VALUES, RealmType, type RealmStage } from '@daoyou/constants/realms';
 import type { Cultivator } from '@daoyou/game-domain/character';
 import { assertCombatV6MutationAllowed } from '@server/combat/mutation-policy.js';
 import { ConditionService } from '@server/cultivator/application/ConditionService.js';
@@ -218,9 +218,9 @@ function normalizeLegacySixAttributes(
   const realmValue = REALM_VALUES.includes(realm as RealmType)
     ? (realm as RealmType)
     : REALM_VALUES[0];
-  const stageValue = REALM_STAGE_VALUES.includes(stage as RealmStage)
+  const stageValue = ALL_REALM_STAGE_VALUES.includes(stage as RealmStage)
     ? (stage as RealmStage)
-    : REALM_STAGE_VALUES[0];
+    : ALL_REALM_STAGE_VALUES[0];
   const naturalValue = getRealmStageNaturalAttributeValue(
     realmValue,
     stageValue,
@@ -344,7 +344,7 @@ export class DungeonFlowService {
   }
 
   private normalizeState(state: DungeonState): DungeonState {
-    const [realm = REALM_VALUES[0], stage = REALM_STAGE_VALUES[0]] =
+    const [realm = REALM_VALUES[0], stage = ALL_REALM_STAGE_VALUES[0]] =
       state.playerInfo.realm.trim().split(/\s+/);
     normalizeLegacySixAttributes(
       state.playerInfo.attributes as unknown as Record<string, unknown>,

@@ -18,6 +18,7 @@ import {
   getPillToxicityStage,
   isConditionStatusActive,
 } from '@daoyou/game-rules/condition';
+import { getRealmLastStage } from '@daoyou/game-domain/progression';
 import { getNextMajorRealm } from '@daoyou/game-rules/consumables/breakthrough';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 
@@ -149,7 +150,8 @@ export function CaveHubContent() {
       caveStatus.activeStatuses.length > 0);
   const hasBreakthroughAlert = (caveStatus?.cultivationPercent ?? 0) >= 60;
   const isMajorBreakthroughCandidate = Boolean(
-    cultivator.realm_stage === '圆满' && getNextMajorRealm(cultivator.realm),
+    cultivator.realm_stage === getRealmLastStage(cultivator.realm) &&
+      getNextMajorRealm(cultivator.realm),
   );
   if (taskError && isMajorBreakthroughCandidate) {
     urgentItems.push(

@@ -231,7 +231,7 @@ describe('projectNaturalRecoveryResources', () => {
       {
         name: 'test',
         realm: '炼气',
-        realm_stage: '初期',
+        realm_stage: '一层',
         attributes: {
           vitality: 10,
           strength: 10,
@@ -269,7 +269,7 @@ describe('projectNaturalRecoveryResources', () => {
     const cultivator = {
       name: 'test',
       realm: '炼气' as const,
-      realm_stage: '初期' as const,
+      realm_stage: '一层' as const,
       attributes: {
         vitality: 10,
         strength: 10,
