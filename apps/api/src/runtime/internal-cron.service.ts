@@ -12,6 +12,7 @@ import {
   runSponsorshipAdminDigestJob,
   runSponsorshipCleanupJob,
   runSponsorshipReconcileJob,
+  runWorldAgingTickJob,
 } from '@server/runtime/jobs/internalCron.js';
 import { redPacketService } from '@server/social/application/RedPacketService.js';
 @Injectable()
@@ -56,5 +57,8 @@ export class InternalCronService {
   }
   sponsorshipAdminDigest() {
     return runSponsorshipAdminDigestJob();
+  }
+  worldAgingTick() {
+    return runWorldAgingTickJob();
   }
 }

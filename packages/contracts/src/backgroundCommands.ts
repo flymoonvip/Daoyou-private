@@ -15,6 +15,7 @@ export const BACKGROUND_COMMAND_TYPES = [
   'sponsorship.cleanup',
   'sponsorship.admin-digest',
   'chat.maintenance',
+  'world.aging.tick',
 ] as const;
 
 export type BackgroundCommandType = (typeof BACKGROUND_COMMAND_TYPES)[number];
@@ -74,6 +75,11 @@ export const BACKGROUND_COMMAND_DEFINITIONS = {
     version: 1,
     subject: `${BACKGROUND_COMMAND_SUBJECT_PREFIX}.sponsorship-admin-digest.v1`,
     scheduleBucketMs: 24 * 60 * 60_000,
+  },
+  'world.aging.tick': {
+    version: 1,
+    subject: `${BACKGROUND_COMMAND_SUBJECT_PREFIX}.world-aging-tick.v1`,
+    scheduleBucketMs: 10 * 60_000,
   },
 } as const satisfies Record<
   BackgroundCommandType,

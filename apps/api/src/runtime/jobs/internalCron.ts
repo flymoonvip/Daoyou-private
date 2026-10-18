@@ -1,10 +1,13 @@
 import { RANKING_REWARDS } from '@daoyou/game-content/economy';
 import { REALM_VALUES } from '@daoyou/constants/realms';
+import { advanceNaturalAging } from '@daoyou/game-rules/world/aging';
+import { REAL_MS_PER_GAME_YEAR } from '@daoyou/game-rules/world/calendar';
 import {
   generateDailyMarketMaterialLibraryEntries,
   ITEM_LIBRARY_SYSTEM_USER_ID,
 } from '@server/admin/application/MaterialLibraryService.js';
 import type { AuctionBuyOrderOperations } from '@server/auction/application/AuctionBuyOrderService.js';
+import { invalidateActiveCultivatorRef } from '@server/lib/auth/activeCultivator.js';
 import type { AuctionOperations } from '@server/auction/application/AuctionService.js';
 import { db, getExecutor } from '@server/lib/drizzle/db.js';
 import { cultivators } from '@server/lib/drizzle/schema.js';
@@ -37,7 +40,7 @@ import {
   sendSponsorshipAdminDigest,
 } from '@server/sponsorship/application/SponsorshipApplicationService.js';
 import { reconcileSubscriptionTerms } from '@server/sponsorship/application/SubscriptionPassService.js';
-import { eq } from 'drizzle-orm';
+import { and, eq, lt } from 'drizzle-orm';
 
 const RANK_REWARD_SETTLED_PREFIX = 'golden_rank:weekly_rewards:settled:';
 const LOCK_TTL_SECONDS = 15 * 60;
@@ -431,6 +434,82 @@ export async function runExpiredDataCleanupJob(): Promise<
       processed,
       skipped: false,
       deleted,
+    };
+  });
+}
+
+/**
+ * 现实时间驱动衰老：按「12 小时 = 1 游戏年」推进活跃角色年龄。
+ * 每角色存 aging_synced_at 作为年龄结算锚点，锚点按消耗的整年前移以保留零头；
+ * 结算后 age >= lifespan 即寿尽身死。
+ */
+export async function runWorldAgingTickJob(
+  scheduledAt = new Date(),
+): Promise<CronJobResult> {
+  return withJobLock('world-aging-tick', async () => {
+    const nowMs = scheduledAt.getTime();
+    const cutoff = new Date(nowMs - REAL_MS_PER_GAME_YEAR);
+
+    const rows = await getExecutor()
+      .select({
+        id: cultivators.id,
+        userId: cultivators.userId,
+        age: cultivators.age,
+        lifespan: cultivators.lifespan,
+        agingSyncedAt: cultivators.agingSyncedAt,
+      })
+      .from(cultivators)
+      .where(
+        and(
+          eq(cultivators.status, 'active'),
+          lt(cultivators.agingSyncedAt, cutoff),
+        ),
+      );
+
+    let processed = 0;
+    const deadUserIds: string[] = [];
+
+    await db.transaction(async (tx) => {
+      for (const row of rows) {
+        const advanced = advanceNaturalAging({
+          age: row.age,
+          anchorMs: row.agingSyncedAt.getTime(),
+          nowMs,
+        });
+        if (advanced.yearsGained <= 0) continue;
+
+        if (advanced.age >= row.lifespan) {
+          await tx
+            .update(cultivators)
+            .set({
+              age: advanced.age,
+              agingSyncedAt: new Date(advanced.anchorMs),
+              status: 'dead',
+              diedAt: new Date(nowMs),
+            })
+            .where(eq(cultivators.id, row.id));
+          deadUserIds.push(row.userId);
+        } else {
+          await tx
+            .update(cultivators)
+            .set({
+              age: advanced.age,
+              agingSyncedAt: new Date(advanced.anchorMs),
+            })
+            .where(eq(cultivators.id, row.id));
+        }
+        processed += 1;
+      }
+    });
+
+    for (const userId of deadUserIds) {
+      await invalidateActiveCultivatorRef(userId);
+    }
+
+    return {
+      success: true,
+      processed,
+      skipped: false,
     };
   });
 }
