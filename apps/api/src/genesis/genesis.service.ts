@@ -12,7 +12,7 @@ import {
   saveTempFates,
 } from '@server/lib/repositories/redisCultivatorRepository.js';
 import { createCultivatorFromTemp } from '@server/genesis/application/CultivatorCreationApplicationService.js';
-import { FATE_REROLL_LIMIT } from '@server/reshape/application/FateConfig.js';
+import { FATE_REROLL_LIMIT, FATE_SLOT_COUNT } from '@server/reshape/application/FateConfig.js';
 import { FateEngine } from '@server/reshape/application/FateEngine.js';
 import { toPlayerStateMutationResponse } from '@server/player/application/state/ResourceMutationResponse.js';
 import { CharacterGenerator } from '@server/lib/generation/CharacterGenerator.js';
@@ -27,12 +27,16 @@ import { z } from 'zod';
 
 const GenerateCharacterSchema = z.object({ userInput: z.string() });
 const GenerateFatesSchema = z.object({ tempId: z.string().min(1) });
+const CreateCharacterSchema = z.object({ userInput: z.string().optional() });
 export const SaveCharacterSchema = z.object({
   tempCultivatorId: z.string(),
   selectedFateIndices: z.array(z.number()).length(3),
 });
 const MIN_PROMPT_LENGTH = 2;
 const MAX_PROMPT_LENGTH = 200;
+// 主站尚未建设完成，建号提示暂用此初始模板兜底；后续由主站传入。
+const INITIAL_CHARACTER_PROMPT =
+  '一位出身没落丹道世家的废柴少主，天资平平却心志坚韧，渴望靠炼丹逆袭，证得长生。';
 function quotaExceededMessage(quota: CharacterGenerationQuota): string {
   switch (quota.limitedBy) {
     case 'email':
@@ -152,5 +156,34 @@ export class GenesisService {
     return toPlayerStateMutationResponse(
       await createCultivatorFromTemp({ userId: user.id, ...input }),
     );
+  }
+
+  /**
+   * 自动建号：提示改由主站传入（缺省用初始模板），先天气运由系统自动分配，
+   * 玩家不再输入提示、择命或手动保存道身。
+   */
+  async create(user: AuthUser, ip: string | undefined, input: unknown) {
+    const parsed = CreateCharacterSchema.safeParse(input ?? {});
+    if (!parsed.success)
+      throw new HttpException(
+        { success: false, error: '请求参数格式错误' },
+        400,
+      );
+    const userInput =
+      normalizeFreeformLlmInput(parsed.data.userInput ?? '') ||
+      INITIAL_CHARACTER_PROMPT;
+    const generated = await this.generate(user, ip, { userInput });
+    const { tempCultivatorId } = generated.data;
+    const { data } = await this.fates({ tempId: tempCultivatorId });
+    if (data.fates.length < FATE_SLOT_COUNT)
+      throw new HttpException(
+        { success: false, error: '气运推演失败，请重试。' },
+        500,
+      );
+    const selectedFateIndices = Array.from(
+      { length: FATE_SLOT_COUNT },
+      (_, index) => index,
+    );
+    return this.save(user, { tempCultivatorId, selectedFateIndices });
   }
 }
