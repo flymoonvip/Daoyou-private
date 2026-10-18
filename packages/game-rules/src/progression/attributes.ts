@@ -57,35 +57,16 @@ export function getBreakthroughAttributeGrowthReward(
 }
 
 
+/**
+ * 境界压制：跨大境界的伤害压制系数。
+ * 攻击方每高出一个大境界，伤害 ×2；每低出一个大境界，伤害 ×0.5。
+ * 双向对称，等效战力约 4:1（伤害 2×、承伤 0.5×），使跨境界成为天堑：
+ * 筑基打炼气大圆满、金丹打筑基大圆满均可一敌四，元婴以下于化神前皆为蝼蚁。
+ * delta = 攻击方大境界序号 − 防守方大境界序号（炼气 0 … 化神 4）。
+ * 同境界 delta 为 0，系数为 1，原有同境界平衡与节奏窗口不受影响。
+ */
 export function getRealmDamagePressureMultiplier(delta: number): number {
-  if (delta === 0) return 1;
-
-  const absDelta = Math.abs(delta);
-  if (delta > 0) {
-    const highToLowByDelta: Record<number, number> = {
-      1: 1.08,
-      2: 1.16,
-      3: 1.25,
-      4: 1.4,
-      5: 1.52,
-      6: 1.64,
-      7: 1.78,
-      8: 1.95,
-    };
-    return Math.min(2.2, highToLowByDelta[absDelta] ?? 1.95 + (absDelta - 8) * 0.05);
-  }
-
-  const lowToHighByDelta: Record<number, number> = {
-    1: 0.94,
-    2: 0.88,
-    3: 0.8,
-    4: 0.68,
-    5: 0.6,
-    6: 0.52,
-    7: 0.45,
-    8: 0.38,
-  };
-  return Math.max(0.25, lowToHighByDelta[absDelta] ?? 0.38 - (absDelta - 8) * 0.03);
+  return 2 ** delta;
 }
 
 

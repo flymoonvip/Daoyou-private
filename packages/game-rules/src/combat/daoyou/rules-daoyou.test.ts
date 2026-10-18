@@ -156,7 +156,7 @@ describe('Daoyou formulas', () => {
         100,
         UnitKind.Player,
       ),
-      target: unit({ hp: 100, speed: 1, physicalAtk: 1, physicalDef: 615 }),
+      target: unit({ hp: 100, speed: 1, physicalAtk: 1, physicalDef: 615 }, 100),
       coeff: 1,
       power: 0,
       fury: false,

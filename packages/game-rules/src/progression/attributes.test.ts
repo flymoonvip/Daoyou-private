@@ -54,16 +54,14 @@ describe('realmProgression', () => {
     expect(getRealmLastLevel('化神')).toBe(100);
   });
 
-  it('applies realm damage pressure with caps', () => {
+  it('applies symmetric realm suppression (2x per major realm)', () => {
     expect(getRealmDamagePressureMultiplier(0)).toBe(1);
-    expect(getRealmDamagePressureMultiplier(1)).toBe(1.08);
-    expect(getRealmDamagePressureMultiplier(-1)).toBe(0.94);
-    expect(getRealmDamagePressureMultiplier(4)).toBe(1.4);
-    expect(getRealmDamagePressureMultiplier(-4)).toBe(0.68);
-    expect(getRealmDamagePressureMultiplier(12)).toBe(2.15);
-    expect(getRealmDamagePressureMultiplier(20)).toBe(2.2);
-    expect(getRealmDamagePressureMultiplier(-12)).toBe(0.26);
-    expect(getRealmDamagePressureMultiplier(-20)).toBe(0.25);
+    expect(getRealmDamagePressureMultiplier(1)).toBe(2);
+    expect(getRealmDamagePressureMultiplier(-1)).toBe(0.5);
+    expect(getRealmDamagePressureMultiplier(2)).toBe(4);
+    expect(getRealmDamagePressureMultiplier(-2)).toBe(0.25);
+    expect(getRealmDamagePressureMultiplier(4)).toBe(16);
+    expect(getRealmDamagePressureMultiplier(-4)).toBe(0.0625);
   });
 
   it('applies realm effect chance pressure with caps', () => {

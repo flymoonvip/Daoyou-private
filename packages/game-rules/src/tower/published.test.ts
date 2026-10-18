@@ -93,7 +93,7 @@ it('拒绝缺层和未知版本，编译结果修改不会污染周配置', () =
   first.units[0].attrs.maxHp = 1;
   first.skills.length = 0;
   expect(publishedTowerEncounter(pack, '金丹', 1)).toEqual(original);
-  expect(() => publishedTowerEncounter(pack, '筑基', 1)).toThrow();
+  expect(() => publishedTowerEncounter(pack, '炼气', 1)).toThrow();
   expect(() => publishedTowerEncounter(pack, '金丹', 21)).toThrow();
 });
 

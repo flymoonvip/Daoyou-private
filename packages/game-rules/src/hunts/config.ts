@@ -16,14 +16,18 @@ const HUNT_TIMEZONE_OFFSET_MS = 8 * 60 * 60 * 1000;
 const HUNT_CYCLE_OFFSET_MS =
   HUNT_TIMEZONE_OFFSET_MS + HUNT_CYCLE_MS - 10 * 60 * 60 * 1000;
 
-export const HUNT_REALMS = REALM_VALUES.slice(2);
+// 讨伐难度平摊在「筑基～化神」：炼气仍在成长引导期，暂不开放结伴讨伐。
+export const HUNT_REALMS = REALM_VALUES.slice(1);
+
+// 已发布的 v1/v2/v3 链接保持原有的三段境界，不因难度平摊而新增目标。
+const LEGACY_HUNT_REALMS = REALM_VALUES.slice(2);
 
 const NODES = [
   'SAT_TN_04',
   'SAT_TN_02',
   'DJ_CENTRAL_01',
-  'DJ_RIFT_01',
   'DJ_KW_01',
+  'DJ_RIFT_01',
   'DJ_SKY_01',
   'DJ_TRIB_01',
 ];
@@ -48,11 +52,12 @@ function eventsForCycle(cycle: number, version: 1 | 2 | 3 | 4): HuntEvent[] {
         ? HUNT_TIMEZONE_OFFSET_MS
         : 0;
   const startsAt = cycle * duration - offset;
+  const realms = version === 4 ? HUNT_REALMS : LEGACY_HUNT_REALMS;
   const bosses: HuntBossId[] =
     version === 1
       ? ['heretic', 'demon', 'beast']
       : (Object.keys(HUNT_BOSSES) as HuntBossId[]);
-  return HUNT_REALMS.map((realm, index) => ({
+  return realms.map((realm, index) => ({
     id: `hunt-v${version}-${cycle}-${index}`,
     bossId: bosses[(cycle + index) % bosses.length],
     realm,

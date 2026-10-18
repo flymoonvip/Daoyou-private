@@ -1,6 +1,9 @@
 import { DamageKind, FormulaFamily, UnitKind } from '@daoyou/combat-core/enums';
 import { type FormulaSet, type SchoolTerm, type SplashSpec, type StrikeFormulaInput, type Unit } from '@daoyou/combat-core/types';
 import { DaoyouRule } from "@daoyou/game-content/combat/tuning"
+import { REALM_VALUES } from '@daoyou/constants/realms';
+import { getLevelRealmStage } from '@daoyou/game-domain/progression';
+import { getRealmDamagePressureMultiplier } from '../../progression/attributes.js';
 
 function clamp(min: number, max: number, value: number): number {
   return Math.min(max, Math.max(min, value))
@@ -103,12 +106,22 @@ const families: Record<string, (input: StrikeFormulaInput) => number> = {
   [FormulaFamily.Fixed]: (input) => finish(input.power),
 }
 
+/** 大境界序号（炼气 0 … 化神 4），由人物等级反查。 */
+function realmRank(unit: Unit): number {
+  return Math.max(0, REALM_VALUES.indexOf(getLevelRealmStage(unit.level).realm))
+}
+
+/** 所有普通攻击/技能伤害的统一出口：先按本族公式结算，再施加境界压制。 */
 export function baseDamage(input: StrikeFormulaInput): number {
-  const compute = families[input.family]
-  if (compute) return compute(input)
-  return families[
-    input.kind === DamageKind.Physical ? FormulaFamily.Physical : FormulaFamily.Spell
-  ](input)
+  const compute =
+    families[input.family] ??
+    families[
+      input.kind === DamageKind.Physical ? FormulaFamily.Physical : FormulaFamily.Spell
+    ]
+  const raw = compute(input)
+  const realmDelta = realmRank(input.source) - realmRank(input.target)
+  if (realmDelta === 0) return raw
+  return finish(raw * getRealmDamagePressureMultiplier(realmDelta))
 }
 
 export const daoyouFormulas: FormulaSet = {

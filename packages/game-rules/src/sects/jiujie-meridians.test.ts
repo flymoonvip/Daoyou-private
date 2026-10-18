@@ -221,7 +221,7 @@ describe('九劫基础循环与指令',()=>{
   it('五雷失败不削蓝，成功扣当前气血并按人物等级封顶',()=>{
     for(const success of [false,true]) {
       vi.restoreAllMocks();vi.spyOn(SeededRng.prototype,'chance').mockImplementation(p=>p===0.5?success:p>=1);
-      const {b}=setup();b.unit('s').level=10;b.unit('s').skillLevels[S('five_thunder')]=180;
+      const {b}=setup();b.unit('s').level=10;b.unit('t').level=10;b.unit('s').skillLevels[S('five_thunder')]=180;
       round(b,{s:cmd('five_thunder')});
       expect(b.unit('t').attrs.mp).toBe(success?75000:100000);
       expect(hits(b)[0]).toBe(success?500:5000);

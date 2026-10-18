@@ -1,8 +1,8 @@
 {
   "$schema": "./encounters.schema.json",
   "formatVersion": 3,
-  "contentRevision": 4,
-  "minRealm": "金丹",
+  "contentRevision": 5,
+  "minRealm": "筑基",
   "difficultyStep": 5,
   "floors": [
     {
@@ -181,6 +181,18 @@
       "referencePhysicalDef": 720,
       "referenceMagicDef": 860,
       "damagePerRound": 1700
+    },
+    "筑基": {
+      "physicalAtk": 300,
+      "magicAtk": 330,
+      "physicalDef": 172,
+      "magicDef": 200,
+      "speed": 155,
+      "hit": 135,
+      "dodge": 60,
+      "referencePhysicalDef": 260,
+      "referenceMagicDef": 290,
+      "damagePerRound": 218
     }
   }
 }

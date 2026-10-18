@@ -144,6 +144,7 @@ describe('基础模组状态与回合边界', () => {
 it('准备途中倒地不会在回合末获得惊雷攻击状态', () => {
   const lethal: SkillDef = { id: 'test.lethal', name: '致命伤害', tags: ['physical'], targeting: { side: 'enemy' }, effects: [{ type: 'fixedHit', power: 10000 }] };
   const b = setup(1000, 'npc', [lethal]);
+  b.unit('t0').level = 120;
   b.unit('t0').skills = [lethal.id];
   b.submit('s', { type: 'skill', skillId: skillId('waiting'), targets: ['t0'] });
   b.submit('t0', { type: 'skill', skillId: lethal.id, targets: ['s'] });

@@ -1,5 +1,5 @@
 import { earlyBaselines } from '@daoyou/game-content/combat/early-baselines';
-import { getLevelRealmStage, getRealmStageLevel } from '@daoyou/game-domain/progression';
+import { getLevelRealmStage, getRealmMidLevel } from '@daoyou/game-domain/progression';
 
 import { TOWER_ENCOUNTER_PACK } from '@daoyou/game-content/tower';
 
@@ -24,7 +24,7 @@ export function presetEnemyAttrs(
     realm === '炼气' || realm === '筑基'
       ? earlyBaselines[realm]
       : TOWER_ENCOUNTER_PACK.baselines[realm];
-  const middle = getRealmStageLevel(realm, '中期');
+  const middle = getRealmMidLevel(realm);
   const stageScale = 1 + (level - middle) * 0.02;
   const budget = TOWER_ENCOUNTER_PACK.scaling.types[kind];
   const maxHp = Math.round(

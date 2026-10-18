@@ -17,7 +17,7 @@ export function huntEnemies(event: HuntEvent, players: number): LineupUnit[] {
   const formation = formations[event.bossId];
   return Array.from({ length: HUNT_ENEMY_COUNT }, (_, slot) => {
     const role = slot === 0 ? 'boss' : slot === 1 ? 'elite' : 'normal';
-    const attrs = huntEnemyAttrs(event.level, role, players);
+    const attrs = huntEnemyAttrs(event.realm, event.level, role, players);
     if (role === 'boss') {
       switch (event.bossId) {
         case 'bloodPython':

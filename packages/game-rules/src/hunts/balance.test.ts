@@ -17,6 +17,10 @@ import { towerReferenceBuild } from '../tower/reference-fixtures.js';
 import { huntEnemies, huntNpcCommand } from './content.js';
 
 const events = huntEventsAt(100000);
+// 筑基中期（30 级）尚未解锁万钧雷狱（45 级），改用同族群雷技能，
+// 保持「同境界可用爆发」的检验口径，避免把未解锁技能当作基准。
+const jiujieAoe = (realm: string) =>
+  realm === '筑基' ? 'jiujie.skill.thunder_slash' : 'jiujie.skill.thunderstorm';
 function encounter(
   event: (typeof events)[number],
   count: number,
@@ -174,7 +178,7 @@ describe('同境界合法构筑的讨伐平衡', () => {
           for (const target of ['hunt.enemy.0', 'hunt.enemy.1']) {
             for (const [actor, skillId] of [
               ['p0', 'lingxiao.skill.triple'],
-              ['p1', 'jiujie.skill.thunderstorm'],
+              ['p1', jiujieAoe(event.realm)],
             ]) {
               const { input } = encounter({ ...event, bossId }, count);
               const battle = createBattle({
@@ -261,7 +265,7 @@ describe('同境界合法构筑的讨伐平衡', () => {
                     unit.name === 'lingxiao'
                       ? 'lingxiao.skill.triple'
                       : unit.name === 'jiujie'
-                        ? 'jiujie.skill.thunderstorm'
+                        ? jiujieAoe(event.realm)
                         : undefined;
                   const skill = battle
                     .queryCommands(unit.id)

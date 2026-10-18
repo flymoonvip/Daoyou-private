@@ -32,7 +32,7 @@ function team(count: number, assisting = false): HuntTeam {
 }
 describe('世界讨伐准入与刷新', () => {
   it('八类目标均轮换到每个境界，新旧传闻链接保持各自的目标', () => {
-    const seen = Array.from({ length: 3 }, () => new Set<string>());
+    const seen = Array.from({ length: 4 }, () => new Set<string>());
     for (let cycle = 100; cycle < 108; cycle++) {
       for (const [index, event] of huntEventsAt(
         HUNT_CYCLE_MS * cycle,
@@ -40,12 +40,15 @@ describe('世界讨伐准入与刷新', () => {
         expect(HuntEventIdSchema.safeParse(event.id).success).toBe(true);
         expect(huntEventById(event.id)).toEqual(event);
         seen[index].add(event.bossId);
-        const oldId = `hunt-v1-${cycle}-${index}`;
-        expect(HuntEventIdSchema.safeParse(oldId).success).toBe(true);
-        expect(huntEventById(oldId)?.bossId).toBe(
-          ['heretic', 'demon', 'beast'][(cycle + index) % 3],
-        );
-        expect(event.id).not.toBe(oldId);
+        // 已发布的 v1 只有三段目标，不比对新版多出来的第四段。
+        if (index < 3) {
+          const oldId = `hunt-v1-${cycle}-${index}`;
+          expect(HuntEventIdSchema.safeParse(oldId).success).toBe(true);
+          expect(huntEventById(oldId)?.bossId).toBe(
+            ['heretic', 'demon', 'beast'][(cycle + index) % 3],
+          );
+          expect(event.id).not.toBe(oldId);
+        }
       }
     }
     for (const pool of seen)
@@ -123,7 +126,7 @@ describe('世界讨伐准入与刷新', () => {
   it('各实例对同一时间生成相同出现事件，刷新后换领奖身份', () => {
     expect(huntEventsAt(now)).toEqual(huntEventsAt(now + 1));
     const events = huntEventsAt(now);
-    expect(events.map((e) => e.realm)).toEqual(['金丹', '元婴', '化神']);
+    expect(events.map((e) => e.realm)).toEqual(['筑基', '金丹', '元婴', '化神']);
     for (const event of events) {
       expect(huntEventById(event.id)).toEqual(event);
       expect(

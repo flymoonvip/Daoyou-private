@@ -16,7 +16,7 @@
     },
     "minRealm": {
       "type": "string",
-      "const": "金丹"
+      "const": "筑基"
     },
     "difficultyStep": {
       "type": "integer",
@@ -88,12 +88,16 @@
         },
         "化神": {
           "$ref": "#/$defs/__schema3"
+        },
+        "筑基": {
+          "$ref": "#/$defs/__schema3"
         }
       },
       "required": [
         "金丹",
         "元婴",
-        "化神"
+        "化神",
+        "筑基"
       ],
       "additionalProperties": false
     }

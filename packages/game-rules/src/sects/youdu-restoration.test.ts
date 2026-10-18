@@ -27,10 +27,10 @@ function setup(path = 'soul_judge', nodes: string[] = []) {
       { id: 's', name: '幽修', kind: 'player' as const, side: 0 as const, level: 180,
         attrs: { hp: 10000, mp: 10000, speed: 1000, physicalAtk: 1000, physicalDef: 1000 },
         skills: p.activeSkillIds, passives: p.passiveSkillIds, skillLevels: p.skillLevels, skillOverrides: p.skillOverrides },
-      { id: 'a', name: '队友', kind: 'player' as const, side: 0 as const, attrs: { hp: 10000, mp: 1000, physicalAtk: 1000, physicalDef: 1000, speed: 2 } },
-      { id: 'pet', name: '灵兽', kind: 'pet' as const, ownerId: 's', side: 0 as const, attrs: { hp: 10000, speed: 1 } },
-      { id: 't', name: '对手', kind: 'player' as const, side: 1 as const, attrs: { hp: 100000, mp: 10000, speed: 3 } },
-      { id: 'npc', name: '怪物', kind: 'npc' as const, side: 1 as const, attrs: { hp: 100000, mp: 10000, speed: 4 } },
+      { id: 'a', name: '队友', kind: 'player' as const, side: 0 as const, level: 180, attrs: { hp: 10000, mp: 1000, physicalAtk: 1000, physicalDef: 1000, speed: 2 } },
+      { id: 'pet', name: '灵兽', kind: 'pet' as const, ownerId: 's', side: 0 as const, level: 180, attrs: { hp: 10000, speed: 1 } },
+      { id: 't', name: '对手', kind: 'player' as const, side: 1 as const, level: 180, attrs: { hp: 100000, mp: 10000, speed: 3 } },
+      { id: 'npc', name: '怪物', kind: 'npc' as const, side: 1 as const, level: 180, attrs: { hp: 100000, mp: 10000, speed: 4 } },
     ] };
   return { b: createBattle(input), input };
 }

@@ -1,25 +1,36 @@
 import type { Attrs } from '@daoyou/combat-core/types';
+import type { RealmType } from '@daoyou/constants/realms';
 
 // Hunt-specific, frozen realm curve. Never scale stats from the actual party's gear.
-// Level 50 = 金丹中期; level 170 = 渡劫中期. Body training follows realm progression.
-const cultivation = [15, 20, 30, 40, 45, 50, 60];
+// 讨伐难度平摊在筑基～化神：金丹中期（level 50）为调参锚点，向下按等级线性回落，
+// 使筑基明显弱于金丹，化神仅比元婴强一档。
+const HP_BASE = { boss: 6000, elite: 3500, normal: 1400 } as const;
+const HP_PER_LEVEL = { boss: 150, elite: 55, normal: 20 } as const;
+
+// 敌人炼体档位与参考构筑在每个境界的冻结炼体保持一致，避免低境界凭空获得高境界炼体。
+const TRAINING_BY_REALM: Record<RealmType, number> = {
+  炼气: 0,
+  筑基: 0,
+  金丹: 15,
+  元婴: 20,
+  化神: 30,
+};
+
 export function huntEnemyAttrs(
+  realm: RealmType,
   level: number,
   role: 'boss' | 'elite' | 'normal',
   players: number,
 ): Attrs {
-  const offset = Math.max(0, level - 50);
+  const offset = level - 50;
   const hp = Math.round(
-    (role === 'boss'
-      ? 6000 + offset * 150
-      : role === 'elite'
-        ? 3500 + offset * 55
-        : 1400 + offset * 20) *
+    (HP_BASE[role] + offset * HP_PER_LEVEL[role]) *
       (1 + (players - 2) * 0.4),
   );
   const output = 0.9 + (players - 2) * 0.12;
-  const training =
-    cultivation[Math.min(6, Math.max(0, Math.floor(offset / 20)))];
+  // 低境界敌人同步压低输出，筑基明显弱于金丹，避免高境界技能/血线碾压低境界队伍。
+  const realmScale = offset < 0 ? Math.max(0.55, 1 + offset * 0.015) : 1;
+  const training = TRAINING_BY_REALM[realm];
   return {
     hp,
     maxHp: hp,
@@ -27,11 +38,13 @@ export function huntEnemyAttrs(
     maxMp: 99999,
     physicalAtk: Math.round(
       (250 + level * (role === 'boss' ? 8.5 : role === 'elite' ? 7 : 5.5)) *
-        output,
+        output *
+        realmScale,
     ),
     magicAtk: Math.round(
       (200 + level * (role === 'boss' ? 11 : role === 'elite' ? 10 : 8.5)) *
-        output,
+        output *
+        realmScale,
     ),
     physicalDef: Math.round((80 + level * 3) * (role === 'normal' ? 0.7 : 1)),
     magicDef: Math.round((100 + level * 4) * (role === 'normal' ? 0.7 : 1)),

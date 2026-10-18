@@ -23,7 +23,7 @@ export const TowerEncounterPackShape = z.strictObject({
   $schema: z.string().optional(),
   formatVersion: z.literal(3),
   contentRevision: z.number().int().positive(),
-  minRealm: z.literal('金丹'),
+  minRealm: z.literal('筑基'),
   difficultyStep: positive.int(),
   floors: z
     .array(
@@ -45,6 +45,7 @@ export const TowerEncounterPackShape = z.strictObject({
     金丹: baseline,
     元婴: baseline,
     化神: baseline,
+    筑基: baseline,
   }),
 });
 export function loadTowerEncounterPack(data: unknown) {
