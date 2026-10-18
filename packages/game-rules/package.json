@@ -80,7 +80,6 @@
     "./rewards/materials": "./dist/public/rewards/materials.js",
     "./rewards/tower": "./dist/rewards/tower.js",
     "./rewards/wild": "./dist/rewards/wild.js",
-    "./rewards/yield": "./dist/rewards/yield.js",
     "./sect-organization": "./dist/sect-organization/index.js",
     "./sect-organization/production": "./dist/sect-organization/production/productionRuntime.js",
     "./sect-organization/tasks": "./dist/sect-organization/core/organization/taskRequirements.js",
@@ -97,7 +96,9 @@
     "./tower/host": "./dist/tower/host.js",
     "./transfer": "./dist/transfer/policy.js",
     "./wanderer": "./dist/public/wanderer.js",
+    "./world/aging": "./dist/world/aging.js",
     "./world/atlas": "./dist/public/world/atlas.js",
+    "./world/calendar": "./dist/world/calendar.js",
     "./world/dungeon": "./dist/world/dungeon.js",
     "./world/market": "./dist/world/marketConfig.js",
     "./yield": "./dist/yield/YieldCalculator.js"

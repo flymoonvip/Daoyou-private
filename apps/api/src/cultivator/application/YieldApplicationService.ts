@@ -1,26 +1,19 @@
 import { findPlayerMutationRequest } from '@server/lib/repositories/playerStateRepository.js';
 import { describeJournal } from '@server/player/application/JournalSettlement.js';
 import { cultivators } from '@server/lib/drizzle/schema.js';
-import { createDomainEvent } from '@server/lib/mq/domainEventWriter.js';
-import { publishTransactionalMessageBestEffort } from '@server/lib/mq/transactionalMessagePublisher.js';
 import { redisLockKeys, withRedisLock } from '@server/lib/redis/lock.js';
 import {
   updateCultivationExp,
   updateSpiritStones,
 } from '@server/cultivator/application/readers/CultivatorStateRepository.js';
 import { getOrInitCultivationProgress } from '@daoyou/game-rules/cultivation';
-import { MailInventoryGrantSchema } from '@daoyou/game-rules/mail';
 import type { GeneratedMaterial } from '@daoyou/game-domain/materials/generation';
 import { YieldCalculator } from '@daoyou/game-rules/yield';
-import { planYieldRewards } from '@daoyou/game-rules/rewards/yield';
 import type { RealmStage, RealmType } from '@daoyou/constants/realms';
 import type { CultivationProgress } from '@daoyou/game-domain/character';
 import { and, eq } from 'drizzle-orm';
 import { getExecutor } from '@server/lib/drizzle/db.js';
 import { playerCommandExecutor } from '@server/player/application/state/CommandExecutors.js';
-import { newRewardAttachment } from '@server/mail/application/MailInventory.js';
-import { generateYieldMaterials } from '@server/cultivator/application/YieldDomainEventProjector.js';
-import { computeItemLibrarySampleKey } from '@server/lib/utils/itemLibrarySampleKey.js';
 
 export class YieldCommandError extends Error {
   constructor(
@@ -98,7 +91,6 @@ export async function executeYieldCommand(args: {
 }) {
   const actionInstanceId = args.requestId;
   const idempotency = { key: args.requestId, fingerprint: 'yield' };
-  let domainEventId: string | undefined;
   const prepared = await withRedisLock(
     {
       key: redisLockKeys.cultivatorMutation(args.cultivatorId),
@@ -136,34 +128,6 @@ export async function executeYieldCommand(args: {
         realmStage: facts.realmStage,
         hoursElapsed,
       });
-      const rewardPlan = planYieldRewards(
-        {
-          realm: facts.realm,
-          realmStage: facts.realmStage,
-          hoursElapsed,
-        },
-        (stream) => {
-          let index = 0;
-          return () =>
-            computeItemLibrarySampleKey(
-              `${actionInstanceId}:${stream}:${index++}`,
-            );
-        },
-      );
-      const materials = await generateYieldMaterials(
-        facts.realm,
-        rewardPlan.materialCount,
-        actionInstanceId,
-        true,
-      );
-      const rewardItems = [
-        ...materials.map((attachment) =>
-          MailInventoryGrantSchema.parse(
-            newRewardAttachment(attachment).inventory,
-          ),
-        ),
-        ...rewardPlan.items,
-      ];
       const result: YieldResult = {
         cultivatorName: facts.name,
         cultivatorRealm: facts.realm,
@@ -179,8 +143,8 @@ export async function executeYieldCommand(args: {
           )?.value ?? 0,
         materials: [] as GeneratedMaterial[],
         hours: hoursElapsed,
-        materialCount: rewardPlan.materialCount,
-        rewardCount: rewardPlan.count,
+        materialCount: 0,
+        rewardCount: 0,
       };
       const committed = await playerCommandExecutor.execute({
         coordination: { mode: 'redis', lease },
@@ -232,29 +196,6 @@ export async function executeYieldCommand(args: {
             .update(cultivators)
             .set({ last_yield_at: claimedAt })
             .where(eq(cultivators.id, args.cultivatorId));
-          if (rewardPlan.count > 0) {
-            domainEventId = (
-              await createDomainEvent(
-                {
-                  type: 'yield.claimed',
-                  aggregate: { type: 'cultivator', id: args.cultivatorId },
-                  data: {
-                    cultivatorId: args.cultivatorId,
-                    actionInstanceId,
-                    realm: facts.realm,
-                    materialCount: rewardPlan.count,
-                    rewardSnapshot: {
-                      poolId: rewardPlan.poolId,
-                      poolVersion: rewardPlan.poolVersion,
-                      items: rewardItems,
-                    },
-                  },
-                  deduplicationKey: `${args.cultivatorId}:yield:${actionInstanceId}`,
-                },
-                tx,
-              )
-            ).id;
-          }
           return {
             result,
             resourceChanges: [
@@ -287,9 +228,5 @@ export async function executeYieldCommand(args: {
       return { committed, result };
     },
   );
-  publishTransactionalMessageBestEffort(domainEventId, {
-    source: 'yield_claim',
-    cultivatorId: args.cultivatorId,
-  });
   return prepared;
 }
