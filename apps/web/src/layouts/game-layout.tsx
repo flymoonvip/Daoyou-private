@@ -59,28 +59,40 @@ function LoadingScreen({ message }: { message: string }) {
 
 function PlayerShell() {
   const session = usePlayerSession();
+  const navigate = useNavigate();
   const note = session.data?.note;
   const hasActiveCultivator = Boolean(session.data?.activeCultivator);
   const isLoading = session.status === 'idle' || session.status === 'loading';
+  const isDead = note === '前世道途已尽';
+  const isTransferPending = note === TRANSFER_PENDING_NOTE;
+  const wasTransferred = note === TRANSFERRED_NOTE;
+  // 无道身且非死亡/转服等特殊状态时，直接进入自动建号，不再让玩家手动点选。
+  const shouldAutoCreate =
+    !hasActiveCultivator && !isDead && !isTransferPending && !wasTransferred;
+
+  useEffect(() => {
+    if (!isLoading && shouldAutoCreate) {
+      navigate('/game/create', { replace: true });
+    }
+  }, [isLoading, shouldAutoCreate, navigate]);
 
   if (isLoading && !hasActiveCultivator) {
     return <LoadingScreen message="正在推演命盘……" />;
   }
 
-  if (!hasActiveCultivator) {
-    const isDead = note === '前世道途已尽';
-    const isTransferPending = note === TRANSFER_PENDING_NOTE;
-    const wasTransferred = note === TRANSFERRED_NOTE;
+  if (shouldAutoCreate) {
+    return <LoadingScreen message="正在凝聚真身……" />;
+  }
 
+  if (!hasActiveCultivator) {
     return (
       <div className="app-safe-area-page bg-paper flex min-h-dvh items-center justify-center">
         <div className="w-full max-w-xl p-6">
           <h1 className="text-xl font-semibold tracking-wide">
-            {isDead ? '前世道途已尽' : isTransferPending ? '道身转服审核中' : wasTransferred ? '道身已转出' : '尚未凝聚真身'}
+            {isDead ? '前世道途已尽' : isTransferPending ? '道身转服审核中' : '道身已转出'}
           </h1>
           <p className="text-ink-secondary mt-3 text-sm leading-7">
-            {note ||
-              '当前账号下还没有活跃角色。可以创建新角色，也可以从其他服务器转入已有角色。'}
+            {note || '当前账号下还没有活跃角色。'}
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             {!isTransferPending && (
@@ -409,7 +421,7 @@ function resolveGenesisSceneDescriptor(
 
   return {
     sceneLabel: '凝气篇',
-    subtitle: '以心念唤道，凝气成形，择定此世的根基与气数。',
+    subtitle: '依主站传承的初始设定自动凝气成形，命格由天机分配，入页即入世。',
     backAction: {
       label: '返回主界',
       href: '/game',

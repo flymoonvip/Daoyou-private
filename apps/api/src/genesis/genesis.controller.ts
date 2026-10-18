@@ -66,6 +66,28 @@ export class GenerateFatesController {
   }
 }
 
+@Controller('api/create-character')
+@Access('user')
+export class CreateCharacterController {
+  constructor(
+    @Inject(GenesisService) private readonly genesis: GenesisService,
+  ) {}
+  @Post()
+  @HttpCode(200)
+  @UseFilters(SaveErrors)
+  create(
+    @CurrentUser() user: AuthUser,
+    @Req() request: Request,
+    @JsonBody() input: unknown,
+  ) {
+    return this.genesis.create(
+      user,
+      getRequestIp(fromNodeHeaders(request.headers)),
+      input,
+    );
+  }
+}
+
 @Controller('api/save-character')
 @Access('user')
 export class SaveCharacterController {
