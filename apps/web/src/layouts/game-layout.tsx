@@ -83,18 +83,16 @@ function PlayerShell() {
               '当前账号下还没有活跃角色。可以创建新角色，也可以从其他服务器转入已有角色。'}
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
-            <InkButton
-              variant="primary"
-              href={isTransferPending ? '/transfer' : isDead ? '/game/reincarnate' : '/game/create'}
-            >
-              {isTransferPending ? '查看转服进度' : isDead ? '前往转世重修' : '前往角色创建'}
-            </InkButton>
+            {!isTransferPending && (
+              <InkButton
+                variant="primary"
+                href={isDead ? '/game/reincarnate' : '/game/create'}
+              >
+                {isDead ? '前往转世重修' : '前往角色创建'}
+              </InkButton>
+            )}
             <InkButton href="/game">返回主界面</InkButton>
           </div>
-          {!isDead && !isTransferPending && !wasTransferred && <div className="mt-4 text-sm text-ink-secondary">
-            已有旧服道身？<InkButton href="/transfer?mode=import" variant="secondary">从其他服务器转入</InkButton>
-          </div>}
-          {(isTransferPending || wasTransferred) && <div className="mt-4"><InkButton href="/transfer" variant="secondary">查看跨服记录</InkButton></div>}
         </div>
       </div>
     );
