@@ -32,7 +32,7 @@ export interface GameDockGroupLinks {
   actions: GameDockLink[];
 }
 
-const coreDockSceneOrder = ['cultivator', 'inventory', 'cave', 'mail'] as const;
+const coreDockSceneOrder = ['cultivator', 'inventory', 'map', 'mail'] as const;
 
 const expandedMenuColumns = [
   ['cultivation', 'sect', 'adventure', 'combat'],
@@ -48,7 +48,6 @@ export const gameDockGroups: GameNavGroup[] = [
         id: 'cave',
         sceneLabel: '洞府',
         href: '/game',
-        coreDockLabel: '洞府',
       },
       {
         id: 'storage',
@@ -220,6 +219,7 @@ export const gameDockGroups: GameNavGroup[] = [
         id: 'map',
         sceneLabel: '山河舆图',
         href: '/game/map-v2',
+        coreDockLabel: '地图',
         expandedDockLabel: '🗺️ 修仙界地图',
       },
       {

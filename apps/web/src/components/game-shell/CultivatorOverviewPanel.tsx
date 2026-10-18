@@ -19,11 +19,17 @@ const BodyTrainingPanel = lazy(() =>
     (module) => ({ default: module.BodyCultivationDetailPanel }),
   ),
 );
+const CaveHubPanel = lazy(() =>
+  import('@app/components/feature/home/CaveHubContent').then((module) => ({
+    default: module.CaveHubContent,
+  })),
+);
 const tabs = [
   { value: 'attributes', label: '人物属性' },
   { value: 'innate', label: '先天设定' },
   { value: 'manuals', label: '所修功法' },
   { value: 'body', label: '肉身修炼' },
+  { value: 'cave', label: '洞府' },
 ] as const;
 
 const desktopQuery = '(min-width: 768px)';
@@ -53,7 +59,7 @@ export function CultivatorOverviewPanel() {
         role="tablist"
         aria-label="角色面板"
         aria-orientation={isDesktop ? 'vertical' : 'horizontal'}
-        className="grid grid-cols-4 gap-1 md:sticky md:top-3 md:flex md:flex-col md:gap-2"
+        className="grid grid-cols-3 gap-1 sm:grid-cols-5 md:sticky md:top-3 md:flex md:flex-col md:gap-2"
       >
         {tabs.map((tab, index) => (
           <button
@@ -105,6 +111,8 @@ export function CultivatorOverviewPanel() {
             <ManualRoom />
           ) : active.value === 'body' ? (
             <BodyTrainingPanel />
+          ) : active.value === 'cave' ? (
+            <CaveHubPanel />
           ) : (
             <CharacterAttributesPanel />
           )}
