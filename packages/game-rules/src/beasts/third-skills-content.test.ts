@@ -127,7 +127,7 @@ it.each([0, 60, 180])(
     expect(b.allocatedAttributes.magic).toBe(80);
   },
 );
-it('咪咪显式低阶稀有且不再初领，四物种按确认出生表生成', () => {
+it('咪咪显式低阶稀有且不再初领，按确认出生表生成', () => {
   const expected = {
     咪咪: {
       core: [],
@@ -139,32 +139,6 @@ it('咪咪显式低阶稀有且不再初领，四物种按确认出生表生成'
         'beast.regeneration',
       ],
     },
-    毕方: {
-      core: ['beast.wildfire'],
-      candidates: [
-        'beast.advanced-spell-mastery',
-        'beast.agility',
-        'beast.spirit-surge',
-      ],
-    },
-    应龙: {
-      core: ['beast.flood'],
-      candidates: [
-        'beast.advanced-spell-critical',
-        'beast.spell-resistance',
-        'beast.regeneration',
-        'beast.wind-pursuit',
-      ],
-    },
-    金乌: {
-      core: ['beast.wildfire'],
-      candidates: [
-        'beast.advanced-divine-revival',
-        'beast.perception',
-        'beast.agility',
-        'beast.eightfold-flame',
-      ],
-    },
   };
   for (const [name, pool] of Object.entries(expected))
     expect(
@@ -174,7 +148,7 @@ it('咪咪显式低阶稀有且不再初领，四物种按确认出生表生成'
   expect(mimi.realm).toBe('炼气');
   expect(mimi.carryLevel).toBe(5);
   expect(BEAST_RARE_SPECIES_IDS.has(mimi.id)).toBe(true);
-  expect(BEAST_RARE_SPECIES_IDS.size).toBe(13);
+  expect(BEAST_RARE_SPECIES_IDS.size).toBe(1);
   expect(BEAST_STARTER_SPECIES.map((species) => species.name)).toEqual([
     '烛尾狐',
     '钢背猪',

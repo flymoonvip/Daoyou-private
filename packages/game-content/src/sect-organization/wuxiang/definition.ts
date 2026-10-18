@@ -236,42 +236,6 @@ export const WUXIANG_DEFINITION: SectDefinition = {
             spiritStones: 400000,
           },
         },
-        {
-          id: '4',
-          order: 4,
-          label: '第四层',
-          minRealm: '炼虚',
-          minRealmStage: '圆满',
-          cost: {
-            cultivationExp: 320000,
-            comprehensionInsight: 100,
-            spiritStones: 1600000,
-          },
-        },
-        {
-          id: '5',
-          order: 5,
-          label: '第五层',
-          minRealm: '大乘',
-          minRealmStage: '中期',
-          cost: {
-            cultivationExp: 1280000,
-            comprehensionInsight: 100,
-            spiritStones: 6400000,
-          },
-        },
-        {
-          id: 'ultimate',
-          order: 6,
-          label: '终式',
-          minRealm: '渡劫',
-          minRealmStage: '圆满',
-          cost: {
-            cultivationExp: 5120000,
-            comprehensionInsight: 100,
-            spiritStones: 25600000,
-          },
-        },
       ],
       defaultTacticId: 'guard',
       tactics: [
@@ -385,65 +349,6 @@ export const WUXIANG_DEFINITION: SectDefinition = {
           name: '一苇载业',
           description: '一苇横江的直接伤害减免由40%提高至50%。',
         },
-        {
-          id: 'mirror-form-beyond',
-          layerId: '4',
-          name: '相外有相',
-          description: '魔相止观的直接伤害减免由20%提高至30%。',
-        },
-        {
-          id: 'mirror-back-demon',
-          layerId: '4',
-          name: '镜背生魔',
-          description:
-            '每次进入魔相时，第一门神通无需消耗业痕，也能触发一次现报；无相不受影响。',
-        },
-        {
-          id: 'mirror-formless-two',
-          layerId: '4',
-          name: '一念两照',
-          description:
-            '成功施展无相神通后额外获得2层业痕；《一念无间》气血成本增加2%。',
-        },
-        {
-          id: 'mirror-full-light',
-          layerId: '5',
-          name: '业满成光',
-          description: '业痕满层时，佛相即时反伤额外提高5%。',
-        },
-        {
-          id: 'mirror-fast-fruit',
-          layerId: '5',
-          name: '现报无迟',
-          description:
-            '现报成功后，攻击神通额外造成0.20倍物攻伤害；自身防御神通额外获得4%最大气血护盾。',
-        },
-        {
-          id: 'mirror-return-source',
-          layerId: '5',
-          name: '照还来处',
-          description:
-            '每次实际消耗1层业痕触发现报时，恢复2%最大气血；免费现报不触发。',
-        },
-        {
-          id: 'mirror-not-platform',
-          layerId: 'ultimate',
-          name: '明镜非台',
-          description: '佛相且业痕满层时，受到的直接伤害降低10%。',
-        },
-        {
-          id: 'mirror-all-karma',
-          layerId: 'ultimate',
-          name: '万业同门',
-          description:
-            '无相现报实际消耗业痕后，会再尝试消耗1层；成功时攻击神通额外造成0.60倍物攻伤害，防御神通获得8%最大气血护盾。',
-        },
-        {
-          id: 'mirror-return-thought',
-          layerId: 'ultimate',
-          name: '来去一念',
-          description: '成功施展无相神通后返还2点心念。',
-        },
       ],
     },
     {
@@ -488,42 +393,6 @@ export const WUXIANG_DEFINITION: SectDefinition = {
             cultivationExp: 80000,
             comprehensionInsight: 100,
             spiritStones: 400000,
-          },
-        },
-        {
-          id: '4',
-          order: 4,
-          label: '第四层',
-          minRealm: '炼虚',
-          minRealmStage: '圆满',
-          cost: {
-            cultivationExp: 320000,
-            comprehensionInsight: 100,
-            spiritStones: 1600000,
-          },
-        },
-        {
-          id: '5',
-          order: 5,
-          label: '第五层',
-          minRealm: '大乘',
-          minRealmStage: '中期',
-          cost: {
-            cultivationExp: 1280000,
-            comprehensionInsight: 100,
-            spiritStones: 6400000,
-          },
-        },
-        {
-          id: 'ultimate',
-          order: 6,
-          label: '终式',
-          minRealm: '渡劫',
-          minRealmStage: '圆满',
-          cost: {
-            cultivationExp: 5120000,
-            comprehensionInsight: 100,
-            spiritStones: 25600000,
           },
         },
       ],
@@ -642,67 +511,6 @@ export const WUXIANG_DEFINITION: SectDefinition = {
           name: '苇短水长',
           description:
             '一苇横江的佛相直接伤害减免由20%提高至30%；魔相最终提高到40%。',
-        },
-        {
-          id: 'demon-first-thought',
-          layerId: '4',
-          name: '第一念魔',
-          description:
-            '进入魔相或无相时获得第一念：下一门攻击神通额外造成0.35倍物攻伤害，防御神通获得5%最大气血护盾。',
-        },
-        {
-          id: 'demon-second-shore',
-          layerId: '4',
-          name: '第二岸苦',
-          description:
-            '魔相期间每成功施展一门宗门神通，恢复2.5%最大气血；无相仅触发一次。',
-        },
-        {
-          id: 'demon-two-gates',
-          layerId: '4',
-          name: '两门同渡',
-          description: '进入魔相时获得的护盾由6%提高至10%最大气血。',
-        },
-        {
-          id: 'demon-body-breaks',
-          layerId: '5',
-          name: '身坏心明',
-          description:
-            '每场战斗首次因自身神通成本降至30%气血以下时，获得1回合控制免疫。',
-        },
-        {
-          id: 'demon-blood-empty',
-          layerId: '5',
-          name: '血尽潮生',
-          description:
-            '每场战斗首次因自身神通成本降至25%气血以下时，恢复5%最大气血。',
-        },
-        {
-          id: 'demon-leave-boat',
-          layerId: '5',
-          name: '渡后留舟',
-          description: '魔相结束时获得6%最大气血护盾；无相结束不触发。',
-        },
-        {
-          id: 'demon-one-furnace',
-          layerId: 'ultimate',
-          name: '佛魔同炉',
-          description:
-            '强化六门神通的无相变化，使收束伤害、恢复、护盾或净化获得提升。',
-        },
-        {
-          id: 'demon-no-gap',
-          layerId: 'ultimate',
-          name: '一息无间',
-          description:
-            '魔相与无相的单行动吸血上限提高至12%最大气血，但渡厄直接伤害减免由20%降低至10%。',
-        },
-        {
-          id: 'demon-look-back',
-          layerId: 'ultimate',
-          name: '回首彼岸',
-          description:
-            '魔相或无相结束时，若存活且低于20%气血，恢复5%最大气血；每次转相最多一次。',
         },
       ],
     },

@@ -12,7 +12,7 @@ describe('sect battle target snapshot', () => {
     ['same-sect', '金丹', ['金丹', '筑基']],
     ['other-sect', '炼气', ['炼气']],
     ['other-sect', '金丹', ['金丹', '筑基']],
-    ['other-sect', '渡劫', ['渡劫', '大乘']],
+    ['other-sect', '化神', ['化神', '元婴']],
   ] as const)(
     'resolves %s target realm candidates from %s',
     (acquisition, realm, expected) => {

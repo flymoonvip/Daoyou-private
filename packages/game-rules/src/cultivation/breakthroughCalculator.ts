@@ -58,10 +58,6 @@ const LIFESPAN_BONUS_BY_REALM: Partial<Record<RealmType, number>> = {
   金丹: 500,
   元婴: 1200,
   化神: 2000,
-  炼虚: 3000,
-  合体: 4000,
-  大乘: 5000,
-  渡劫: 8000,
 };
 
 /**

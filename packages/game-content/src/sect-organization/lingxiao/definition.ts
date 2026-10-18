@@ -239,42 +239,6 @@ export const LINGXIAO_DEFINITION: SectDefinition = {
             spiritStones: 400000,
           },
         },
-        {
-          id: '4',
-          order: 4,
-          label: '第四层',
-          minRealm: '炼虚',
-          minRealmStage: '圆满',
-          cost: {
-            cultivationExp: 320000,
-            comprehensionInsight: 100,
-            spiritStones: 1600000,
-          },
-        },
-        {
-          id: '5',
-          order: 5,
-          label: '第五层',
-          minRealm: '大乘',
-          minRealmStage: '中期',
-          cost: {
-            cultivationExp: 1280000,
-            comprehensionInsight: 100,
-            spiritStones: 6400000,
-          },
-        },
-        {
-          id: 'ultimate',
-          order: 6,
-          label: '终式',
-          minRealm: '渡劫',
-          minRealmStage: '圆满',
-          cost: {
-            cultivationExp: 5120000,
-            comprehensionInsight: 100,
-            spiritStones: 25600000,
-          },
-        },
       ],
       defaultTacticId: 'aggressive',
       presentation: {
@@ -383,68 +347,6 @@ export const LINGXIAO_DEFINITION: SectDefinition = {
           description:
             '被控制而跳过行动时剑意不衰减；下一次通过积势神通获得剑意时额外获得1点。',
         },
-        {
-          id: 'swift-mountain-breaking',
-          layerId: '4',
-          name: '破妄',
-          description:
-            '施展《此剑平生》时消耗全部剑痕；每消耗1层，追加一次随《红尘剑录》成长且无视防御的伤害。',
-        },
-        {
-          id: 'swift-life-chasing',
-          layerId: '4',
-          name: '追命',
-          description: '目标气血低于25%时，《此剑平生》造成的伤害提高15%。',
-        },
-        {
-          id: 'swift-sheathing',
-          layerId: '4',
-          name: '归鞘',
-          description:
-            '《此剑平生》伤害降低15%，施展后返还2点剑意，并获得随《红尘剑录》成长的护盾。剑有出时，也应有归处。',
-        },
-        {
-          id: 'swift-gapless',
-          layerId: '5',
-          name: '无隙',
-          description:
-            '施展《此剑平生》后，下一次《剑起沧澜》不消耗法力，并额外获得1点剑意。',
-        },
-        {
-          id: 'swift-linked-city',
-          layerId: '5',
-          name: '连城',
-          description:
-            '施展《剑荡山河》后，其他快剑神通的当前冷却减少1回合，每回合最多触发一次。',
-        },
-        {
-          id: 'swift-still-tide',
-          layerId: '5',
-          name: '静潮',
-          description:
-            '连续两次自身行动未施展《此剑平生》后，暂停剑意衰减；下一次《此剑平生》伤害提高15%。',
-        },
-        {
-          id: 'swift-endless-flow',
-          layerId: 'ultimate',
-          name: '无间',
-          description:
-            '施展《此剑平生》后，追加随《红尘剑录》成长的追击并获得1点剑意，每3回合最多触发一次。',
-        },
-        {
-          id: 'swift-shadow-line',
-          layerId: 'ultimate',
-          name: '绝影',
-          description:
-            '以6点剑意施展《此剑平生》时，总伤害降低15%，全部伤害段必定暴击，冷却增加1回合。',
-        },
-        {
-          id: 'swift-unending-wind',
-          layerId: 'ultimate',
-          name: '回风',
-          description:
-            '每次《藏锋听雷》持续期间首次闪避时，获得随《凌虚步》成长的护盾，并施加1层剑痕。',
-        },
       ],
     },
     {
@@ -489,42 +391,6 @@ export const LINGXIAO_DEFINITION: SectDefinition = {
             cultivationExp: 80000,
             comprehensionInsight: 100,
             spiritStones: 400000,
-          },
-        },
-        {
-          id: '4',
-          order: 4,
-          label: '第四层',
-          minRealm: '炼虚',
-          minRealmStage: '圆满',
-          cost: {
-            cultivationExp: 320000,
-            comprehensionInsight: 100,
-            spiritStones: 1600000,
-          },
-        },
-        {
-          id: '5',
-          order: 5,
-          label: '第五层',
-          minRealm: '大乘',
-          minRealmStage: '中期',
-          cost: {
-            cultivationExp: 1280000,
-            comprehensionInsight: 100,
-            spiritStones: 6400000,
-          },
-        },
-        {
-          id: 'ultimate',
-          order: 6,
-          label: '终式',
-          minRealm: '渡劫',
-          minRealmStage: '圆满',
-          cost: {
-            cultivationExp: 5120000,
-            comprehensionInsight: 100,
-            spiritStones: 25600000,
           },
         },
       ],
@@ -636,67 +502,6 @@ export const LINGXIAO_DEFINITION: SectDefinition = {
           layerId: '3',
           name: '固守',
           description: '拥有护盾时，受到的直接伤害降低10%。',
-        },
-        {
-          id: 'heavy-rending-mountain',
-          layerId: '4',
-          name: '横关',
-          description:
-            '每回合首次以护盾吸收直接伤害时，反击造成相当于55%物攻的伤害，并获得1点剑意。',
-        },
-        {
-          id: 'heavy-ending-life',
-          layerId: '4',
-          name: '借力',
-          description:
-            '返还本次护盾吸收量20%的伤害，反击伤害不超过相当于60%物攻。',
-        },
-        {
-          id: 'heavy-returning-peak',
-          layerId: '4',
-          name: '震锋',
-          description:
-            '每回合首次受到直接伤害时，反击造成相当于40%物攻的伤害，并驱散敌方1个正面状态。',
-        },
-        {
-          id: 'heavy-aftershock',
-          layerId: '5',
-          name: '裂岳',
-          description: '《此剑平生》获得15%穿防。',
-        },
-        {
-          id: 'heavy-linked-mountains',
-          layerId: '5',
-          name: '断命',
-          description: '目标气血低于25%时，《此剑平生》造成的伤害提高15%。',
-        },
-        {
-          id: 'heavy-steady-mountain',
-          layerId: '5',
-          name: '回峰',
-          description:
-            '《此剑平生》伤害降低15%，施展后返还2点剑意，并获得随《红尘剑录》成长的护盾。',
-        },
-        {
-          id: 'heavy-heaven-cleaving',
-          layerId: 'ultimate',
-          name: '开天',
-          description:
-            '《此剑平生》改为仅可在6点剑意时施展，提高随《红尘剑录》成长的总倍率并获得20%穿防；冷却增加1回合。',
-        },
-        {
-          id: 'heavy-immovable-mountain',
-          layerId: 'ultimate',
-          name: '不动如山',
-          description:
-            '《剑心通明》额外提供随《万法不侵》成长的护盾；持续期间每回合可反击一次，造成随该心法成长的伤害。',
-        },
-        {
-          id: 'heavy-mountain-river-echo',
-          layerId: 'ultimate',
-          name: '山河回响',
-          description:
-            '施展《此剑平生》后恢复气血并获得随《红尘剑录》成长的护盾，每3回合最多触发一次。',
         },
       ],
     },

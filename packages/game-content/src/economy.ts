@@ -10,10 +10,6 @@ export const REALM_YIELD_RATES: Record<RealmType, number> = {
   金丹: 400,
   元婴: 800,
   化神: 1600,
-  炼虚: 3200,
-  合体: 4800,
-  大乘: 6400,
-  渡劫: 12800,
 };
 
 

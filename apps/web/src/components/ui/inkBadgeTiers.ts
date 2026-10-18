@@ -42,10 +42,6 @@ export const tierColorMap: Record<Tier, string> = {
   金丹: 'text-tier-xuan',
   元婴: 'text-tier-zhen',
   化神: 'text-tier-shen',
-  炼虚: 'text-tier-di',
-  合体: 'text-tier-tian',
-  大乘: 'text-tier-xian',
-  渡劫: 'text-tier-shen',
 };
 
 export const dungeonDifficultyColorMap: Record<DungeonDifficultyTier, string> =

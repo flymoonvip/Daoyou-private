@@ -42,30 +42,6 @@ export const REALM_REWARD_CONFIG: Record<RealmType, RewardRangeConfig> = {
     cultivation_exp: { min: 800, max: 3000 },
     comprehension_insight: { min: 12, max: 30 },
   },
-  炼虚: {
-    spirit_stones: { min: 2500, max: 10000 },
-    material_price: { min: 1200, max: 6000 },
-    cultivation_exp: { min: 2000, max: 8000 },
-    comprehension_insight: { min: 18, max: 45 },
-  },
-  合体: {
-    spirit_stones: { min: 6000, max: 25000 },
-    material_price: { min: 3000, max: 15000 },
-    cultivation_exp: { min: 5000, max: 20000 },
-    comprehension_insight: { min: 25, max: 60 },
-  },
-  大乘: {
-    spirit_stones: { min: 15000, max: 60000 },
-    material_price: { min: 8000, max: 40000 },
-    cultivation_exp: { min: 12000, max: 50000 },
-    comprehension_insight: { min: 35, max: 80 },
-  },
-  渡劫: {
-    spirit_stones: { min: 40000, max: 150000 },
-    material_price: { min: 20000, max: 100000 },
-    cultivation_exp: { min: 30000, max: 120000 },
-    comprehension_insight: { min: 50, max: 100 },
-  },
 };
 
 /**
@@ -102,8 +78,4 @@ export const REALM_QUALITY_CAP: Record<RealmType, Quality> = {
   金丹: '地品',
   元婴: '天品',
   化神: '仙品',
-  炼虚: '神品',
-  合体: '神品',
-  大乘: '神品',
-  渡劫: '神品',
 };

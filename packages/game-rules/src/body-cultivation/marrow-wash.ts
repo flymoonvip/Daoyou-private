@@ -14,10 +14,6 @@ const MARROW_WASH_LEVEL_CAP_BY_REALM = {
   金丹: 35,
   元婴: 50,
   化神: 70,
-  炼虚: 90,
-  合体: 120,
-  大乘: 120,
-  渡劫: 120,
 } as const satisfies Record<RealmType, number>;
 
 export interface MarrowWashSummary {

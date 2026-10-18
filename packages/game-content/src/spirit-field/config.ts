@@ -233,7 +233,7 @@ export const SPIRIT_FIELD_QUALITY_BALANCE: Record<
     baseYield: [2, 4],
   },
   天品: {
-    minRealm: '炼虚',
+    minRealm: '化神',
     stageDurationMs: {
       germination: hours(4),
       nourishing: hours(4),
@@ -242,7 +242,7 @@ export const SPIRIT_FIELD_QUALITY_BALANCE: Record<
     baseYield: [2, 3],
   },
   仙品: {
-    minRealm: '合体',
+    minRealm: '化神',
     stageDurationMs: {
       germination: hours(8),
       nourishing: hours(8),
@@ -251,7 +251,7 @@ export const SPIRIT_FIELD_QUALITY_BALANCE: Record<
     baseYield: [2, 3],
   },
   神品: {
-    minRealm: '大乘',
+    minRealm: '化神',
     stageDurationMs: {
       germination: hours(16),
       nourishing: hours(16),

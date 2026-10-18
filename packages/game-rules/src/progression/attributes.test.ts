@@ -8,8 +8,8 @@ describe('realmProgression', () => {
     expect(getRealmStageAttributeBudget('炼气', '初期')).toBe(115);
     expect(getRealmStageAttributeBudget('筑基', '初期')).toBe(335);
     expect(getRealmStageAttributeBudget('金丹', '初期')).toBe(555);
-    expect(getRealmStageAttributeBudget('渡劫', '初期')).toBe(1875);
-    expect(getRealmStageAttributeBudget('渡劫', '圆满')).toBe(2040);
+    expect(getRealmStageAttributeBudget('化神', '初期')).toBe(995);
+    expect(getRealmStageAttributeBudget('化神', '圆满')).toBe(1160);
   });
 
   it('splits attribute budget into natural values and allocatable points', () => {
@@ -19,8 +19,8 @@ describe('realmProgression', () => {
     expect(getRealmStageNaturalAttributeValue('筑基', '初期')).toBe(35);
     expect(getRealmStageUnallocatedAttributeBudget('筑基', '初期')).toBe(125);
 
-    expect(getRealmStageNaturalAttributeValue('渡劫', '圆满')).toBe(190);
-    expect(getRealmStageUnallocatedAttributeBudget('渡劫', '圆满')).toBe(900);
+    expect(getRealmStageNaturalAttributeValue('化神', '圆满')).toBe(110);
+    expect(getRealmStageUnallocatedAttributeBudget('化神', '圆满')).toBe(500);
   });
 
   it('calculates realm stage rank and breakthrough rewards', () => {
@@ -36,7 +36,7 @@ describe('realmProgression', () => {
     )).toEqual({ naturalPerAttribute: 5, attributePointReward: 25 });
   });
 
-  it('conserves the level budget across all 36 stages and 35 breakthroughs', () => {
+  it('conserves the level budget across all 20 stages and 19 breakthroughs', () => {
     const stages = REALM_VALUES.flatMap((realm) =>
       REALM_STAGE_VALUES.map((stage) => ({ realm, stage })),
     );
@@ -53,7 +53,7 @@ describe('realmProgression', () => {
       expect(getRealmStageNaturalAttributeValue(current.realm, current.stage)).toBe(natural);
       expect(getRealmStageUnallocatedAttributeBudget(current.realm, current.stage)).toBe(free);
     });
-    expect({ natural, free }).toEqual({ natural: 190, free: 900 });
+    expect({ natural, free }).toEqual({ natural: 110, free: 500 });
   });
 
   it('applies realm damage pressure with caps', () => {
@@ -99,8 +99,8 @@ describe('等级境界展示', () => {
     [21, '筑基初期'],
     [50, '金丹中期'],
     [90, '化神中期'],
-    [130, '合体中期'],
-    [180, '渡劫圆满'],
+    [130, '化神圆满'],
+    [180, '化神圆满'],
   ])('将 %s 映射为 %s，并向上取到可满足门槛的境界', (level, label) => {
     expect(getLevelRealmStage(level).label).toBe(label);
   });

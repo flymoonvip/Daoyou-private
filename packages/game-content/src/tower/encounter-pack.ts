@@ -45,10 +45,6 @@ export const TowerEncounterPackShape = z.strictObject({
     金丹: baseline,
     元婴: baseline,
     化神: baseline,
-    炼虚: baseline,
-    合体: baseline,
-    大乘: baseline,
-    渡劫: baseline,
   }),
 });
 export function loadTowerEncounterPack(data: unknown) {

@@ -77,12 +77,6 @@ function getMajorDeviationGain(
       return randomInt(30, 45, rng);
     case '化神':
       return randomInt(35, 50, rng);
-    case '炼虚':
-      return randomInt(40, 55, rng);
-    case '合体':
-      return randomInt(45, 60, rng);
-    case '大乘':
-      return randomInt(50, 65, rng);
     default:
       return randomInt(12, 20, rng);
   }

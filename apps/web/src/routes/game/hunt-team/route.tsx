@@ -64,7 +64,7 @@ export default function HuntTeamPage() {
   const [actionError, setActionError] = useState('');
   const [note, setNote] = useState('');
   const [minRealm, setMinRealm] = useState<RealmType>('炼气');
-  const [maxRealm, setMaxRealm] = useState<RealmType>('渡劫');
+  const [maxRealm, setMaxRealm] = useState<RealmType>('化神');
   const team = data?.team ?? null;
   const self = team?.members.find((member) => member.cultivatorId === actorId);
   const leader = team?.leaderId === actorId;

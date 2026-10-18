@@ -53,10 +53,7 @@ it('每种灵兽都标出野外出没地，低境界在前', () => {
     expect(entry.habitats.length).toBeGreaterThan(0);
   }
   const fox = codex.find((item) => item.name === '烛尾狐');
-  expect(fox?.habitats.map((habitat) => habitat.name)).toEqual([
-    '青溪坡',
-    '雾灯林',
-  ]);
+  expect(fox?.habitats.map((habitat) => habitat.name)).toEqual(['青溪坡']);
   expect(fox?.aptitudes.attack.max).toBe(840);
   expect(fox?.growthMilli.max).toBe(1030);
   expect(fox?.skills[0]).toEqual({ id: 'beast.spirit-flame', innate: 'core' });
@@ -64,6 +61,5 @@ it('每种灵兽都标出野外出没地，低境界在前', () => {
   expect(boar?.habitats.map((habitat) => habitat.realmRequirement)).toEqual([
     '炼气',
     '筑基',
-    '大乘',
   ]);
 });

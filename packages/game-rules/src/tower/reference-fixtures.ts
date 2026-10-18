@@ -26,10 +26,6 @@ const trainingByRealm: Partial<
   金丹: ['jade_marrow', 15],
   元婴: ['golden_body', 20],
   化神: ['dharma_body', 30],
-  炼虚: ['dharma_body', 40],
-  合体: ['dao_body', 45],
-  大乘: ['dao_body', 50],
-  渡劫: ['dao_body', 60],
 };
 // Legal attribute budgets and currently obtainable equipment. No rare bonuses.
 export function towerReferenceBuild(

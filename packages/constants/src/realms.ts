@@ -1,14 +1,15 @@
 // 境界
+// 当前内容封顶到「化神」，化神以上的大境界暂不开放（保留在此处备查）。
 export const REALM_VALUES = [
   '炼气',
   '筑基',
   '金丹',
   '元婴',
   '化神',
-  '炼虚',
-  '合体',
-  '大乘',
-  '渡劫',
+  // '炼虚',
+  // '合体',
+  // '大乘',
+  // '渡劫',
 ] as const;
 
 export type RealmType = (typeof REALM_VALUES)[number];
@@ -27,8 +28,8 @@ export const REALM_ORDER: Record<RealmType, number> = {
   金丹: 2,
   元婴: 3,
   化神: 4,
-  炼虚: 5,
-  合体: 6,
-  大乘: 7,
-  渡劫: 8,
+  // 炼虚: 5,
+  // 合体: 6,
+  // 大乘: 7,
+  // 渡劫: 8,
 };

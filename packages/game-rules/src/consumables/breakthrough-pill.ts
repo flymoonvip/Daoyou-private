@@ -26,14 +26,6 @@ export function getBreakthroughPillLabel(
       return '护婴丹';
     case '化神':
       return '叩神丹';
-    case '炼虚':
-      return '洞虚丹';
-    case '合体':
-      return '合真丹';
-    case '大乘':
-      return '证道丹';
-    case '渡劫':
-      return '应劫丹';
     default:
       return targetRealm ? `${targetRealm}破境丹` : '破境丹';
   }

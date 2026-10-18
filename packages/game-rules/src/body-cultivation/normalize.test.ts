@@ -144,7 +144,7 @@ describe('body cultivation normalization and advancement', () => {
     ['iron_bone', '金丹', 55, 'jade_marrow'],
     ['jade_marrow', '元婴', 90, 'golden_body'],
     ['golden_body', '化神', 140, 'dharma_body'],
-    ['dharma_body', '合体', 220, 'dao_body'],
+    ['dharma_body', '化神', 220, 'dao_body'],
   ] as const)(
     'advances %s at the locked realm and total-level threshold',
     (fromRealm, cultivatorRealm, totalLevel, toRealm) => {

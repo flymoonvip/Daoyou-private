@@ -208,10 +208,6 @@ export const SECT_REALM_QUALITY_RULES: Readonly<
   金丹: { weights: { 玄品: 75, 真品: 25 } },
   元婴: { weights: { 玄品: 55, 真品: 30, 地品: 15 } },
   化神: { weights: { 玄品: 45, 真品: 30, 地品: 18, 天品: 7 } },
-  炼虚: { weights: { 玄品: 40, 真品: 28, 地品: 18, 天品: 11, 仙品: 3 } },
-  合体: { weights: { 玄品: 35, 真品: 28, 地品: 20, 天品: 13, 仙品: 4 } },
-  大乘: { weights: { 玄品: 30, 真品: 27, 地品: 22, 天品: 16, 仙品: 5 } },
-  渡劫: { weights: { 玄品: 25, 真品: 25, 地品: 23, 天品: 20, 仙品: 7 } },
 };
 
 export function assertSectRealmQualityRules(

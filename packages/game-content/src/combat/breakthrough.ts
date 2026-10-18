@@ -49,33 +49,6 @@ export const BREAKTHROUGH_CHALLENGES = {
     attack: 1.05,
     skills: ['breakthrough.rift'],
   },
-  tribulation_body: {
-    title: '雷劫淬体',
-    name: '负岳雷鼋',
-    attackType: 'physical',
-    fromRealm: '炼虚',
-    hp: 2.5,
-    attack: 1.05,
-    skills: ['breakthrough.thunder-shell', 'breakthrough.mountain-strike'],
-  },
-  inner_demon_grand: {
-    title: '大执念劫',
-    name: '抱匣枯猿',
-    attackType: 'physical',
-    fromRealm: '合体',
-    hp: 2.7,
-    attack: 1.1,
-    skills: ['breakthrough.empty-casket'],
-  },
-  heavenly_tribulation_final: {
-    title: '天劫前奏',
-    name: '天衡残钟',
-    attackType: 'spell',
-    fromRealm: '大乘',
-    hp: 2.9,
-    attack: 1.1,
-    skills: ['breakthrough.heavenly-chime', 'breakthrough.last-chime'],
-  },
 } as const satisfies Record<
   BreakthroughChallengeId,
   {

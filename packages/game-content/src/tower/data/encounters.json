@@ -181,54 +181,6 @@
       "referencePhysicalDef": 720,
       "referenceMagicDef": 860,
       "damagePerRound": 1400
-    },
-    "炼虚": {
-      "physicalAtk": 1130,
-      "magicAtk": 1280,
-      "physicalDef": 360,
-      "magicDef": 485,
-      "speed": 480,
-      "hit": 215,
-      "dodge": 125,
-      "referencePhysicalDef": 780,
-      "referenceMagicDef": 980,
-      "damagePerRound": 1600
-    },
-    "合体": {
-      "physicalAtk": 1240,
-      "magicAtk": 1420,
-      "physicalDef": 390,
-      "magicDef": 530,
-      "speed": 555,
-      "hit": 235,
-      "dodge": 145,
-      "referencePhysicalDef": 850,
-      "referenceMagicDef": 1100,
-      "damagePerRound": 1800
-    },
-    "大乘": {
-      "physicalAtk": 1330,
-      "magicAtk": 1560,
-      "physicalDef": 420,
-      "magicDef": 575,
-      "speed": 630,
-      "hit": 255,
-      "dodge": 165,
-      "referencePhysicalDef": 910,
-      "referenceMagicDef": 1220,
-      "damagePerRound": 1850
-    },
-    "渡劫": {
-      "physicalAtk": 1420,
-      "magicAtk": 1700,
-      "physicalDef": 450,
-      "magicDef": 620,
-      "speed": 705,
-      "hit": 275,
-      "dodge": 185,
-      "referencePhysicalDef": 970,
-      "referenceMagicDef": 1340,
-      "damagePerRound": 2050
     }
   }
 }

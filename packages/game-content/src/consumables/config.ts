@@ -8,10 +8,6 @@ export const REALM_PILL_USAGE_LIMITS: Record<RealmType, number> = {
   金丹: 10,
   元婴: 12,
   化神: 14,
-  炼虚: 16,
-  合体: 18,
-  大乘: 20,
-  渡劫: 24,
 };
 
 export const CULTIVATION_PILL_USAGE_LIMITS: Record<RealmType, number> = {
@@ -20,10 +16,6 @@ export const CULTIVATION_PILL_USAGE_LIMITS: Record<RealmType, number> = {
   金丹: 30,
   元婴: 40,
   化神: 50,
-  炼虚: 60,
-  合体: 70,
-  大乘: 80,
-  渡劫: 90,
 };
 
 export const CULTIVATION_PILL_MAX_QUALITY_BY_REALM: Record<RealmType, Quality> =
@@ -33,10 +25,6 @@ export const CULTIVATION_PILL_MAX_QUALITY_BY_REALM: Record<RealmType, Quality> =
     金丹: '地品',
     元婴: '天品',
     化神: '神品',
-    炼虚: '神品',
-    合体: '神品',
-    大乘: '神品',
-    渡劫: '神品',
   };
 
 export const CULTIVATION_PILL_MIN_QUALITY_BY_REALM: Record<RealmType, Quality> =
@@ -46,10 +34,6 @@ export const CULTIVATION_PILL_MIN_QUALITY_BY_REALM: Record<RealmType, Quality> =
     金丹: '灵品',
     元婴: '玄品',
     化神: '玄品',
-    炼虚: '玄品',
-    合体: '玄品',
-    大乘: '玄品',
-    渡劫: '玄品',
   };
 
 export const PILL_TOXICITY_CAP = 1000;

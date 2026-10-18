@@ -227,42 +227,6 @@ export const JIUJIE_DEFINITION: SectDefinition = {
             spiritStones: 400000,
           },
         },
-        {
-          id: '4',
-          order: 4,
-          label: '第四层',
-          minRealm: '炼虚',
-          minRealmStage: '圆满',
-          cost: {
-            cultivationExp: 320000,
-            comprehensionInsight: 100,
-            spiritStones: 1600000,
-          },
-        },
-        {
-          id: '5',
-          order: 5,
-          label: '第五层',
-          minRealm: '大乘',
-          minRealmStage: '中期',
-          cost: {
-            cultivationExp: 1280000,
-            comprehensionInsight: 100,
-            spiritStones: 6400000,
-          },
-        },
-        {
-          id: 'ultimate',
-          order: 6,
-          label: '终式',
-          minRealm: '渡劫',
-          minRealmStage: '圆满',
-          cost: {
-            cultivationExp: 5120000,
-            comprehensionInsight: 100,
-            spiritStones: 25600000,
-          },
-        },
       ],
       defaultTacticId: 'bear-and-return',
       tactics: [
@@ -370,68 +334,6 @@ export const JIUJIE_DEFINITION: SectDefinition = {
           description:
             '若一整个回合内劫眼没有记录到直接伤害，则回合结束时获得1点劫数，并使《承天受劫》冷却减少1回合。',
         },
-        {
-          id: 'eye-long-gaze',
-          layerId: '4',
-          name: '众劫归一',
-          description:
-            '《因果回响》命中照见目标时，额外释放当前承劫量的20%作为追击雷伤，但不消耗承劫量；每回合最多一次。',
-        },
-        {
-          id: 'eye-heavy-thunder',
-          layerId: '4',
-          name: '雷狱追身',
-          description:
-            '《雷狱问行》命中照见目标时追加0.25倍法攻雷伤，并将劫眼刷新1回合。',
-        },
-        {
-          id: 'eye-shelter',
-          layerId: '4',
-          name: '劫甲回生',
-          description:
-            '《借劫回身》的护盾破裂时，恢复6%最大气血，并为破盾者施加或刷新劫雷；每个护盾最多触发一次。',
-        },
-        {
-          id: 'eye-true-record',
-          layerId: '5',
-          name: '真劫入簿',
-          description: '《九霄清算》的承劫量以45%比例转为无属性真实伤害。',
-        },
-        {
-          id: 'eye-returning-law',
-          layerId: '5',
-          name: '劫尽身还',
-          description:
-            '《九霄清算》除造成承劫伤害外，再将承劫量的25%转为自身治疗。',
-        },
-        {
-          id: 'eye-after-rain',
-          layerId: '5',
-          name: '清算留门',
-          description:
-            '消耗3点劫数施展《九霄清算》后，重新获得1回合劫眼和基础承天受劫。',
-        },
-        {
-          id: 'eye-nine-gates',
-          layerId: 'ultimate',
-          name: '九门归劫',
-          description:
-            '《九霄清算》以100%比例释放承劫量；若承劫量达到记录上限，额外推进目标1层劫债。',
-        },
-        {
-          id: 'eye-heavenly-shield',
-          layerId: 'ultimate',
-          name: '身为天门',
-          description:
-            '《九霄清算》释放承劫伤害的同时，将承劫量的60%转为护盾，持续2回合。',
-        },
-        {
-          id: 'eye-calamity-without-end',
-          layerId: 'ultimate',
-          name: '劫后再开',
-          description:
-            '《九霄清算》后获得2回合劫眼和1回合承天受劫；期间首次受击返还1点劫数，每3回合最多一次。',
-        },
       ],
     },
     {
@@ -476,42 +378,6 @@ export const JIUJIE_DEFINITION: SectDefinition = {
             cultivationExp: 80000,
             comprehensionInsight: 100,
             spiritStones: 400000,
-          },
-        },
-        {
-          id: '4',
-          order: 4,
-          label: '第四层',
-          minRealm: '炼虚',
-          minRealmStage: '圆满',
-          cost: {
-            cultivationExp: 320000,
-            comprehensionInsight: 100,
-            spiritStones: 1600000,
-          },
-        },
-        {
-          id: '5',
-          order: 5,
-          label: '第五层',
-          minRealm: '大乘',
-          minRealmStage: '中期',
-          cost: {
-            cultivationExp: 1280000,
-            comprehensionInsight: 100,
-            spiritStones: 6400000,
-          },
-        },
-        {
-          id: 'ultimate',
-          order: 6,
-          label: '终式',
-          minRealm: '渡劫',
-          minRealmStage: '圆满',
-          cost: {
-            cultivationExp: 5120000,
-            comprehensionInsight: 100,
-            spiritStones: 25600000,
           },
         },
       ],
@@ -618,66 +484,6 @@ export const JIUJIE_DEFINITION: SectDefinition = {
           name: '庶行有录',
           description:
             '普通攻击仍不增加劫债和重犯，但会令劫雷延长1回合，并使本次基础雷罚提高30%。',
-        },
-        {
-          id: 'condemnation-heavy-statute',
-          layerId: '4',
-          name: '重法催审',
-          description:
-            '《因果回响》命中3层劫债目标时，消耗1层劫债，获得1点劫数并追加0.30倍法攻雷伤。',
-        },
-        {
-          id: 'condemnation-quick-record',
-          layerId: '4',
-          name: '疾书追罪',
-          description:
-            '《劫簿落印》命中已有主罪的目标后，《雷狱问行》冷却减少1回合；每回合最多一次。',
-        },
-        {
-          id: 'condemnation-three-questions',
-          layerId: '4',
-          name: '三问成案',
-          description:
-            '《雷狱问行》命中至少2层劫债目标后施加候审；下一次非普通主动神通按重复主罪结算。',
-        },
-        {
-          id: 'condemnation-reoffend',
-          layerId: '5',
-          name: '再犯从重',
-          description: '《九霄清算》每层重犯的结算伤害额外计入50%强度的劫雷。',
-        },
-        {
-          id: 'condemnation-clear-book',
-          layerId: '5',
-          name: '清册留案',
-          description: '《九霄清算》消费劫债和重犯，但保留当前主罪与劫雷。',
-        },
-        {
-          id: 'condemnation-no-escape',
-          layerId: '5',
-          name: '两避成罪',
-          description:
-            '同一目标在劫雷期间连续两次使用普通攻击时，第二次额外增加1层劫债。',
-        },
-        {
-          id: 'condemnation-final-verdict',
-          layerId: 'ultimate',
-          name: '三债终审',
-          description:
-            '对3层劫债目标施展《九霄清算》时只消耗2点劫数，但按3点劫数计算基础清算伤害。',
-        },
-        {
-          id: 'condemnation-nine-crimes',
-          layerId: 'ultimate',
-          name: '九罪同科',
-          description: '《九霄清算》根据清算前的主罪追加伤罪、援罪或禁罪判词。',
-        },
-        {
-          id: 'condemnation-heavenly-punishment',
-          layerId: 'ultimate',
-          name: '天谴不绝',
-          description:
-            '《九霄清算》后重新施加2回合劫雷和1层劫债，并重新开启立案。',
         },
       ],
     },

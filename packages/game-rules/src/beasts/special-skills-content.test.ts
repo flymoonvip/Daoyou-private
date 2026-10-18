@@ -39,7 +39,7 @@ function project(input: SummonedBeast) {
 it.each([0, 60, 180])(
   '瑞气盈身在 %d 级使用完整体质与成长，只增加气血面板',
   (level) => {
-    const base = beast('麒麟', [], level);
+    const base = beast('幽冥虎', [], level);
     base.allocatedAttributes.constitution = 57;
     const enhanced = {
       ...base,
@@ -57,7 +57,7 @@ it.each([0, 60, 180])(
   },
 );
 
-it.each(['鸣蛇', '烛尾狐', '九尾狐'])(
+it.each(['烛尾狐', '狰', '幽冥虎'])(
   '出奇制胜在%s中均正常投影为被动',
   (name) => {
     const unit = project(beast(name, ['beast.surprise-spell'], 0));
@@ -66,7 +66,7 @@ it.each(['鸣蛇', '烛尾狐', '九尾狐'])(
 );
 
 it('观照万象在其他物种中仍正常投影为主动技能', () => {
-  const unit = project(beast('鸣蛇', ['beast.all-seeing'], 0));
+  const unit = project(beast('狰', ['beast.all-seeing'], 0));
   expect(unit.skills).toEqual(['beast.all-seeing']);
   expect(unit.passives).toEqual([]);
 });
@@ -90,14 +90,14 @@ it.each([
   const definitionId = `book.${skillId}`;
   expect(findItemDefinition(definitionId)).toBeUndefined();
   expect(() =>
-    learnBeastSkill(beast('鸣蛇', [], 0), definitionId, 180, 0),
+    learnBeastSkill(beast('狰', [], 0), definitionId, 180, 0),
   ).toThrow();
 });
 
 it.each([0, 60, 180])(
   '灵慧与凶威在%d级按完整属性进入同一展示／战斗面板',
   (level) => {
-    const base = beast('鸣蛇', [], level);
+    const base = beast('狰', [], level);
     base.allocatedAttributes.strength = 41;
     base.allocatedAttributes.magic = 23;
     const attributes = beastAttributes(base);
@@ -123,7 +123,7 @@ it.each([0, 60, 180])(
 );
 
 it('战斗事实保留完整力量，只记录实际生效铁骨的防御贡献', () => {
-  const input = beast('鸣蛇', ['beast.defense', 'beast.advanced-defense'], 60);
+  const input = beast('狰', ['beast.defense', 'beast.advanced-defense'], 60);
   expect(beastCombatFacts(input)).toEqual({
     isBeast: 1,
     strength: beastAttributes(input).strength,
@@ -133,48 +133,8 @@ it('战斗事实保留完整力量，只记录实际生效铁骨的防御贡献'
   expect(project(input).combatFacts).toEqual(beastCombatFacts(input));
 });
 
-it('第二轮出生池为六种新增、饕餮替换蛮力，原必带与其余技能保留', () => {
+it('元婴新增物种狰按确认出生表生成且出生候选为五条', () => {
   const expected: Record<string, { core: string[]; candidates: string[] }> = {
-    白泽: {
-      core: [],
-      candidates: [
-        'beast.advanced-miracle',
-        'beast.water-attack',
-        'beast.wisdom',
-        'beast.parry',
-        'beast.innate-wisdom',
-      ],
-    },
-    饕餮: {
-      core: [],
-      candidates: [
-        'beast.advanced-lifesteal',
-        'beast.overwhelming-might',
-        'beast.sluggish',
-        'beast.regeneration',
-        'beast.defense',
-      ],
-    },
-    旋龟: {
-      core: [],
-      candidates: [
-        'beast.advanced-reflection',
-        'beast.water-attack',
-        'beast.regeneration',
-        'beast.sluggish',
-        'beast.spirit-guard',
-      ],
-    },
-    鸣蛇: {
-      core: [],
-      candidates: [
-        'beast.advanced-agility',
-        'beast.sneak-attack',
-        'beast.perception',
-        'beast.critical',
-        'beast.wind-strike',
-      ],
-    },
     狰: {
       core: [],
       candidates: [
@@ -183,24 +143,6 @@ it('第二轮出生池为六种新增、饕餮替换蛮力，原必带与其余�
         'beast.strength',
         'beast.perception',
         'beast.barrier-breaker',
-      ],
-    },
-    祸斗: {
-      core: ['beast.wildfire'],
-      candidates: [
-        'beast.spell-resistance',
-        'beast.meditation',
-        'beast.wisdom',
-        'beast.mind-shatter',
-      ],
-    },
-    九尾狐: {
-      core: ['beast.water-attack'],
-      candidates: [
-        'beast.advanced-spell-combo',
-        'beast.surprise-spell',
-        'beast.regeneration',
-        'beast.unanticipated',
       ],
     },
   };
@@ -222,7 +164,7 @@ it.each([
   'beast.mind-shatter',
   'beast.unanticipated',
 ])('%s可以融合到其他物种并正常投影', (skillId) => {
-  const first = beast('鸣蛇', [skillId]);
+  const first = beast('狰', [skillId]);
   const second = {
     ...beast('钢背猪', []),
     id: '00000000-0000-4000-8000-000000000002',

@@ -88,28 +88,12 @@
         },
         "化神": {
           "$ref": "#/$defs/__schema3"
-        },
-        "炼虚": {
-          "$ref": "#/$defs/__schema3"
-        },
-        "合体": {
-          "$ref": "#/$defs/__schema3"
-        },
-        "大乘": {
-          "$ref": "#/$defs/__schema3"
-        },
-        "渡劫": {
-          "$ref": "#/$defs/__schema3"
         }
       },
       "required": [
         "金丹",
         "元婴",
-        "化神",
-        "炼虚",
-        "合体",
-        "大乘",
-        "渡劫"
+        "化神"
       ],
       "additionalProperties": false
     }

@@ -29,7 +29,7 @@ export function HuntLobbyDrawer({
   const [creating, setCreating] = useState(false);
   const [note, setNote] = useState('');
   const [minRealm, setMinRealm] = useState<RealmType>('炼气');
-  const [maxRealm, setMaxRealm] = useState<RealmType>('渡劫');
+  const [maxRealm, setMaxRealm] = useState<RealmType>('化神');
   const navigate = useNavigate();
   const team = data?.myTeam;
   useHuntBattleNavigation(team, actorId, refresh);

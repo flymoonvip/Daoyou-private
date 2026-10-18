@@ -202,42 +202,6 @@ export const YOUDU_DEFINITION: SectDefinition = {
             spiritStones: 400000,
           },
         },
-        {
-          id: '4',
-          order: 4,
-          label: '第四层',
-          minRealm: '炼虚',
-          minRealmStage: '圆满',
-          cost: {
-            cultivationExp: 320000,
-            comprehensionInsight: 100,
-            spiritStones: 1600000,
-          },
-        },
-        {
-          id: '5',
-          order: 5,
-          label: '第五层',
-          minRealm: '大乘',
-          minRealmStage: '中期',
-          cost: {
-            cultivationExp: 1280000,
-            comprehensionInsight: 100,
-            spiritStones: 6400000,
-          },
-        },
-        {
-          id: 'ultimate',
-          order: 6,
-          label: '终式',
-          minRealm: '渡劫',
-          minRealmStage: '圆满',
-          cost: {
-            cultivationExp: 5120000,
-            comprehensionInsight: 100,
-            spiritStones: 25600000,
-          },
-        },
       ],
       defaultTacticId: 'tide-cycle',
       tactics: [
@@ -336,64 +300,6 @@ export const YOUDU_DEFINITION: SectDefinition = {
           description:
             '每回合第一次对至少4层目标结算忘川时，追加0.12倍法攻魂伤。',
         },
-        {
-          id: 'tide-no-return-current',
-          layerId: '4',
-          name: '江流不返',
-          description: '忘川对至少4层目标造成的持续魂伤总计提高45%。',
-        },
-        {
-          id: 'tide-cleanse-toll',
-          layerId: '4',
-          name: '洗魂有价',
-          description:
-            '敌人驱散蚀魂层数后受到0.12倍法攻魂伤，自身获得1点魂火，每次行动最多一次。',
-        },
-        {
-          id: 'tide-shoreless',
-          layerId: '4',
-          name: '两岸俱失',
-          description:
-            '不归的速度降低由30%提高到40%；魂兮不归命中后额外获得1点魂火。',
-        },
-        {
-          id: 'tide-hundred-ghosts',
-          layerId: '5',
-          name: '百鬼同哭',
-          description:
-            '目标每次进入5层时追加0.30倍法攻魂伤，同一目标每3回合最多一次。',
-        },
-        {
-          id: 'tide-dream-invasion',
-          layerId: '5',
-          name: '魂梦相侵',
-          description:
-            '目标进入5层时刷新忘川，并立即额外结算一次基础忘川魂伤。',
-        },
-        {
-          id: 'tide-last-ferry',
-          layerId: '5',
-          name: '末渡无舟',
-          description: '带有忘川的目标进入5层时，额外失去10%最大法力。',
-        },
-        {
-          id: 'tide-embers-remain',
-          layerId: 'ultimate',
-          name: '不归亦不散',
-          description: '魂兮不归结算后保留2层蚀魂。',
-        },
-        {
-          id: 'tide-lament-deepens',
-          layerId: 'ultimate',
-          name: '楚些成悲',
-          description: '魂兮不归每层追加魂伤由0.20提高到0.24。',
-        },
-        {
-          id: 'tide-burial-current',
-          layerId: 'ultimate',
-          name: '黑潮送行',
-          description: '魂兮不归结算后给目标施加2回合忘川。',
-        },
       ],
     },
     {
@@ -438,42 +344,6 @@ export const YOUDU_DEFINITION: SectDefinition = {
             cultivationExp: 80000,
             comprehensionInsight: 100,
             spiritStones: 400000,
-          },
-        },
-        {
-          id: '4',
-          order: 4,
-          label: '第四层',
-          minRealm: '炼虚',
-          minRealmStage: '圆满',
-          cost: {
-            cultivationExp: 320000,
-            comprehensionInsight: 100,
-            spiritStones: 1600000,
-          },
-        },
-        {
-          id: '5',
-          order: 5,
-          label: '第五层',
-          minRealm: '大乘',
-          minRealmStage: '中期',
-          cost: {
-            cultivationExp: 1280000,
-            comprehensionInsight: 100,
-            spiritStones: 6400000,
-          },
-        },
-        {
-          id: 'ultimate',
-          order: 6,
-          label: '终式',
-          minRealm: '渡劫',
-          minRealmStage: '圆满',
-          cost: {
-            cultivationExp: 5120000,
-            comprehensionInsight: 100,
-            spiritStones: 25600000,
           },
         },
       ],
@@ -574,64 +444,6 @@ export const YOUDU_DEFINITION: SectDefinition = {
           name: '心寂反照',
           description:
             '心死神活首次解控时获得2点魂火；每回合首次成功抵抗控制也获得2点。',
-        },
-        {
-          id: 'decree-four-gates-closed',
-          layerId: '4',
-          name: '四门皆闭',
-          description:
-            '镇魂命中施法前至少4层目标时，追加0.20倍法攻魂伤，并令其速度降低20%两回合。',
-        },
-        {
-          id: 'decree-punishment-measured',
-          layerId: '4',
-          name: '魂刑有度',
-          description:
-            '失魂被抵抗或控制免疫阻止时，目标攻击与速度仍降低20%两回合。',
-        },
-        {
-          id: 'decree-iron-law',
-          layerId: '4',
-          name: '幽都铁律',
-          description: '对至少4层蚀魂目标施加控制时，控制命中提高15%。',
-        },
-        {
-          id: 'decree-five-souls-scattered',
-          layerId: '5',
-          name: '五魄俱散',
-          description: '目标从失魂回落后，攻击额外降低15%两回合。',
-        },
-        {
-          id: 'decree-returning-barrier',
-          layerId: '5',
-          name: '神归有垣',
-          description: '心死神活首次解控后，获得15%最大气血护盾。',
-        },
-        {
-          id: 'decree-one-name-one-judgment',
-          layerId: '5',
-          name: '一名一判',
-          description: '目标首次进入4层后获得标记；下一次终结命中返还60法力。',
-        },
-        {
-          id: 'decree-verdict',
-          layerId: 'ultimate',
-          name: '司命判词',
-          description:
-            '魂兮不归基础魂伤由0.70提高到0.85，并可对3层蚀魂目标施放。',
-        },
-        {
-          id: 'decree-seven-inch-severance',
-          layerId: 'ultimate',
-          name: '七寸断魂',
-          description: '魂兮不归每层追加魂伤由0.20提高到0.25。',
-        },
-        {
-          id: 'decree-name-in-youdu',
-          layerId: 'ultimate',
-          name: '名落幽都',
-          description:
-            '终结后目标低于35%气血时获得3魂火并返还2回合冷却，每场一次。',
         },
       ],
     },

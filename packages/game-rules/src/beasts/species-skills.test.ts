@@ -5,13 +5,7 @@ import { canDeployBeast, projectBeastRoster } from './projection.js';
 import { CANDIDATE_SKILL_CHANCE, rollBeastTraits } from './trait-generator.js';
 const id = '00000000-0000-4000-8000-000000000001';
 
-it.each([
-  ['化神', 1240, 1780],
-  ['炼虚', 1275, 1810],
-  ['合体', 1310, 1840],
-  ['大乘', 1345, 1870],
-  ['渡劫', 1380, 1900],
-] as const)(
+it.each([['化神', 1240, 1780]] as const)(
   '%s 普通出生范围遵守收紧后的成长与攻资上沿',
   (realm, growth, attack) => {
     const species = BEAST_SPECIES.filter((s) => s.realm === realm);
@@ -38,16 +32,14 @@ it('减少必带物种，六目灵猿以横扫替换反击候选，保留幽冥�
     candidates: ['beast.strength', 'beast.perception'],
   });
   expect(BEAST_SPECIES.filter((s) => !s.birthSkills.core.length)).toHaveLength(
-    16,
+    7,
   );
-  expect(find('青鸾').birthSkills.core).toEqual([]);
-  expect(find('麒麟').birthSkills.core).toEqual([]);
 });
 
 it('变异沿用普通抽取值加成，不受普通出生上沿截断', () => {
   for (const [name, key, expected] of [
-    ['麒麟', 'growth', 1.449],
-    ['谛听', 'attack', 1995],
+    ['冥灯蝶', 'growth', 1.302],
+    ['幽冥虎', 'attack', 1869],
   ] as const) {
     const species = structuredClone(
       BEAST_SPECIES.find((s) => s.name === name)!,

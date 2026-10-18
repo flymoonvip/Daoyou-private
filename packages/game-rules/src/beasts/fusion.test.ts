@@ -102,8 +102,8 @@ describe('融合与宝宝身份', () => {
       ),
     ).toBeCloseTo(99.4);
   });
-  it('融合与存量材料可超过新版普通出生的1.380成长和1900攻资', () => {
-    const qilin = BEAST_SPECIES.find((s) => s.name === '麒麟')!;
+  it('融合与存量材料可超过新版普通出生的1.240成长和1780攻资', () => {
+    const qilin = BEAST_SPECIES.find((s) => s.name === '幽冥虎')!;
     const [a, b] = pair().map((beast) => ({
       ...beast,
       speciesId: qilin.id,
@@ -126,7 +126,7 @@ describe('融合与宝宝身份', () => {
   });
   it('候选化不再凭空补技能，保留必带的两个物种仍自动获得原核心', () => {
     for (const [name, expected] of [
-      ['麒麟', []],
+      ['狰', []],
       ['六目灵猿', ['beast.advanced-perception']],
       ['幽冥虎', ['beast.advanced-exorcism', 'beast.spirit-flame']],
     ] as const) {

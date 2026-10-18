@@ -29,10 +29,6 @@ export const DUNGEON_LIFESPAN_COST_BASE: Record<RealmType, number> = {
   金丹: 3,
   元婴: 5,
   化神: 8,
-  炼虚: 12,
-  合体: 18,
-  大乘: 25,
-  渡劫: 35,
 };
 
 export const DUNGEON_MATERIAL_QUALITY_VALUES = [

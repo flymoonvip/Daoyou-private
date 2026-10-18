@@ -17,10 +17,6 @@ export const REALM_TARGET_DAYS = {
   金丹: 21,
   元婴: 42,
   化神: 70,
-  炼虚: 98,
-  合体: 126,
-  大乘: 154,
-  渡劫: 182,
 } satisfies Record<RealmType, number>;
 
 /**
@@ -47,10 +43,6 @@ export const REALM_DAILY_EXP_BUDGET = {
   金丹: 3_200,
   元婴: 5_600,
   化神: 9_000,
-  炼虚: 14_000,
-  合体: 21_000,
-  大乘: 30_000,
-  渡劫: 42_000,
 } satisfies Record<RealmType, number>;
 
 /**
