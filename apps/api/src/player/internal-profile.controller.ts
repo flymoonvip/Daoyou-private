@@ -3,10 +3,10 @@ import {
   Get,
   HttpException,
   Inject,
-  Query,
   UseGuards,
 } from '@nestjs/common';
 import { Access } from '../auth/access.js';
+import { FirstQuery } from '../http/first-query.js';
 import { InternalIdentityGuard } from './internal-identity.guard.js';
 import { PlayerService } from './player.service.js';
 
@@ -21,7 +21,7 @@ export class InternalProfileController {
   constructor(@Inject(PlayerService) private readonly player: PlayerService) {}
 
   @Get('profile')
-  async profile(@Query('externalUserId') externalUserId?: string) {
+  async profile(@FirstQuery('externalUserId') externalUserId?: string) {
     const id = typeof externalUserId === 'string' ? externalUserId.trim() : '';
     if (!id) {
       throw new HttpException(
