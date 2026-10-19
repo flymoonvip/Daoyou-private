@@ -17,10 +17,8 @@ export function settleWildResources(
   )
     throw new Error('INVALID_WILD_SETTLEMENT');
   return {
-    hp: Math.max(
-      technicalAbort ? 0 : 1,
-      Math.min(entry.maxHp, Math.floor(source.hp)),
-    ),
+    // 气血可以归零：战斗结算不再锁 1 点血，归零即触发战斗死亡。
+    hp: Math.max(0, Math.min(entry.maxHp, Math.floor(source.hp))),
     mp: Math.max(0, Math.min(entry.maxMp, Math.floor(source.mp))),
     maxHp: entry.maxHp,
     maxMp: entry.maxMp,

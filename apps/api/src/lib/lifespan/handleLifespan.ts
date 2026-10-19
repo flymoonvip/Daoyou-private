@@ -9,7 +9,7 @@ import type {
   RetreatStoryCultivator,
 } from '@server/utils/prompts.js';
 import { RealmStage, RealmType } from '@daoyou/constants/realms';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
 export interface ConsumeLifespanResult {
   depleted: boolean;
@@ -107,4 +107,24 @@ export async function consumeLifespanAndHandleDepletion(
   }
 
   return { depleted: false };
+}
+
+/**
+ * 战斗死亡：PvE 战斗结算后角色气血归零，直接判定身死。
+ * 复用寿元耗尽的死亡状态——角色仍留在名册中，只能转世重修。
+ * 返回缓存失效回调，调用方应在数据库事务提交后执行。
+ */
+export async function markBattleDeath(
+  cultivatorId: string,
+  tx: DbTransaction,
+  now: Date = new Date(),
+): Promise<(() => Promise<void>) | undefined> {
+  const ownerId = await findActiveCultivatorOwnerId(cultivatorId, tx);
+  await tx
+    .update(cultivators)
+    .set({ status: 'dead', diedAt: now })
+    .where(
+      and(eq(cultivators.id, cultivatorId), eq(cultivators.status, 'active')),
+    );
+  return ownerId ? () => invalidateActiveCultivatorRef(ownerId) : undefined;
 }

@@ -1,5 +1,6 @@
 import { db } from '@server/lib/drizzle/db.js';
 import { cultivators, messageConsumptions } from '@server/lib/drizzle/schema.js';
+import { markBattleDeath } from '@server/lib/lifespan/handleLifespan.js';
 import { publishTransactionalMessageBestEffort } from '@server/lib/mq/transactionalMessagePublisher.js';
 import { redisLockKeys, withRedisLock } from '@server/lib/redis/lock.js';
 import { claimMessageForConsumer } from '@server/lib/repositories/messageConsumptionRepository.js';
@@ -76,6 +77,7 @@ export async function projectHuntReward(battleId: string) {
       retries: 0,
     },
     async (lease) => {
+      const invalidateDeaths: Array<() => Promise<void>> = [];
       const commits = await db.transaction(async (tx) => {
         for (const p of participants)
           await lockCultivatorForStateMutation(tx, p.cultivatorId);
@@ -107,6 +109,11 @@ export async function projectHuntReward(battleId: string) {
               runtime.state.units.find((u) => u.id === p.unitId),
               runtime.terminalReason === 'technical-abort',
             );
+            // 气血归零即战斗死亡；技术中止按入场资源结算，不判死。
+            if (resources.hp <= 0) {
+              const invalidate = await markBattleDeath(p.cultivatorId, tx);
+              if (invalidate) invalidateDeaths.push(invalidate);
+            }
             await tx
               .update(cultivators)
               .set({
@@ -250,6 +257,7 @@ export async function projectHuntReward(battleId: string) {
         return { changes, mailEvents };
       });
       if (commits.changes.length) publishResourceEvents(commits.changes);
+      for (const invalidate of invalidateDeaths) await invalidate();
       for (const id of commits.mailEvents)
         publishTransactionalMessageBestEffort(id, { source: 'hunt-reward' });
     },

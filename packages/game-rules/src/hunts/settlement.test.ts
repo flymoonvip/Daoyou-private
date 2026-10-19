@@ -101,14 +101,14 @@ describe('讨伐个人成败与持久资源', () => {
       mp: 500,
     });
   });
-  it('死亡沿用战后濒死一气血规则，但不会因此被认作个人胜利', () => {
+  it('死亡结算气血归零，且不会因此被认作个人胜利', () => {
     const { state, entry, unit } = fixture();
     unit.attrs.hp = 0;
     unit.attrs.mp = 10;
     unit.flags.downed = true;
     expect(settleHuntResources(entry, unit, false)).toEqual({
       ...entry,
-      hp: 1,
+      hp: 0,
       mp: 10,
     });
     expect(huntParticipantSucceeded(state, 'p')).toBe(false);

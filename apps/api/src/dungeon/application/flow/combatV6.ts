@@ -13,6 +13,7 @@ import {
 } from '@server/lib/repositories/combatV6BeastRepository.js';
 import { archiveCombatV6Replay } from '@server/lib/repositories/combatV6ReplayRepository.js';
 import { lockCultivatorForStateMutation } from '@server/lib/repositories/playerStateRepository.js';
+import { markBattleDeath } from '@server/lib/lifespan/handleLifespan.js';
 import { assembleCombatV6WildPlayer } from '@server/combat/application/CombatV6BuildService.js';
 import { ConditionService } from '@server/cultivator/application/ConditionService.js';
 import { getCultivatorPreHeavenFates } from '@server/cultivator/application/readers/CultivatorProfileRepository.js';
@@ -252,8 +253,9 @@ export async function changeDungeonBattle(
       timeoutMs: 30000,
       retries: 0,
     },
-    async (lease) =>
-      db.transaction(async (tx) => {
+    async (lease) => {
+      let invalidateDeath: (() => Promise<void>) | undefined;
+      const result = await db.transaction(async (tx) => {
         await lockCultivatorForStateMutation(tx, actor.cultivatorId);
         const found = await readRun(actor.cultivatorId, id, tx);
         if (!found) throw new Error('遭遇战不存在');
@@ -297,10 +299,12 @@ export async function changeDungeonBattle(
             .from(cultivators)
             .where(eq(cultivators.id, actor.cultivatorId));
           if (!row?.condition) throw new Error('角色资源缺失');
+          // 气血可以归零：战斗结算不再锁 1 点血，归零即触发战斗死亡。
+          const hp = Math.max(0, Math.floor(final.attrs.hp));
           const condition = ConditionService.applyCombatV6Resources(
             row.condition as CultivatorCondition,
             {
-              hp: Math.max(1, final.attrs.hp),
+              hp,
               mp: final.attrs.mp,
               maxHp: final.attrs.maxHp,
               maxMp: final.attrs.maxMp,
@@ -310,6 +314,8 @@ export async function changeDungeonBattle(
             .update(cultivators)
             .set({ condition })
             .where(eq(cultivators.id, actor.cultivatorId));
+          if (hp <= 0)
+            invalidateDeath = await markBattleDeath(actor.cultivatorId, tx);
           await settleBeastDeaths(
             actor.cultivatorId,
             beastDeathIds(payload.snapshot.events),
@@ -389,7 +395,10 @@ export async function changeDungeonBattle(
           ...view(payload, after),
           ...(!command ? { playback: playback.playback } : {}),
         };
-      }),
+      });
+      if (invalidateDeath) await invalidateDeath();
+      return result;
+    },
   );
 }
 

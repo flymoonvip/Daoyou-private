@@ -53,6 +53,7 @@ import {
 } from '@server/lib/repositories/combatV6ReplayRepository.js';
 import { claimMessageForConsumer } from '@server/lib/repositories/messageConsumptionRepository.js';
 import { lockCultivatorForStateMutation } from '@server/lib/repositories/playerStateRepository.js';
+import { markBattleDeath } from '@server/lib/lifespan/handleLifespan.js';
 import {
   getOrPublishTowerWeek,
   readTowerPublishedWeek,
@@ -545,6 +546,7 @@ export async function changeTowerBattle(
           await save(owner, run, lease);
         }
       }
+      let invalidateDeath: (() => Promise<void>) | undefined;
       const changes = await db.transaction(async (tx) => {
         const changes: ResourceChange[] = [];
         lease.assertHeld();
@@ -567,6 +569,9 @@ export async function changeTowerBattle(
             .update(cultivators)
             .set({ condition })
             .where(eq(cultivators.id, owner));
+          // 气血归零即战斗死亡；战斗内不再锁 1 点血。
+          if (unit.attrs.hp <= 0)
+            invalidateDeath = await markBattleDeath(owner, tx);
           const committed = await new ResourceEventCommitter().commit(tx, {
             actor,
             source: 'tower-v6-condition',
@@ -660,6 +665,7 @@ export async function changeTowerBattle(
         return changes;
       });
       publishResourceEvents(changes);
+      if (invalidateDeath) await invalidateDeath();
       lease.assertHeld();
       receipt = await readTowerRewardState(owner);
       run.rewards = towerRewards(receipt, run.season.seasonKey);

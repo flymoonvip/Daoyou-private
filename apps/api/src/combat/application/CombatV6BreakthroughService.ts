@@ -7,6 +7,7 @@ import { redisLockKeys, withRedisLock } from '@server/lib/redis/lock.js';
 import { settleBeastDeaths } from '@server/lib/repositories/combatV6BeastRepository.js';
 import { archiveCombatV6Replay } from '@server/lib/repositories/combatV6ReplayRepository.js';
 import { lockCultivatorForStateMutation } from '@server/lib/repositories/playerStateRepository.js';
+import { markBattleDeath } from '@server/lib/lifespan/handleLifespan.js';
 import {
   findCultivatorTaskById,
   updateCultivatorTask,
@@ -222,13 +223,15 @@ async function settle(
     .where(eq(cultivators.id, actor.cultivatorId));
   if (!player?.condition) throw new Error('角色资源缺失');
   const final = host.state.units.find((unit) => unit.id === host.playerId)!;
+  // 气血可以归零：战斗结算不再锁 1 点血，归零即触发战斗死亡。
+  const hp = Math.max(0, Math.floor(final.attrs.hp));
   await tx
     .update(cultivators)
     .set({
       condition: ConditionService.applyCombatV6Resources(
         player.condition as CultivatorCondition,
         {
-          hp: Math.max(1, final.attrs.hp),
+          hp,
           mp: final.attrs.mp,
           maxHp: final.attrs.maxHp,
           maxMp: final.attrs.maxMp,
@@ -236,6 +239,8 @@ async function settle(
       ),
     })
     .where(eq(cultivators.id, actor.cultivatorId));
+  const invalidateDeath =
+    hp <= 0 ? await markBattleDeath(actor.cultivatorId, tx) : undefined;
   await settleBeastDeaths(
     actor.cultivatorId,
     beastDeathIds(runtime.snapshot.events),
@@ -289,6 +294,7 @@ async function settle(
       eventType: 'tasks.challenge_resolved',
     })),
   });
+  return invalidateDeath;
 }
 export async function changeBreakthroughBattle(
   actor: Actor,
@@ -350,10 +356,12 @@ export async function changeBreakthroughBattle(
           throw new Error('战斗状态已变化，请刷新');
       }
       if (host.finished) {
-        await db.transaction(async (tx) => {
-          await settle(actor, runtime, host, tx);
+        const invalidateDeath = await db.transaction(async (tx) => {
+          const invalidation = await settle(actor, runtime, host, tx);
           lease.assertHeld();
+          return invalidation;
         });
+        if (invalidateDeath) await invalidateDeath();
         await redis.expire(key(id), 86400);
       }
       return view(runtime, host.finished, after);

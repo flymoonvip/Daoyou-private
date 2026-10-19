@@ -30,6 +30,7 @@ import { redisLockKeys, withRedisLock } from '@server/lib/redis/lock.js';
 import { settleBeastDeaths } from '@server/lib/repositories/combatV6BeastRepository.js';
 import { archiveCombatV6Replay } from '@server/lib/repositories/combatV6ReplayRepository.js';
 import { lockCultivatorForStateMutation } from '@server/lib/repositories/playerStateRepository.js';
+import { markBattleDeath } from '@server/lib/lifespan/handleLifespan.js';
 import { and, eq } from 'drizzle-orm';
 import { ConditionService } from '@server/cultivator/application/ConditionService.js';
 import { describeJournal, runJournalSettlement } from '@server/player/application/JournalSettlement.js';
@@ -200,13 +201,14 @@ export async function changeSectTaskBattle(
           invalidSectTask('战斗状态已变化，请刷新');
       }
       if (host.finished) {
-        await db.transaction(async (tx) => {
+        const invalidateDeaths = await db.transaction(async (tx) => {
+          const invalidations: Array<() => Promise<void>> = [];
           await lockCultivatorForStateMutation(tx, actor.cultivatorId);
           const [receipt] = await tx
             .select({ id: combatReplayArchives.battleId })
             .from(combatReplayArchives)
             .where(eq(combatReplayArchives.battleId, id));
-          if (receipt) return;
+          if (receipt) return invalidations;
           await runJournalSettlement(
             tx,
             actor.cultivatorId,
@@ -269,13 +271,15 @@ export async function changeSectTaskBattle(
                 const final = host.state.units.find(
                   (unit) => unit.id === host.playerId,
                 )!;
+                // 气血可以归零：战斗结算不再锁 1 点血，归零即触发战斗死亡。
+                const hp = Math.max(0, Math.floor(final.attrs.hp));
                 await tx
                   .update(cultivators)
                   .set({
                     condition: ConditionService.applyCombatV6Resources(
                       player.condition as CultivatorCondition,
                       {
-                        hp: Math.max(1, final.attrs.hp),
+                        hp,
                         mp: final.attrs.mp,
                         maxHp: final.attrs.maxHp,
                         maxMp: final.attrs.maxMp,
@@ -283,6 +287,13 @@ export async function changeSectTaskBattle(
                     ),
                   })
                   .where(eq(cultivators.id, actor.cultivatorId));
+                if (hp <= 0) {
+                  const invalidate = await markBattleDeath(
+                    actor.cultivatorId,
+                    tx,
+                  );
+                  if (invalidate) invalidations.push(invalidate);
+                }
                 await settleBeastDeaths(
                   actor.cultivatorId,
                   beastDeathIds(runtime.snapshot.events),
@@ -350,7 +361,9 @@ export async function changeSectTaskBattle(
               lease.assertHeld();
             },
           );
+          return invalidations;
         });
+        for (const invalidate of invalidateDeaths) await invalidate();
         await redis.expire(key(id), 86400);
       }
       return view(runtime, host.finished, after);

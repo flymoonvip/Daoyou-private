@@ -1,6 +1,7 @@
 import { runJournalSettlement, describeJournal } from '@server/player/application/JournalSettlement.js';
 import { db } from '@server/lib/drizzle/db.js';
 import { cultivators, messageConsumptions } from '@server/lib/drizzle/schema.js';
+import { markBattleDeath } from '@server/lib/lifespan/handleLifespan.js';
 import { createDomainEvent } from '@server/lib/mq/domainEventWriter.js';
 import { redisLockKeys, withRedisLock } from '@server/lib/redis/lock.js';
 import {
@@ -66,6 +67,7 @@ export async function projectCombatV6Condition(
     },
     async (lease) => {
       const now = new Date();
+      let invalidateDeath: (() => Promise<void>) | undefined;
       const committed = await db.transaction(async (tx) => {
         await lockCultivatorForStateMutation(tx, s.cultivatorId);
         // Transport receipt still resolves redelivery after Redis terminal data expires.
@@ -136,6 +138,9 @@ export async function projectCombatV6Condition(
           s.entry,
           record.reason === 'technical-abort',
         );
+        // 气血归零即战斗死亡；技术中止按入场资源结算，不判死。
+        if (resources.hp <= 0)
+          invalidateDeath = await markBattleDeath(s.cultivatorId, tx, now);
         const condition = ConditionService.applyCombatV6Resources(
           row.condition as CultivatorCondition,
           resources,
@@ -172,6 +177,7 @@ export async function projectCombatV6Condition(
         });
       });
       if (committed) publishResourceEvents(committed.changes);
+      if (invalidateDeath) await invalidateDeath();
       await store.complete(s, now.getTime());
     },
   );
