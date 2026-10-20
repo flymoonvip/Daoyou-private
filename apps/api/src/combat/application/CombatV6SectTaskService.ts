@@ -30,8 +30,9 @@ import { redisLockKeys, withRedisLock } from '@server/lib/redis/lock.js';
 import { settleBeastDeaths } from '@server/lib/repositories/combatV6BeastRepository.js';
 import { archiveCombatV6Replay } from '@server/lib/repositories/combatV6ReplayRepository.js';
 import { lockCultivatorForStateMutation } from '@server/lib/repositories/playerStateRepository.js';
-import { markBattleDeath } from '@server/lib/lifespan/handleLifespan.js';
+import { resolveBattleDeath } from '@server/lib/lifespan/handleLifespan.js';
 import { and, eq } from 'drizzle-orm';
+import type { RealmStage, RealmType } from '@daoyou/constants/realms';
 import { ConditionService } from '@server/cultivator/application/ConditionService.js';
 import { describeJournal, runJournalSettlement } from '@server/player/application/JournalSettlement.js';
 import { ResourceEventCommitter } from '@server/player/application/state/ResourceEventCommitter.js';
@@ -264,36 +265,49 @@ export async function changeSectTaskBattle(
               }
               if (runtime.snapshot.resourcePolicy === 'persistent') {
                 const [player] = await tx
-                  .select({ condition: cultivators.condition })
+                  .select({ condition: cultivators.condition, realm: cultivators.realm, realmStage: cultivators.realm_stage })
                   .from(cultivators)
                   .where(eq(cultivators.id, actor.cultivatorId));
                 if (!player?.condition) invalidSectTask('角色资源缺失');
                 const final = host.state.units.find(
                   (unit) => unit.id === host.playerId,
                 )!;
-                // 气血可以归零：战斗结算不再锁 1 点血，归零即触发战斗死亡。
+                // 气血可以归零：战斗结算不再锁 1 点血，归零即触发战斗结局判定。
                 const hp = Math.max(0, Math.floor(final.attrs.hp));
-                await tx
-                  .update(cultivators)
-                  .set({
-                    condition: ConditionService.applyCombatV6Resources(
-                      player.condition as CultivatorCondition,
-                      {
-                        hp,
-                        mp: final.attrs.mp,
-                        maxHp: final.attrs.maxHp,
-                        maxMp: final.attrs.maxMp,
-                      },
-                    ),
-                  })
-                  .where(eq(cultivators.id, actor.cultivatorId));
+                let condition = ConditionService.applyCombatV6Resources(
+                  player.condition as CultivatorCondition,
+                  {
+                    hp,
+                    mp: final.attrs.mp,
+                    maxHp: final.attrs.maxHp,
+                    maxMp: final.attrs.maxMp,
+                  },
+                );
                 if (hp <= 0) {
-                  const invalidate = await markBattleDeath(
+                  const enemyLevel = Math.max(
+                    0,
+                    ...host.state.units
+                      .filter((u) => u.side !== final.side)
+                      .map((u) => u.level),
+                  );
+                  const resolved = await resolveBattleDeath(
                     actor.cultivatorId,
                     tx,
+                    {
+                      playerRealm: player.realm as RealmType,
+                      playerRealmStage: player.realmStage as RealmStage,
+                      enemyLevel,
+                      condition,
+                    },
                   );
-                  if (invalidate) invalidations.push(invalidate);
+                  condition = resolved.condition;
+                  if (resolved.invalidateDeath)
+                    invalidations.push(resolved.invalidateDeath);
                 }
+                await tx
+                  .update(cultivators)
+                  .set({ condition })
+                  .where(eq(cultivators.id, actor.cultivatorId));
                 await settleBeastDeaths(
                   actor.cultivatorId,
                   beastDeathIds(runtime.snapshot.events),

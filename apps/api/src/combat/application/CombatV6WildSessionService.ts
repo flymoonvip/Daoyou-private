@@ -173,6 +173,10 @@ function summaryOf(
       maxHp: entry.maxHp,
       maxMp: entry.maxMp,
     },
+    enemyLevel: Math.max(
+      0,
+      ...r.host.state.units.filter((u) => u.side !== p.side).map((u) => u.level),
+    ),
   };
 }
 async function readBeastLureSearches(cultivatorId: string) {

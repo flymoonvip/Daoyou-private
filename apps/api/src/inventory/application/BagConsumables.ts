@@ -64,6 +64,13 @@ export async function consumeBagConsumable(
   id: string,
   quantity: number,
   q: DbExecutor | DbTransaction,
+  options: {
+    /**
+     * 战斗结算内由服务端强制消耗（如保命符续命）时传 false，
+     * 跳过「战斗中不可调整物品」的空闲校验；调用方必须已持有角色状态锁。
+     */
+    requireIdle?: boolean;
+  } = { requireIdle: true },
 ) {
   if (!Number.isSafeInteger(quantity) || quantity < 1)
     throw new Error('消耗数量无效');
@@ -81,7 +88,7 @@ export async function consumeBagConsumable(
     .for('update');
   if (!row || row.quantity < quantity)
     throw new Error('随身消耗品不足，请先从洞府宝库或储藏室取出');
-  await assertInventoryIdle(owner, q);
+  if (options.requireIdle !== false) await assertInventoryIdle(owner, q);
   const filter = and(
     eq(inventoryItems.id, id),
     eq(inventoryItems.cultivatorId, owner),

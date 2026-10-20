@@ -1,7 +1,7 @@
 import { runJournalSettlement, describeJournal } from '@server/player/application/JournalSettlement.js';
 import { db } from '@server/lib/drizzle/db.js';
 import { cultivators, messageConsumptions } from '@server/lib/drizzle/schema.js';
-import { markBattleDeath } from '@server/lib/lifespan/handleLifespan.js';
+import { resolveBattleDeath } from '@server/lib/lifespan/handleLifespan.js';
 import { createDomainEvent } from '@server/lib/mq/domainEventWriter.js';
 import { redisLockKeys, withRedisLock } from '@server/lib/redis/lock.js';
 import {
@@ -17,6 +17,7 @@ import { beastTradePreview } from '@daoyou/game-domain/beasts';
 import { settleWildResources } from '@daoyou/game-rules/combat/wild';
 import { storyMarkForSignal } from '@daoyou/game-rules/story';
 import type { CultivatorCondition } from '@daoyou/game-domain/condition';
+import type { RealmStage, RealmType } from '@daoyou/constants/realms';
 import { and, eq } from 'drizzle-orm';
 import { ConditionService } from '@server/cultivator/application/ConditionService.js';
 import { grantInventory } from '@server/inventory/operations.js';
@@ -129,7 +130,11 @@ export async function projectCombatV6Condition(
             await grantInventory(s.cultivatorId, s.itemRewards ?? [], tx);
         }
         const [row] = await tx
-          .select({ condition: cultivators.condition })
+          .select({
+            condition: cultivators.condition,
+            realm: cultivators.realm,
+            realmStage: cultivators.realm_stage,
+          })
           .from(cultivators)
           .where(eq(cultivators.id, s.cultivatorId));
         if (!row?.condition) throw new Error('COMBAT_V6_CONDITION_MISSING');
@@ -138,14 +143,23 @@ export async function projectCombatV6Condition(
           s.entry,
           record.reason === 'technical-abort',
         );
-        // 气血归零即战斗死亡；技术中止按入场资源结算，不判死。
-        if (resources.hp <= 0)
-          invalidateDeath = await markBattleDeath(s.cultivatorId, tx, now);
-        const condition = ConditionService.applyCombatV6Resources(
+        let condition = ConditionService.applyCombatV6Resources(
           row.condition as CultivatorCondition,
           resources,
           now,
         );
+        // 气血归零即触发战斗结局判定；技术中止按入场资源结算，不判死。
+        if (resources.hp <= 0) {
+          const resolved = await resolveBattleDeath(s.cultivatorId, tx, {
+            playerRealm: row.realm as RealmType,
+            playerRealmStage: row.realmStage as RealmStage,
+            enemyLevel: s.enemyLevel ?? 0,
+            condition,
+            now,
+          });
+          condition = resolved.condition;
+          invalidateDeath = resolved.invalidateDeath;
+        }
         await tx
           .update(cultivators)
           .set({ condition })

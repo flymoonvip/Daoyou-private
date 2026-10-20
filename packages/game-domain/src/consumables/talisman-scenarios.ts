@@ -43,6 +43,10 @@ export const TALISMAN_SCENARIO_OPTIONS = [
     value: 'qi_restore_fill_to_max',
     label: '天地引气符·补满灵气',
   },
+  {
+    value: 'death_save',
+    label: '保命符·濒死续命',
+  },
 ] as const;
 
 export type TalismanScenario =
