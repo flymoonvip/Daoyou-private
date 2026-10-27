@@ -21,12 +21,12 @@ ALTER TABLE "wanjiedaoyou_cultivators"
 --   created_at = 迁移日志 meta/_journal.json 中该条目的 when 值
 INSERT INTO drizzle.__drizzle_migrations (hash, created_at)
 SELECT
-  '7ff87147c581a312612c1041ec69d08ce1d691b61c38c3707d6812eb02699312',
+  '67563efe05be4623cdab9a8c49754ed4546e2876cdb885f68359da36a1bb4a3a',
   1793112475245
 WHERE NOT EXISTS (
   SELECT 1
   FROM drizzle.__drizzle_migrations
-  WHERE hash = '7ff87147c581a312612c1041ec69d08ce1d691b61c38c3707d6812eb02699312'
+  WHERE hash = '67563efe05be4623cdab9a8c49754ed4546e2876cdb885f68359da36a1bb4a3a'
 );
 
 COMMIT;
