@@ -1,6 +1,5 @@
 import { db } from '@server/lib/drizzle/db.js';
 import { cultivators, messageConsumptions } from '@server/lib/drizzle/schema.js';
-import { resolveBattleDeath } from '@server/lib/lifespan/handleLifespan.js';
 import { publishTransactionalMessageBestEffort } from '@server/lib/mq/transactionalMessagePublisher.js';
 import { redisLockKeys, withRedisLock } from '@server/lib/redis/lock.js';
 import { claimMessageForConsumer } from '@server/lib/repositories/messageConsumptionRepository.js';
@@ -77,7 +76,6 @@ export async function projectHuntReward(battleId: string) {
       retries: 0,
     },
     async (lease) => {
-      const invalidateDeaths: Array<() => Promise<void>> = [];
       const commits = await db.transaction(async (tx) => {
         for (const p of participants)
           await lockCultivatorForStateMutation(tx, p.cultivatorId);
@@ -109,34 +107,14 @@ export async function projectHuntReward(battleId: string) {
               runtime.state.units.find((u) => u.id === p.unitId),
               runtime.terminalReason === 'technical-abort',
             );
-            let condition = ConditionService.applyCombatV6Resources(
-              row.condition as CultivatorCondition,
-              resources,
-            );
-            // 气血归零即触发战斗结局判定；技术中止按入场资源结算，不判死。
-            if (resources.hp <= 0) {
-              const playerUnit = runtime.state.units.find(
-                (u) => u.id === p.unitId,
-              );
-              const enemyLevel = Math.max(
-                0,
-                ...runtime.state.units
-                  .filter((u) => u.side !== playerUnit?.side)
-                  .map((u) => u.level),
-              );
-              const resolved = await resolveBattleDeath(p.cultivatorId, tx, {
-                playerRealm: row.realm as RealmType,
-                playerRealmStage: row.realm_stage as RealmStage,
-                enemyLevel,
-                condition,
-              });
-              condition = resolved.condition;
-              if (resolved.invalidateDeath)
-                invalidateDeaths.push(resolved.invalidateDeath);
-            }
             await tx
               .update(cultivators)
-              .set({ condition })
+              .set({
+                condition: ConditionService.applyCombatV6Resources(
+                  row.condition as CultivatorCondition,
+                  resources,
+                ),
+              })
               .where(eq(cultivators.id, p.cultivatorId));
             const committed = await new ResourceEventCommitter().commit(tx, {
               actor: p,
@@ -272,7 +250,6 @@ export async function projectHuntReward(battleId: string) {
         return { changes, mailEvents };
       });
       if (commits.changes.length) publishResourceEvents(commits.changes);
-      for (const invalidate of invalidateDeaths) await invalidate();
       for (const id of commits.mailEvents)
         publishTransactionalMessageBestEffort(id, { source: 'hunt-reward' });
     },

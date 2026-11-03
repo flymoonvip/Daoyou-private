@@ -6,7 +6,7 @@ import { evalExpr, skillLevelOf } from './expr.js';
 import { alliesOf, enemiesOf } from './unit-query.js';
 import { passiveSkills, skillOf } from './skills.js';
 import type { SkillDef, Unit } from './types.js';
-import { isStanding, resourceOf } from './units.js';
+import { effectiveSpeed, isStanding, resourceOf } from './units.js';
 
 /**
  * 隐身目标不可被单体或群体选取；攻击方的灵觉或看破状态可解除此限制。
@@ -39,7 +39,13 @@ export function canSelect(
   skill: SkillDef,
 ): boolean {
   if (skill.targeting.excludeSelf && source.id === target.id) return false;
+  const stackLimit = skill.targeting.ownedStatusStackLimit;
+  if (stackLimit && target.statuses
+    .filter(status => status.kind === stackLimit.kind && status.sourceId === source.id)
+    .reduce((sum, status) => sum + status.stacks, 0) >= stackLimit.max) return false;
   if (skill.targeting.requireKind && target.kind !== skill.targeting.requireKind) return false;
+  if (skill.targeting.requireKinds && !skill.targeting.requireKinds.includes(target.kind)) return false;
+  if (skill.targeting.requireOwnedPet && (target.kind !== 'pet' || target.ownerId !== source.id)) return false;
   if (target.flags.capturedBy || target.flags.benched) return false;
   if (skill.targeting.requireRevivable &&
     (isReviveBlocked(ctx, target) ||
@@ -138,6 +144,22 @@ export function targetCount(
   return Math.max(1, Math.floor(raw + bonus));
 }
 
+/** Deterministic cost preflight; never rolls a random target-count bonus. */
+export function costTargets(
+  ctx: BattleContext,
+  source: Unit,
+  skill: SkillDef,
+  pool = poolFor(ctx, source, skill),
+): Unit[] {
+  const base = targetCount(source, skill, 1, ctx);
+  const env = { state: ctx.state, skillLevel: skillLevelOf(source, skill.id), source, targets: Math.min(base, pool.length) };
+  const extra = skill.targeting.reserveExtraCost &&
+    (skill.targeting.extraChance === undefined || evalExpr(skill.targeting.extraChance, env) > 0)
+    ? Math.max(0, Math.floor(evalExpr(skill.targeting.extraCount, env)))
+    : 0;
+  return pool.slice(0, base + extra);
+}
+
 /**
  * fill：指令目标优先，再按站位补满人数（破釜、龙卷）。
  * lowestHp：按气血比例从低到高取（推气过宫）。
@@ -155,6 +177,17 @@ export function resolveSkillTargets(
 
   const count = targetCount(source, skill, targetIds.length || 1, ctx);
   const pool = poolFor(ctx, source, skill);
+  if (skill.targeting.fillPriority === 'delayedRevivalThenSpeed') {
+    const priority = (unit: Unit) => {
+      const groups = skill.targeting.fillPriorityPassives;
+      if (groups) {
+        const index = groups.findIndex(ids => ids.some(id => unit.passives.includes(id)));
+        return index < 0 ? groups.length : index;
+      }
+      return passiveSkills(ctx.skills, unit).some(def => def.innate?.delayedRevivalRounds) ? 0 : 1;
+    };
+    pool.sort((a, b) => priority(a) - priority(b) || effectiveSpeed(b) - effectiveSpeed(a) || a.slot - b.slot);
+  }
 
   if (mode === TargetMode.All) {
     const picked =
@@ -202,7 +235,9 @@ export function resolveSkillTargets(
   if (forcedPrimaryId) {
     const forced = ctx.state.units.find((unit) => unit.id === forcedPrimaryId);
     if (forced && forced.id !== source.id && isStanding(forced) &&
-      (!skill.targeting.requireKind || forced.kind === skill.targeting.requireKind)) {
+      (!skill.targeting.requireKind || forced.kind === skill.targeting.requireKind) &&
+      (!skill.targeting.requireKinds || skill.targeting.requireKinds.includes(forced.kind)) &&
+      (!skill.targeting.requireOwnedPet || (forced.kind === 'pet' && forced.ownerId === source.id))) {
       picked.push(forced);
       seen.add(forced.id);
     }
@@ -221,6 +256,16 @@ export function resolveSkillTargets(
     return addExtra(ctx, source, skill, picked, pool, normalTargetIds);
 
   const remaining = pool.filter(unit => !seen.has(unit.id));
+  if (skill.targeting.secondaryOwnedStatusKind && picked.length === 1 && count > 1) {
+    const index = remaining.findIndex(unit => unit.statuses.some(status =>
+      status.kind === skill.targeting.secondaryOwnedStatusKind && status.sourceId === source.id,
+    ));
+    if (index >= 0) {
+      const [secondary] = remaining.splice(index, 1);
+      picked.push(secondary);
+      seen.add(secondary.id);
+    }
+  }
   const fill = skill.targeting.randomFill ? shuffleTake(ctx, remaining, Math.max(0, count - picked.length)) : remaining;
   for (const unit of fill) {
     if (picked.length >= count) break;
@@ -248,6 +293,7 @@ function addExtra(
   const extraChance = skill.targeting.extraChance;
   if (extraCount === undefined && extraChance === undefined) return picked;
   const env = {
+    state: ctx.state,
     skillLevel: skillLevelOf(source, skill.id),
     targets: picked.length,
     source,

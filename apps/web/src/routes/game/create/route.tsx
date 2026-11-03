@@ -10,7 +10,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 
 const genesisPanelClassName =
-  'border-battle-rule-strong border border-dashed bg-[rgba(248,243,230,0.88)] px-4 py-4 md:px-5 md:py-5';
+  'border-battle-rule-strong border border-dashed bg-paper px-4 py-4 md:px-5 md:py-5';
 
 /**
  * 建号页 —— 不再由玩家输入提示或择命。

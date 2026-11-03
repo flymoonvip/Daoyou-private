@@ -7,7 +7,6 @@ import {
   getAttributeInfo,
 } from '@daoyou/game-content/presentation/concepts';
 import type { Attributes } from '@daoyou/game-domain/character';
-import { getRealmLastStage } from '@daoyou/game-domain/progression';
 import { getNextMajorRealm } from '@daoyou/game-rules/consumables/breakthrough';
 import { format } from 'd3-format';
 import { useMemo } from 'react';
@@ -87,7 +86,7 @@ export function RetreatResultModal({
       >
         <div className="space-y-5">
           {showStoryPanel ? (
-            <div className="border-ink/10 bg-bgpaper/70 border border-dashed p-4 text-sm leading-7 whitespace-pre-line">
+            <div className="border-ink/10 bg-paper-2 border border-dashed p-4 text-sm leading-7 whitespace-pre-line">
               {getStoryText(retreatResult, isStreaming)}
             </div>
           ) : null}
@@ -160,9 +159,8 @@ function BreakthroughResultContent({
       : '';
   const majorGateReady =
     summary.success &&
-    summary.toRealm !== undefined &&
-    summary.toStage === getRealmLastStage(summary.toRealm) &&
-    Boolean(getNextMajorRealm(summary.toRealm));
+    summary.toStage === '圆满' &&
+    Boolean(summary.toRealm && getNextMajorRealm(summary.toRealm));
 
   const attributeGrowthText = useMemo(() => {
     if (!summary.attributeGrowth) return '';
@@ -189,7 +187,7 @@ function BreakthroughResultContent({
         {summary.success ? '🌅 突破成功！' : '☁️ 冲关失败'}
       </p>
 
-      <div className="border-teal/25 bg-bgpaper/60 space-y-3 border border-dashed p-3">
+      <div className="border-teal/25 bg-paper-2 space-y-3 border border-dashed p-3">
         <p className="text-teal font-medium">【本次成功率推演】</p>
         <BreakthroughChanceDetails presentation={chancePresentation} />
       </div>

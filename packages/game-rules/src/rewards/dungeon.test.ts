@@ -31,10 +31,10 @@ describe('副本混合物品奖励', () => {
     [45, '金丹'],
     [65, '元婴'],
     [85, '化神'],
-    [105, '化神'],
-    [125, '化神'],
-    [145, '化神'],
-    [165, '化神'],
+    [105, '炼虚'],
+    [125, '合体'],
+    [145, '大乘'],
+    [165, '渡劫'],
   ])('等级%s的材料使用%s品质分布，不随图纸开放上限截断', (level, realm) => {
     const pack = structuredClone(originalPack);
     pack.sources.completion.weights = { material: 1, blueprint: 0, book: 0 };
@@ -92,18 +92,23 @@ describe('副本混合物品奖励', () => {
   });
 
   it.each([
-    [1, 10],
-    [20, 10],
-    [25, 30],
-    [45, 50],
-    [65, 70],
-    [85, 90],
-    [180, 90],
-  ])('副本等级 %s 对应已开放图纸档位 %s', (level, expected) => {
+    [1, [10]],
+    [20, [10]],
+    [25, [30]],
+    [45, [50]],
+    [65, [70]],
+    [85, [70, 90]],
+    [105, [70, 90, 110]],
+    [125, [70, 90, 110, 130]],
+    [145, [90, 110, 130, 150]],
+    [165, [110, 130, 150, 170]],
+    [180, [110, 130, 150, 170]],
+  ])('副本等级 %s 的图纸落在 %j', (level, expected) => {
     const pack = structuredClone(originalPack);
     pack.sources.completion.weights = { material: 0, blueprint: 1, book: 0 };
+    const levels = new Set<number>();
     const slots = new Set<string>();
-    for (let seed = 0; seed < 128; seed++) {
+    for (let seed = 0; seed < 256; seed++) {
       const result = planDungeonReward(
         seed,
         'completion',
@@ -113,9 +118,11 @@ describe('副本混合物品奖励', () => {
       );
       const item = findItemDefinition(result.items[0].definitionId)!;
       expect(item.kind).toBe('blueprint');
-      expect(item.level).toBe(expected);
+      expect(expected).toContain(item.level);
+      levels.add(item.level!);
       slots.add(item.slot!);
     }
+    expect([...levels].sort((a, b) => a - b)).toEqual(expected);
     expect(slots.size).toBe(6);
   });
 
@@ -215,8 +222,8 @@ describe('秘境额外养成奖励', () => {
     }
     expect(totals.originDew).toBeCloseTo(0.5, 10);
     expect(totals.superiorOriginDew).toBeCloseTo(0.2, 10);
-    expect(totals.blueprint).toBeCloseTo(0.75, 10);
-    expect(totals.superiorBook).toBeCloseTo(0.1005, 4);
+    expect(totals.blueprint).toBeCloseTo(0.3, 10);
+    expect(totals.superiorBook).toBeCloseTo(0.11083252963632712, 8);
   });
 
   it.each(['exploration', 'battle', 'completion'] as const)(
@@ -255,7 +262,6 @@ describe('秘境额外养成奖励', () => {
         for (const [id] of bonus) {
           const definition = findItemDefinition(id)!;
           if (definition.kind === 'blueprint') {
-            expect(definition.level).toBe(70);
             seen.add('blueprint');
           } else if (definition.kind === 'beast_book') {
             expect(DUNGEON_REWARD_PACK.superiorBooks).toContain(id);
@@ -266,7 +272,6 @@ describe('秘境额外养成奖励', () => {
       expect(missed).toBe(true);
       expect(seen).toEqual(
         new Set([
-          'blueprint',
           'superiorBook',
           'beast.refinement.origin-dew',
           'beast.refinement.superior-origin-dew',
@@ -344,8 +349,8 @@ describe('秘境分环节资源奖励', () => {
 
   it('高境界、危险度和地图难度提高收益，同一种子与来源保持确定', () => {
     const high = {
-      mapRealm: '化神' as const,
-      playerRealm: '化神' as const,
+      mapRealm: '渡劫' as const,
+      playerRealm: '渡劫' as const,
       dangerScore: 100,
       difficultyTier: 'boss' as const,
     };
@@ -362,7 +367,7 @@ describe('秘境分环节资源奖励', () => {
     expect(first).toEqual(
       planDungeonStepResources(9, 'battle:1', 'battle', high),
     );
-    expect(first.experience).toBe(2673);
+    expect(first.experience).toBe(12474);
     expect(lowDanger.experience).toBeGreaterThan(
       planDungeonStepResources(9, 'battle:1', 'battle', context).experience,
     );

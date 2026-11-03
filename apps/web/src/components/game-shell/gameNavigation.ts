@@ -32,7 +32,7 @@ export interface GameDockGroupLinks {
   actions: GameDockLink[];
 }
 
-const coreDockSceneOrder = ['cultivator', 'inventory', 'map', 'mail'] as const;
+const coreDockSceneOrder = ['cultivator', 'inventory', 'cave', 'mail'] as const;
 
 const expandedMenuColumns = [
   ['cultivation', 'sect', 'adventure', 'combat'],
@@ -48,6 +48,7 @@ export const gameDockGroups: GameNavGroup[] = [
         id: 'cave',
         sceneLabel: '洞府',
         href: '/game',
+        coreDockLabel: '洞府',
       },
       {
         id: 'storage',
@@ -191,8 +192,13 @@ export const gameDockGroups: GameNavGroup[] = [
       {
         id: 'sect-abilities',
         sceneLabel: '宗门演武',
-        href: '/game/sect/arena?workspace=loadout&npc=instructor',
-        expandedDockLabel: '📜 宗门神通',
+        href: '/game/sect/arena',
+      },
+      {
+        id: 'sect-methods',
+        sceneLabel: '宗门心法',
+        href: '/game/cultivator?tab=sect',
+        expandedDockLabel: '📜 宗门心法',
       },
       { id: 'sect-onboarding', sceneLabel: '诸宗山门' },
       { id: 'sect-transfer', sceneLabel: '欺天台 · 转宗' },
@@ -224,7 +230,6 @@ export const gameDockGroups: GameNavGroup[] = [
         id: 'map',
         sceneLabel: '山河舆图',
         href: '/game/map-v2',
-        coreDockLabel: '地图',
         expandedDockLabel: '🗺️ 修仙界地图',
       },
       {
@@ -277,6 +282,11 @@ export const gameDockGroups: GameNavGroup[] = [
       {
         id: 'refine',
         sceneLabel: '炼器室',
+      },
+      {
+        id: 'equipment-codex',
+        sceneLabel: '装备图鉴',
+        href: '/game/craft/refine/codex',
       },
     ],
   },

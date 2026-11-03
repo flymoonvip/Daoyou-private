@@ -11,10 +11,7 @@ export {
   type SectFacilityState,
   type SectRankRequirement,
 } from '@daoyou/game-domain/sects';
-import {
-  getRealmEntryStage,
-  getRealmStageRank,
-} from '@daoyou/game-domain/progression';
+import { getRealmStageRank } from '@daoyou/game-domain/progression';
 
 import type { RealmStage, RealmType } from '@daoyou/constants/realms';
 
@@ -44,7 +41,6 @@ export function realmMeetsSectRank(
   requiredRealm: RealmType,
 ): boolean {
   return (
-    getRealmStageRank(realm, stage) >=
-    getRealmStageRank(requiredRealm, getRealmEntryStage(requiredRealm))
+    getRealmStageRank(realm, stage) >= getRealmStageRank(requiredRealm, '初期')
   );
 }

@@ -34,16 +34,16 @@ describe('atlas single-purpose locations', () => {
     }
     expect(
       nodes.filter((node) => getAtlasCategory(node) === 'wild'),
-    ).toHaveLength(10);
+    ).toHaveLength(26);
     expect(
       nodes.filter((node) => getAtlasCategory(node) === 'dungeon'),
-    ).toHaveLength(22);
+    ).toHaveLength(31);
     expect(
       nodes.filter((node) => getAtlasCategory(node) === 'market'),
     ).toHaveLength(9);
     expect(
       nodes.filter((node) => getAtlasCategory(node) === 'sect'),
-    ).toHaveLength(5);
+    ).toHaveLength(8);
   });
 
   it('makes Qingxi slope exclusively a wild habitat, including its authoritative config', () => {
@@ -56,7 +56,7 @@ describe('atlas single-purpose locations', () => {
       getAtlasLocations().filter((node) =>
         matchesAtlasCategories(node, ['wild', 'dungeon']),
       ),
-    ).toHaveLength(32);
+    ).toHaveLength(57);
   });
 
   it('uses actual dungeon entrances rather than lore tags or dangerous names', () => {

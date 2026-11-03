@@ -4,32 +4,9 @@ import type { ResolvedDungeonMapConfig, MapNodeInfo } from '@daoyou/game-domain/
 
 import type { DungeonDifficultyTier } from '@daoyou/game-domain/dungeon';
 
-import type { BaseRealmStage, RealmStage } from '@daoyou/constants/realms';
+import type { RealmStage } from '@daoyou/constants/realms';
 
-import {
-  QI_LAYER_VALUES,
-  REALM_ORDER,
-  isQiLayerStage,
-  type RealmType,
-} from '@daoyou/constants/realms';
-
-const BASE_STAGE_ORDER: readonly BaseRealmStage[] = ['初期', '中期', '后期', '圆满'];
-
-/**
- * 把任意阶段标签折算成大境界四等分档位。
- * 炼气十三层按其相对位置映射到同样的四档，保证秘境敌人档位选择不因炼气分层而错位。
- */
-function stageQuartile(stage: RealmStage): number {
-  if (isQiLayerStage(stage)) {
-    const index = QI_LAYER_VALUES.indexOf(stage);
-    return Math.min(
-      BASE_STAGE_ORDER.length - 1,
-      Math.floor((index * BASE_STAGE_ORDER.length) / QI_LAYER_VALUES.length),
-    );
-  }
-  const index = BASE_STAGE_ORDER.indexOf(stage as BaseRealmStage);
-  return index === -1 ? 0 : index;
-}
+import { REALM_ORDER, type RealmType } from '@daoyou/constants/realms';
 
 export function resolveDungeonMapConfig(
   node: MapNodeInfo,
@@ -74,7 +51,7 @@ export function clampDungeonEnemyRealmStage(
     return realmStage;
   }
 
-  if (stageQuartile(realmStage) <= 1) {
+  if (realmStage === '初期' || realmStage === '中期') {
     return config.allowedEnemyRealmStages[0] ?? '初期';
   }
 

@@ -2,7 +2,7 @@ import { formatContentPackErrors } from '@daoyou/game-domain/content-pack-errors
 import { z } from 'zod';
 import { isOpenEquipmentLevel } from '@daoyou/game-domain/equipment';
 import { equipmentRealm } from '../equipment/realm.js';
-import { getRealmEntryLevel } from '@daoyou/game-domain/progression';
+import { getRealmStageLevel as combatCharacterLevel } from '@daoyou/game-domain/progression';
 import { findItemDefinition } from '@daoyou/game-content/items';
 import { TOWER_MIN_REALM } from '../tower/helpers.js';
 import { REWARDS_TOWER_DATA as raw } from '@daoyou/game-content/rewards/tower';
@@ -68,7 +68,7 @@ export function loadTowerRewardPack(data: unknown) {
         return (
           isOpenEquipmentLevel(item.level!) &&
           equipmentRealm(item.level!).requiredLevel <=
-            getRealmEntryLevel(TOWER_MIN_REALM)
+            combatCharacterLevel(TOWER_MIN_REALM, '初期')
         );
       })
     )

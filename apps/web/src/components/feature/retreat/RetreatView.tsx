@@ -21,7 +21,6 @@ import {
 } from '@daoyou/game-content/cultivation';
 import { getGameConceptLabel } from '@daoyou/game-content/presentation/concepts';
 import { QI_ACTION_COSTS } from '@daoyou/game-content/qi/config';
-import { getRealmLastStage } from '@daoyou/game-domain/progression';
 import { getNextMajorRealm } from '@daoyou/game-rules/consumables/breakthrough';
 import { getNextStage } from '@daoyou/game-rules/cultivation';
 import { useState } from 'react';
@@ -326,9 +325,8 @@ export function RetreatView({ sectContext }: RetreatViewProps) {
   const majorGateKey =
     retreatResult && isSuccessfulBreakthrough(retreatResult)
       ? 'toStage' in retreatResult.summary &&
+        retreatResult.summary.toStage === '圆满' &&
         retreatResult.summary.toRealm &&
-        retreatResult.summary.toStage ===
-          getRealmLastStage(retreatResult.summary.toRealm) &&
         getNextMajorRealm(retreatResult.summary.toRealm)
         ? `${retreatResult.summary.fromRealm}${retreatResult.summary.fromStage}-${retreatResult.summary.toRealm}`
         : null
@@ -380,7 +378,7 @@ export function RetreatView({ sectContext }: RetreatViewProps) {
           headerMeta={headerMeta}
         >
           <GameSceneSection>
-            <div className="border-ink/10 bg-bgpaper/70 border border-dashed px-4 py-4 text-sm leading-7">
+            <div className="border-ink/10 bg-paper-2 border border-dashed px-4 py-4 text-sm leading-7">
               前尘回响尚未收束，听完这一段，再踏入轮回。
             </div>
           </GameSceneSection>

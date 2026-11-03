@@ -15,12 +15,20 @@ import {
 import { getTowerBlessingEffectPreview } from './presentation.js';
 
 describe('tower helpers', () => {
-  it('limits tower eligibility to foundation establishment and above', () => {
-    expect(TOWER_ELIGIBLE_REALMS).toEqual(['筑基', '金丹', '元婴', '化神']);
+  it('limits tower eligibility to golden core and above', () => {
+    expect(TOWER_ELIGIBLE_REALMS).toEqual([
+      '金丹',
+      '元婴',
+      '化神',
+      '炼虚',
+      '合体',
+      '大乘',
+      '渡劫',
+    ]);
     expect(isTowerRealmEligible('炼气')).toBe(false);
-    expect(isTowerRealmEligible('筑基')).toBe(true);
+    expect(isTowerRealmEligible('筑基')).toBe(false);
     expect(isTowerRealmEligible('金丹')).toBe(true);
-    expect(isTowerRealmEligible('化神')).toBe(true);
+    expect(isTowerRealmEligible('渡劫')).toBe(true);
   });
 
   it('maps floor kinds and realm stages deterministically', () => {

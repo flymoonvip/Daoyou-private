@@ -16,7 +16,7 @@
     },
     "minRealm": {
       "type": "string",
-      "const": "筑基"
+      "const": "金丹"
     },
     "difficultyStep": {
       "type": "integer",
@@ -48,6 +48,11 @@
           "minimum": 0,
           "maximum": 0.01
         },
+        "survivalScale": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 3
+        },
         "types": {
           "type": "object",
           "properties": {
@@ -61,11 +66,7 @@
               "$ref": "#/$defs/__schema2"
             }
           },
-          "required": [
-            "normal",
-            "elite",
-            "boss"
-          ],
+          "required": ["normal", "elite", "boss"],
           "additionalProperties": false
         }
       },
@@ -73,6 +74,7 @@
         "hpGrowth",
         "outputGrowth",
         "defenseGrowth",
+        "survivalScale",
         "types"
       ],
       "additionalProperties": false
@@ -89,16 +91,20 @@
         "化神": {
           "$ref": "#/$defs/__schema3"
         },
-        "筑基": {
+        "炼虚": {
+          "$ref": "#/$defs/__schema3"
+        },
+        "合体": {
+          "$ref": "#/$defs/__schema3"
+        },
+        "大乘": {
+          "$ref": "#/$defs/__schema3"
+        },
+        "渡劫": {
           "$ref": "#/$defs/__schema3"
         }
       },
-      "required": [
-        "金丹",
-        "元婴",
-        "化神",
-        "筑基"
-      ],
+      "required": ["金丹", "元婴", "化神", "炼虚", "合体", "大乘", "渡劫"],
       "additionalProperties": false
     }
   },
@@ -128,11 +134,7 @@
         },
         "kind": {
           "type": "string",
-          "enum": [
-            "normal",
-            "elite",
-            "boss"
-          ]
+          "enum": ["normal", "elite", "boss"]
         },
         "realmStage": {
           "type": "string",
@@ -142,12 +144,7 @@
           "anyOf": [
             {
               "type": "string",
-              "enum": [
-                "C",
-                "B",
-                "A",
-                "S"
-              ]
+              "enum": ["C", "B", "A", "S"]
             },
             {
               "type": "null"
@@ -155,12 +152,7 @@
           ]
         }
       },
-      "required": [
-        "floor",
-        "kind",
-        "realmStage",
-        "milestone"
-      ],
+      "required": ["floor", "kind", "realmStage", "milestone"],
       "additionalProperties": false
     },
     "__schema2": {
@@ -175,10 +167,7 @@
           "$ref": "#/$defs/__schema0"
         }
       },
-      "required": [
-        "rounds",
-        "output"
-      ],
+      "required": ["rounds", "output"],
       "additionalProperties": false
     },
     "__schema3": {
@@ -217,6 +206,9 @@
         "cultivate": {
           "type": "integer",
           "$ref": "#/$defs/__schema0"
+        },
+        "sealHit": {
+          "$ref": "#/$defs/__schema0"
         }
       },
       "required": [
@@ -230,7 +222,8 @@
         "speed",
         "hit",
         "dodge",
-        "cultivate"
+        "cultivate",
+        "sealHit"
       ],
       "additionalProperties": false
     }

@@ -2,7 +2,6 @@ import { BREAKTHROUGH_CHALLENGES } from '@daoyou/game-content/combat/breakthroug
 import { COMBAT_V6_SECT_DEFINITIONS } from '@daoyou/game-content/sects';
 import type { CombatV6TrainingPlayerInput } from '@daoyou/game-domain/combat';
 import { type BreakthroughChallengeId } from '@daoyou/game-domain/combat/challenges';
-import { getRealmLastStage } from '@daoyou/game-domain/progression';
 import type { CultivatorCondition } from '@daoyou/game-domain/condition';
 import { describe, expect, it } from 'vitest';
 import { generateStarterBeast } from '../../beasts/generator.js';
@@ -41,7 +40,7 @@ function player(id: string): CombatV6TrainingPlayerInput {
       id,
       name: id,
       realm: '炼气',
-      realm_stage: '九层',
+      realm_stage: '后期',
       attributes: {
         vitality: 10,
         strength: 10,
@@ -115,7 +114,7 @@ describe('突破试炼普通 V6 战斗', () => {
       const input = towerReferenceBuild(
         'lingxiao',
         BREAKTHROUGH_CHALLENGES[id].fromRealm,
-        getRealmLastStage(BREAKTHROUGH_CHALLENGES[id].fromRealm),
+        '圆满',
       );
       const first = createBreakthroughHost(
         input,
@@ -326,7 +325,7 @@ describe('突破试炼普通 V6 战斗', () => {
   it('普通回合上限为百回合，双方未胜时返回平局', () => {
     const initial = createBreakthroughHost(
       player('player'),
-      'law_insight_void',
+      'tribulation_body',
       true,
       9,
     ).runtimeSnapshot();
@@ -362,7 +361,7 @@ function referenceBuild(
   const input = towerReferenceBuild(
     sectId,
     BREAKTHROUGH_CHALLENGES[id].fromRealm,
-    getRealmLastStage(BREAKTHROUGH_CHALLENGES[id].fromRealm),
+    '圆满',
     path,
   );
   if (!trained) {

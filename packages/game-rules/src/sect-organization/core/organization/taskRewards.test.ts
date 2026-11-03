@@ -63,15 +63,15 @@ describe('sect task rewards', () => {
   it('applies the weekly cadence before deriving the spirit-stone reward', () => {
     expect(
       calculateRealmSectTaskReward({
-        realm: '化神',
+        realm: '渡劫',
         realmStage: '圆满',
         difficulty: 'elite',
         cadence: 'weekly',
         reward: { baseContribution: 60 },
       }),
     ).toMatchObject({
-      cultivationExp: 4_860,
-      spiritStones: 24_300,
+      cultivationExp: 22_680,
+      spiritStones: 113_400,
       contribution: 96,
     });
   });
@@ -103,13 +103,13 @@ describe('sect task rewards', () => {
     ).toBe(1_000);
     expect(
       calculateRealmSectTaskReward({
-        realm: '化神',
+        realm: '渡劫',
         realmStage: '初期',
         difficulty: 'easy',
         cadence: 'daily',
         reward: { baseContribution: 30 },
       }).spiritStones,
-    ).toBe(5_000);
+    ).toBe(10_500);
   });
 
   it('uses the higher of the configured and generated difficulty', () => {

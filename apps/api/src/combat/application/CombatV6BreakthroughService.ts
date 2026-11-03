@@ -7,7 +7,6 @@ import { redisLockKeys, withRedisLock } from '@server/lib/redis/lock.js';
 import { settleBeastDeaths } from '@server/lib/repositories/combatV6BeastRepository.js';
 import { archiveCombatV6Replay } from '@server/lib/repositories/combatV6ReplayRepository.js';
 import { lockCultivatorForStateMutation } from '@server/lib/repositories/playerStateRepository.js';
-import { resolveBattleDeath } from '@server/lib/lifespan/handleLifespan.js';
 import {
   findCultivatorTaskById,
   updateCultivatorTask,
@@ -31,7 +30,6 @@ import { BreakthroughHost, createBreakthroughHost } from '@daoyou/game-rules/com
 import { hasActiveConditionStatus } from '@daoyou/game-rules/condition';
 import type { CultivatorCondition } from '@daoyou/game-domain/condition';
 import type { TaskInstanceMetadata } from '@daoyou/game-domain/tasks';
-import type { RealmStage, RealmType } from '@daoyou/constants/realms';
 import { eq } from 'drizzle-orm';
 import { randomInt, randomUUID } from 'node:crypto';
 import { ConditionService } from '@server/cultivator/application/ConditionService.js';
@@ -219,42 +217,24 @@ async function settle(
     throw new Error('任务战局不匹配');
   if (pointer.settled) return;
   const [player] = await tx
-    .select({ condition: cultivators.condition, realm: cultivators.realm, realmStage: cultivators.realm_stage })
+    .select({ condition: cultivators.condition })
     .from(cultivators)
     .where(eq(cultivators.id, actor.cultivatorId));
   if (!player?.condition) throw new Error('角色资源缺失');
   const final = host.state.units.find((unit) => unit.id === host.playerId)!;
-  // 气血可以归零：战斗结算不再锁 1 点血，归零即触发战斗结局判定。
-  const hp = Math.max(0, Math.floor(final.attrs.hp));
-  let condition = ConditionService.applyCombatV6Resources(
-    player.condition as CultivatorCondition,
-    {
-      hp,
-      mp: final.attrs.mp,
-      maxHp: final.attrs.maxHp,
-      maxMp: final.attrs.maxMp,
-    },
-  );
-  let invalidateDeath: (() => Promise<void>) | undefined;
-  if (hp <= 0) {
-    const enemyLevel = Math.max(
-      0,
-      ...host.state.units
-        .filter((u) => u.side !== final.side)
-        .map((u) => u.level),
-    );
-    const resolved = await resolveBattleDeath(actor.cultivatorId, tx, {
-      playerRealm: player.realm as RealmType,
-      playerRealmStage: player.realmStage as RealmStage,
-      enemyLevel,
-      condition,
-    });
-    condition = resolved.condition;
-    invalidateDeath = resolved.invalidateDeath;
-  }
   await tx
     .update(cultivators)
-    .set({ condition })
+    .set({
+      condition: ConditionService.applyCombatV6Resources(
+        player.condition as CultivatorCondition,
+        {
+          hp: Math.max(1, final.attrs.hp),
+          mp: final.attrs.mp,
+          maxHp: final.attrs.maxHp,
+          maxMp: final.attrs.maxMp,
+        },
+      ),
+    })
     .where(eq(cultivators.id, actor.cultivatorId));
   await settleBeastDeaths(
     actor.cultivatorId,
@@ -309,7 +289,6 @@ async function settle(
       eventType: 'tasks.challenge_resolved',
     })),
   });
-  return invalidateDeath;
 }
 export async function changeBreakthroughBattle(
   actor: Actor,
@@ -371,12 +350,10 @@ export async function changeBreakthroughBattle(
           throw new Error('战斗状态已变化，请刷新');
       }
       if (host.finished) {
-        const invalidateDeath = await db.transaction(async (tx) => {
-          const invalidation = await settle(actor, runtime, host, tx);
+        await db.transaction(async (tx) => {
+          await settle(actor, runtime, host, tx);
           lease.assertHeld();
-          return invalidation;
         });
-        if (invalidateDeath) await invalidateDeath();
         await redis.expire(key(id), 86400);
       }
       return view(runtime, host.finished, after);

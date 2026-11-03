@@ -6,7 +6,6 @@ import type {
 } from '@daoyou/contracts/task';
 import type { Cultivator } from '@daoyou/game-domain/character';
 import type { TaskInstance } from '@daoyou/game-domain/tasks';
-import { getRealmLastStage } from '@daoyou/game-domain/progression';
 import { getNextMajorRealm } from '@daoyou/game-rules/consumables/breakthrough';
 
 async function readJsonOrThrow<T>(response: Response): Promise<T> {
@@ -59,7 +58,7 @@ export function findCurrentMajorBreakthroughTask(
   cultivator: Pick<Cultivator, 'realm' | 'realm_stage'> | null | undefined,
   tasks: TaskInstance[],
 ): TaskInstance | null {
-  if (!cultivator || cultivator.realm_stage !== getRealmLastStage(cultivator.realm)) {
+  if (!cultivator || cultivator.realm_stage !== '圆满') {
     return null;
   }
 

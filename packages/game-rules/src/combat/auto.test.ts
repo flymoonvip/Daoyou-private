@@ -188,6 +188,35 @@ function conditionedDefend(
   };
 }
 describe('当前场次托管', () => {
+  it('人物隔离一名敌人后，灵兽攻击另一名敌人而不打醒睡眠', () => {
+    const sleep: StatusDef = { id: 'sleep', kind: 'sleep', name: '入梦', category: 'control', blocksAction: true, breakOnDamage: true };
+    const control: SkillDef = { id: 'sleep-skill', name: '催眠', tags: ['spell', 'support'], sealBase: 100, targeting: { side: 'enemy' }, effects: [{ type: 'applyStatus', statusId: sleep.id, duration: 3, hit: 'seal' }] };
+    const battle = createBattle({
+      seed: 42, ruleset: daoyouRulesetV6, skills: [control], statusDefs: [sleep],
+      units: [
+        { id: 'player', name: '人物', kind: 'player', side: 0, level: 60, skills: [control.id], attrs: { hp: 1000, maxHp: 1000, mp: 100, physicalAtk: 10, speed: 50 } },
+        { id: 'pet', name: '灵兽', kind: 'pet', ownerId: 'player', side: 0, level: 60, attrs: { hp: 1000, physicalAtk: 100, speed: 40 } },
+        { id: 'enemy', name: '敌人', kind: 'npc', side: 1, level: 60, attrs: { hp: 10000, speed: 10 } },
+        { id: 'enemy2', name: '敌人二', kind: 'npc', side: 1, level: 60, attrs: { hp: 10000, speed: 10 } },
+      ],
+    });
+    const choose = () => automaticCommands(battle.snapshot(), 'player', [control], id => battle.queryCommands(id), { statusDefs: [sleep] });
+    expect(choose()).toEqual([
+      { unitId: 'player', command: { type: 'skill', skillId: control.id, targets: ['enemy'] } },
+      { unitId: 'pet', command: { type: 'attack', target: 'enemy2' } },
+    ]);
+    Object.assign(battle.unit('enemy').attrs, { speed: 9999, sealResist: 9999, physicalAtk: 9999 });
+    expect(choose()[1].command).toEqual({ type: 'attack', target: 'enemy2' });
+  });
+
+  it('只向己方观察暴露护身本轮是否已使用', () => {
+    const battle = fixture();
+    battle.unit('player').flags.hostileActionGuardRound = 1;
+    battle.unit('enemy').flags.hostileActionGuardRound = 1;
+    const observed = observeAutoBattle(battle.snapshot(), 'player', []);
+    expect(observed.units.find(unit => unit.id === 'player')!.flags.hostileActionGuardRound).toBe(1);
+    expect(observed.units.find(unit => unit.id === 'enemy')!.flags.hostileActionGuardRound).toBeUndefined();
+  });
   it.each([
     { expected: 1625 },
     { percentageDamage: true, expected: 1000 },
@@ -590,7 +619,7 @@ describe('当前场次托管', () => {
     battle.unit('pet').flags.downed = true;
     expect(chooseWithStrategy(battle, strategy, defs).type).toBe('skill');
   });
-  it.each(['combat_auto_rules_v3', undefined])(
+  it.each(['combat_auto_rules_v3', 'combat_auto_rules_v6', undefined])(
     '旧自动策略版本（%s）忽略冻结战术，改用临场应变',
     (version) => {
       const battle = fixture(['strike']);
@@ -958,7 +987,7 @@ describe('当前场次托管', () => {
             ).toBe(true);
         }
         const early = projectCharacterToCombatV6({
-          ...towerReferenceBuild(definition.id, '炼气', '五层', index as 0 | 1),
+          ...towerReferenceBuild(definition.id, '炼气', '中期', index as 0 | 1),
           side: 0,
           slot: 0,
           resourcePolicy: 'full',
@@ -971,11 +1000,54 @@ describe('当前场次托管', () => {
             ? [rule.action.skillId]
             : [],
         );
-        expect(unlearned).toEqual(
-          path.id === 'wuxiang.path.compassion' ? ['wuxiang.skill.nectar'] : [],
-        );
+        const expectedUnlearned: Record<string, string[]> = {
+          'wuxiang.path.compassion': ['wuxiang.skill.nectar'],
+          'wanqiao.path.resonance': [
+            'wanqiao.skill.rest', 'wanqiao.skill.resonate',
+            'wanqiao.skill.chorus', 'wanqiao.skill.pierce',
+          ],
+          'wanqiao.path.subtlety': [
+            'wanqiao.skill.rest', 'wanqiao.skill.coda',
+            'wanqiao.skill.catalyze', 'wanqiao.skill.undertone',
+            'wanqiao.skill.echo', 'wanqiao.skill.pierce',
+          ],
+          'xiaoyue.path.blood': [
+            'xiaoyue.skill.transform', 'xiaoyue.skill.chain_strike',
+            'xiaoyue.skill.eagle_strike', 'xiaoyue.skill.lion_strike',
+          ],
+          'xiaoyue.path.bond': [
+            'xiaoyue.skill.transform', 'xiaoyue.skill.lion_strike',
+            'xiaoyue.skill.eagle_strike', 'xiaoyue.skill.lion_strike',
+          ],
+        };
+        expect(unlearned).toEqual(expectedUnlearned[path.id] ?? []);
       }
     }
+  });
+  it.each([0, 1] as const)('万窍山道途%s在尚未学会主动法术时托管使用普攻', pathIndex => {
+    const projection = projectCharacterToCombatV6({
+      ...towerReferenceBuild('wanqiao', '炼气', '中期', pathIndex),
+      side: 0, slot: 0, resourcePolicy: 'full',
+    });
+    expect(projection.ok).toBe(true);
+    if (!projection.ok) return;
+    const battle = createBattle({
+      seed: 42, versions: COMBAT_V6_CHARACTER_BUILD_VERSIONS,
+      ruleset: daoyouRulesetV6, skills: [...projection.skills],
+      statusDefs: [...projection.statusDefs],
+      units: [projection.unit, {
+        id: 'enemy', name: '敌人', kind: 'npc', side: 1, level: 10,
+        attrs: { hp: 10000, maxHp: 10000, speed: 1 },
+      }],
+    });
+    const path = COMBAT_V6_SECT_DEFINITIONS.wanqiao.paths[pathIndex];
+    const command = automaticCommands(
+      battle.snapshot(), projection.unit.id, projection.skills,
+      id => battle.queryCommands(id),
+      { statusDefs: projection.statusDefs,
+        strategies: { [projection.unit.id]: DEFAULT_AUTO_STRATEGIES[path.id] } },
+    )[0].command;
+    expect(command).toMatchObject({ type: 'attack', target: 'enemy' });
   });
   it('灵兽选择优于普攻的主动物法技能，缺蓝或技能伤害不足时普攻', () => {
     const physical: SkillDef = {
@@ -1054,9 +1126,9 @@ describe('当前场次托管', () => {
     pet.attrs.mp = 79;
     expect(choosePet().type).toBe('attack');
   });
-  it('化神红尘正常构筑会进攻，而不是反复施放剑意增益', () => {
-    const lingxiao = towerReferenceBuild('lingxiao', '化神');
-    const youdu = towerReferenceBuild('youdu', '化神');
+  it('大乘红尘正常构筑会进攻，而不是反复施放剑意增益', () => {
+    const lingxiao = towerReferenceBuild('lingxiao', '大乘');
+    const youdu = towerReferenceBuild('youdu', '大乘');
     youdu.cultivator.id = '00000000-0000-4000-8000-000000000003';
     youdu.beasts = undefined;
     const input = compileRankingBattle([lingxiao, youdu], 42);
@@ -1722,7 +1794,7 @@ for (const definition of Object.values(COMBAT_V6_SECT_DEFINITIONS)) {
         cultivator: {
           id,
           name: id,
-          realm: '化神',
+          realm: '渡劫',
           realm_stage: '圆满',
           attributes: {
             vitality: 50,

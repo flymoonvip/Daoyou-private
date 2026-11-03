@@ -112,6 +112,8 @@
                   "afterStrike",
                   "onFatal",
                   "onStatusRemoved",
+                  "onStatusResolved",
+                  "onHostileActionIntercepted",
                   "onDeath",
                   "onRoundStart",
                   "onRoundEnd",
@@ -120,6 +122,8 @@
                   "onCritRoll",
                   "onHitRoll",
                   "onHealCalc",
+                  "afterHeal",
+                  "onPetSummoned",
                   "onBarrierCalc",
                   "onWoundCalc"
                 ]
@@ -134,6 +138,7 @@
                 "type": "string",
                 "enum": [
                   "self",
+                  "ownedPet",
                   "hookTarget",
                   "hookSource",
                   "others"
@@ -970,6 +975,11 @@
         },
         "name": {
           "$ref": "#/$defs/__schema2"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
         },
         "kind": {
           "$ref": "#/$defs/__schema0"

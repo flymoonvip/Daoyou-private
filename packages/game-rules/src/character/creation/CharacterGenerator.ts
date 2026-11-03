@@ -39,14 +39,14 @@ export function buildGeneratedCharacter(
     raceNarrative: data.race_narrative,
 
     realm: '炼气',
-    realm_stage: '一层',
+    realm_stage: '初期',
     age,
     lifespan,
 
     attributes,
     unallocated_attribute_points: getRealmStageUnallocatedAttributeBudget(
       '炼气',
-      '一层',
+      '初期',
     ),
     spiritual_roots,
     status: 'active',

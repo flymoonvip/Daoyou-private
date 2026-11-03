@@ -9,10 +9,11 @@ import {
 import { COMBAT_V6_SECT_DEFINITIONS } from '@daoyou/game-content/sects';
 import { compileSectDefinitionV6 } from './compiler.js';
 import { createEmptySectCombatProgressV6, createFreshCombatV6MethodLevels } from './build-state.js';
+import { SECT_PANEL_LABELS } from './presentation.js';
 
 describe('宗门心法配置', () => {
   it('编辑器 Schema 与运行时结构一致', () => {
-    expect(z.toJSONSchema(SectMethodsPackShape)).toEqual(schema);
+    expect(z.toJSONSchema(SectMethodsPackShape, { reused: 'ref' })).toEqual(schema);
   });
   it('拒绝重复槽位、外宗 ID 和多个主心法', () => {
     for (const change of [
@@ -25,6 +26,16 @@ describe('宗门心法配置', () => {
       expect(() => loadSectMethodsPack(data)).toThrow('content/data/methods.json: sects.lingxiao');
     }
   });
+  it('心法简介可选但不能是空白或超长文案', () => {
+    for (const description of ['', '   ', '字'.repeat(501)]) {
+      const data = structuredClone(raw);
+      data.sects.wanqiao[0].description = description;
+      expect(() => loadSectMethodsPack(data)).toThrow('description');
+    }
+    const old = structuredClone(raw);
+    Reflect.deleteProperty(old.sects.wanqiao[0], 'description');
+    expect(() => loadSectMethodsPack(old)).not.toThrow();
+  });
   it('修改心法面板系数后实际编译采用新值', () => {
     const data = structuredClone(raw);
     data.sects.lingxiao[0].panel.value = 3;
@@ -33,5 +44,17 @@ describe('宗门心法配置', () => {
     const result = compileSectDefinitionV6({ definition, progress, characterLevel: 10 });
     expect(result.ok).toBe(true);
     if (result.ok) expect(result.projection.panel).toContainEqual({ attr: 'physicalAtk', mode: 'add', value: 3 });
+  });
+  it('心法与经脉面板属性都有中文名', () => {
+    const attrs = new Set<string>();
+    for (const definition of Object.values(COMBAT_V6_SECT_DEFINITIONS)) {
+      for (const method of definition.methods) if (method.panel) attrs.add(method.panel.attr);
+      for (const path of definition.paths) for (const node of path.nodes) for (const panel of node.panel ?? []) attrs.add(panel.attr);
+    }
+    for (const attr of attrs) {
+      const label = SECT_PANEL_LABELS[attr];
+      expect(label, attr).toBeTruthy();
+      expect(label, attr).not.toMatch(/[A-Za-z]/);
+    }
   });
 });

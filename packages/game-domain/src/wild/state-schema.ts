@@ -117,7 +117,6 @@ const WildSettlementSchema = z
     round: z.number().int().positive(),
     entry: WildResourcesSchema,
     final: WildResourcesSchema,
-    enemyLevel: z.number().int().nonnegative().optional(),
   })
   .strict()
   .refine((v) => v.metadata.sourceType === 'wild-encounter');

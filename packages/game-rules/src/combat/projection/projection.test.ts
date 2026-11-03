@@ -48,7 +48,7 @@ function cultivator(
     id: "cultivator-a",
     name: "甲",
     realm: "炼气",
-    realm_stage: "一层",
+    realm_stage: "初期",
     attributes: { ...BASE_ATTRIBUTES },
     ...overrides,
   }
@@ -167,7 +167,7 @@ describe("base cultivator projection", () => {
     })
   })
 
-  it("maps realm endpoints to combat levels 5 and 100", () => {
+  it("maps realm endpoints to combat levels 5 and 180", () => {
     const first = projectCultivatorBaseToCombatV6({
       cultivator: cultivator(),
       side: 0,
@@ -175,14 +175,14 @@ describe("base cultivator projection", () => {
       resourcePolicy: "full",
     })
     const last = projectCultivatorBaseToCombatV6({
-      cultivator: cultivator({ realm: "化神", realm_stage: "圆满" }),
+      cultivator: cultivator({ realm: "渡劫", realm_stage: "圆满" }),
       side: 1,
       slot: 0,
       resourcePolicy: "full",
     })
 
     expect(first.ok && first.unit.level).toBe(5)
-    expect(last.ok && last.unit.level).toBe(100)
+    expect(last.ok && last.unit.level).toBe(180)
   })
 
   it("uses persistent current resources, ignores old maxima, clamps, and warns about statuses", () => {

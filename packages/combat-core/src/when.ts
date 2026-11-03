@@ -5,18 +5,28 @@ import { evalExpr } from './expr.js'
  */
 import type { BattleContext } from "./context.js"
 import type { DamageKind, DamageOrigin, StatusCategory, StatusFlag } from "./enums.js"
-import type { EffectWhen, SkillDef, SkillId, Unit } from "./types.js"
+import type { EffectWhen, SkillDef, SkillId, StatusApplyResult, Unit } from "./types.js"
 import { isStanding, resourceOf } from "./units.js"
 
 export type WhenScope = {
+  statusId?: string
+  statusKind?: string
+  statusHit?: import('./enums.js').StatusHit
+  statusResult?: StatusApplyResult
+  statusChance?: number
+  statusDuration?: number
   removedStatusKind?: string
+  removedStatusRounds?: number
+  removedStatusSkillLevel?: number
   removedStatusCategory?: StatusCategory
   removedStatusDispellable?: boolean
+  removedStatusWasSeal?: boolean
   removedStatusFlags?: StatusFlag[]
   statusRemovedByAlly?: boolean
   dotStatusId?: string
   statusRemoveReason?: string
   originalResourceCost?: number
+  petEntryKind?: 'initial' | 'switch'
   source: Unit
   target?: Unit
   skill?: SkillDef
@@ -25,8 +35,10 @@ export type WhenScope = {
   origin?: DamageOrigin
   isPrimary?: boolean
   percentageDamage?: boolean
+  retaliationDamage?: boolean
   damage?: number
   hpDamage?: number
+  heal?: number
   /** 写入 marks 的前缀，通常是被动技能 id + 钩子下标 */
   markKey?: string
 }
@@ -77,12 +89,30 @@ export function targetStatusStacks(
 function markName(scope: WhenScope, round: number, when: EffectWhen): string | undefined {
   if (!scope.markKey) return undefined
   if (when.oncePerBattle) return `battle:${scope.markKey}`
+  if (when.oncePerRoundTarget) return scope.target ? `round:${round}:${scope.markKey}:${scope.target.id}` : undefined
   if (when.oncePerRound) return `round:${round}:${scope.markKey}`
   return undefined
 }
 
 export function matchesWhen(ctx: Pick<BattleContext, 'statusDefs' | 'currentAction'> & Partial<Pick<BattleContext, 'skills' | 'invokingAttackSkills'>> & { state: Pick<BattleContext['state'], 'round'> & Partial<Pick<BattleContext['state'], 'units'>> }, when: EffectWhen | undefined, scope: WhenScope): boolean {
   if (!when) return true
+  if (when.resolvedStatusIds && (!scope.statusId || !when.resolvedStatusIds.includes(scope.statusId))) return false
+  if (when.resolvedStatusKinds && (!scope.statusKind || !when.resolvedStatusKinds.includes(scope.statusKind))) return false
+  if (when.statusResults && (!scope.statusResult || !when.statusResults.includes(scope.statusResult))) return false
+  if (when.statusHit && scope.statusHit !== when.statusHit) return false
+  if (when.targetHasNegativeSpellResistance !== undefined) {
+    const target = scope.target;
+    const resistant = Boolean(target && ctx.skills && passiveSkills(ctx.skills, target).some(passive => {
+      const innate = passive.innate;
+      return (innate?.negativeSpellResistance ?? 0) > 0 || (innate?.sealHitTakenFactor ?? 1) < 1 ||
+        innate?.immuneStatusCategories?.includes('control') ||
+        innate?.immuneStatusKinds?.some(kind => [...ctx.statusDefs.values()].some(def => def.kind === kind &&
+          (def.category === 'control' || def.blocksAction || def.blocksSpell || def.blocksPhysical || def.blocksDamagingSpells)));
+    }));
+    if (resistant !== when.targetHasNegativeSpellResistance) return false;
+  }
+  if (when.petEntryKind && scope.petEntryKind !== when.petEntryKind) return false
+  if (when.retaliationDamage !== undefined && Boolean(scope.retaliationDamage) !== when.retaliationDamage) return false
   if (when.rootActionOnly && ctx.invokingAttackSkills) return false
   if (when.sameAttackTarget !== undefined && (Boolean(scope.target && scope.source.actionHistory?.lastAttackTargetId === scope.target.id) !== when.sameAttackTarget)) return false
   if (when.previousAttackKind && scope.source.actionHistory?.lastAttackKind !== when.previousAttackKind) return false
@@ -92,11 +122,12 @@ export function matchesWhen(ctx: Pick<BattleContext, 'statusDefs' | 'currentActi
     if (repeated !== when.repeatedIncomingSkill) return false
   }
   if (when.excludeSpellRepeat && ctx.currentAction?.spellRepeatFactor !== undefined) return false
-  if (when.expression !== undefined && !evalExpr(when.expression, { allyPetSkillUnused: ctx.currentAction?.sourceId === scope.source.id ? ctx.currentAction.allyPetSkillUnused : false, source: scope.source, target: scope.target, damage: scope.damage, hpDamage: scope.hpDamage, skillLevel: scope.source.skillLevels[scope.skillId ?? ''] ?? scope.source.level, targets: 1, state: { ...ctx.state, units: ctx.state.units ?? [] } })) return false
+  if (when.expression !== undefined && !evalExpr(when.expression, { statusDuration: scope.statusDuration, statusChance: scope.statusChance, removedStatusRounds: scope.removedStatusRounds, removedStatusSkillLevel: scope.removedStatusSkillLevel, statusDefs: ctx.statusDefs, skills: ctx.skills, allyPetSkillUnused: ctx.currentAction?.sourceId === scope.source.id ? ctx.currentAction.allyPetSkillUnused : false, source: scope.source, target: scope.target, damage: scope.damage, hpDamage: scope.hpDamage, heal: scope.heal, skillLevel: scope.source.skillLevels[scope.skillId ?? ''] ?? scope.source.level, targets: 1, state: { ...ctx.state, units: ctx.state.units ?? [] } })) return false
   const units = ctx.state.units ?? []
   if (when.removedStatusKind && scope.removedStatusKind !== when.removedStatusKind) return false
   if (when.removedStatusCategory && scope.removedStatusCategory !== when.removedStatusCategory) return false
   if (when.removedStatusDispellable !== undefined && scope.removedStatusDispellable !== when.removedStatusDispellable) return false
+  if (when.removedStatusWasSeal !== undefined && scope.removedStatusWasSeal !== when.removedStatusWasSeal) return false
   if (when.removedStatusFlags && !when.removedStatusFlags.some(flag => scope.removedStatusFlags?.includes(flag))) return false
   if (when.excludedRemovedStatusFlags?.some(flag => scope.removedStatusFlags?.includes(flag))) return false
   if (when.statusRemovedByAlly !== undefined && scope.statusRemovedByAlly !== when.statusRemovedByAlly) return false
@@ -112,7 +143,17 @@ export function matchesWhen(ctx: Pick<BattleContext, 'statusDefs' | 'currentActi
   if (when.pvp !== undefined && units.some(u => u.side !== scope.source.side && u.kind === 'player') !== when.pvp) return false
   if (when.teamUniqueTag && units.filter(u => u.side === scope.source.side && u.kind === 'player' && u.tags.includes(when.teamUniqueTag!)).length !== 1) return false
   if (when.targetEnemy && (!scope.target || scope.target.side === scope.source.side)) return false
+  if (when.targetOtherAlly && (!scope.target || scope.target.id === scope.source.id || scope.target.side !== scope.source.side)) return false
   if (when.targetHasStandingPet !== undefined && (!scope.target || units.some(u => u.kind === 'pet' && u.ownerId === scope.target!.id && isStanding(u)) !== when.targetHasStandingPet)) return false
+  if (when.sourceHasStandingPet !== undefined && units.some(u => u.kind === 'pet' && u.ownerId === scope.source.id && isStanding(u)) !== when.sourceHasStandingPet) return false
+  if (when.sourceKind && scope.source.kind !== when.sourceKind) return false
+  if (when.sourceOwnedPetStatusKinds?.length && !units.some(u => u.kind === 'pet' && u.ownerId === scope.source.id && isStanding(u) && when.sourceOwnedPetStatusKinds!.some(kind => hasKind(u, [kind])))) return false
+  if (when.targetOwnerStatusKinds?.length) {
+    const owner = units.find(u => u.id === scope.target?.ownerId)
+    if (scope.target?.kind !== 'pet' || !owner || !when.targetOwnerStatusKinds.some(kind => hasKind(owner, [kind]))) return false
+  }
+  if (when.targetStatusFromSourceOwnerKinds?.length && (!scope.source.ownerId || !scope.target?.statuses.some(s => s.sourceId === scope.source.ownerId && when.targetStatusFromSourceOwnerKinds!.includes(s.kind)))) return false
+  if (when.targetHasSeal !== undefined && (!scope.target || scope.target.statuses.some(s => ctx.statusDefs.get(s.id)?.isSeal) !== when.targetHasSeal)) return false
   if (when.actionSucceeded && (!ctx.currentAction || ctx.currentAction.failed)) return false
   if (when.actionHealedTarget !== undefined && (Boolean(scope.target && ctx.currentAction?.healedTargetIds?.includes(scope.target.id)) !== when.actionHealedTarget)) return false
   if (when.actionKilledTarget !== undefined && (Boolean(scope.target && ctx.currentAction?.killedTargetIds?.includes(scope.target.id)) !== when.actionKilledTarget)) return false

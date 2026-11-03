@@ -17,7 +17,6 @@ import {
 } from '../exp-gain.js';
 import { buildPillCultivationExpInput } from '../../alchemy/pillCultivationExp.js';
 import type { RealmStage, RealmType } from '@daoyou/constants/realms';
-import { getRealmEntryStage } from '@daoyou/game-domain/progression';
 import {
   clampNonNegativeFinite,
   type BattleVictoryExpContext,
@@ -283,7 +282,7 @@ export function calculateDungeonExp(
 export function calculatePillExp(
   realm: RealmType,
   qualityScalar: number,
-  realmStage: RealmStage = getRealmEntryStage(realm),
+  realmStage: RealmStage = '初期',
   expCap?: number,
 ): number {
   return calculateSceneCultivationExp('pill', {

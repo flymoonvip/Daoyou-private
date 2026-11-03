@@ -7,13 +7,11 @@ import type { BreakthroughModifiers } from '@daoyou/game-domain/cultivation';
  */
 
 import {
-  REALM_STAGES,
+  REALM_STAGE_VALUES,
   REALM_VALUES,
   type RealmStage,
   type RealmType,
 } from '@daoyou/constants/realms';
-
-import { getRealmEntryStage } from '@daoyou/game-domain/progression';
 
 import type {
   CultivationProgress,
@@ -53,11 +51,17 @@ import {
 
 const REALM_ORDER = [...REALM_VALUES];
 
+const STAGE_ORDER = [...REALM_STAGE_VALUES];
+
 const LIFESPAN_BONUS_BY_REALM: Partial<Record<RealmType, number>> = {
   筑基: 200,
   金丹: 500,
   元婴: 1200,
   化神: 2000,
+  炼虚: 3000,
+  合体: 4000,
+  大乘: 5000,
+  渡劫: 8000,
 };
 
 /**
@@ -209,24 +213,22 @@ export function getNextStage(
   realm: RealmType,
   stage: RealmStage,
 ): { realm: RealmType; stage: RealmStage } | null {
-  const stages = REALM_STAGES[realm];
-  const stageIndex = stages.indexOf(stage);
+  const stageIndex = STAGE_ORDER.indexOf(stage);
 
   if (stageIndex === -1) return null;
 
-  // 不是本境界末段：进入同境界的下一阶段（炼气内为换层，大境界内为换阶段）
-  if (stageIndex < stages.length - 1) {
-    return { realm, stage: stages[stageIndex + 1] };
+  // 如果不是圆满，则进入下一阶段
+  if (stageIndex < STAGE_ORDER.length - 1) {
+    return { realm, stage: STAGE_ORDER[stageIndex + 1] };
   }
 
-  // 本境界末段（炼气十三层 / 大境界圆满）后进入下一大境界的起始阶段
+  // 圆满后进入下一大境界的初期
   const realmIndex = REALM_ORDER.indexOf(realm);
   if (realmIndex === -1 || realmIndex >= REALM_ORDER.length - 1) {
     return null; // 已达最高境界
   }
 
-  const nextRealm = REALM_ORDER[realmIndex + 1];
-  return { realm: nextRealm, stage: getRealmEntryStage(nextRealm) };
+  return { realm: REALM_ORDER[realmIndex + 1], stage: '初期' };
 }
 
 /**

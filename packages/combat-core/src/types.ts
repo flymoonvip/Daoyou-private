@@ -61,6 +61,8 @@ export type {
 export type UnitId = string;
 export type SkillId = string;
 export type StatusId = string;
+export type StatusApplyResult =
+  'applied' | 'miss' | 'immune' | 'rejected' | 'intercepted';
 
 export type CombatResourceState = {
   id: string;
@@ -192,6 +194,8 @@ export type StatusInstance = {
   speedMod: number;
   attrMods: Partial<Attrs>;
   storedTargetId?: UnitId;
+  /** 施加／刷新时的技能等级，供移除后的效果读取。 */
+  appliedSkillLevel?: number;
   /** 自然到期转入下一状态时沿用施法等级。 */
   transitionSkillLevel?: number;
   /** 周期数值沿用施加时的技能等级，快照恢复不重新读取施法者技能。 */
@@ -204,6 +208,8 @@ export type StatusInstance = {
 };
 
 export type UnitFlags = {
+  /** Shared by hostile-action guards; refreshing a status cannot reset this round's use. */
+  hostileActionGuardRound?: number;
   statusImmunityThroughRound?: Record<string, number>;
   capturedBy?: UnitId;
   reviveAtRound?: number;
@@ -265,6 +271,8 @@ export type Unit = {
   marks: string[];
   statuses: StatusInstance[];
   flags: UnitFlags;
+  /** A reflected fatal hit completes only after this unit's current action. */
+  pendingRetaliationFatal?: { sourceId: UnitId; skillId?: SkillId };
   command?: Command;
   lastCommand?: Command;
   lastTargetId?: UnitId;
@@ -342,12 +350,21 @@ export type LineupUnit = {
 };
 
 export type SkillTargeting = {
+  /** 排除来自本次施法者、已达到指定层数的目标。 */
+  ownedStatusStackLimit?: { kind: string; max: number };
+  secondaryOwnedStatusKind?: string;
+  fillPriority?: 'delayedRevivalThenSpeed';
+  fillPriorityPassives?: string[][];
+  reserveExtraCost?: boolean;
   /** Maximum manually selected targets; fill chooses the remainder. */
   maxSelected?: number;
   excludeSelf?: boolean;
   includeOwnedStatusKind?: string;
   side: TargetSide;
   requireKind?: UnitKind;
+  requireKinds?: UnitKind[];
+  /** Only the acting player's currently deployed pet. */
+  requireOwnedPet?: boolean;
   /** explicit=只用指令目标；fill=指令目标优先再补满；all/random/lowestHp/lowestDef 由引擎选 */
   mode?: TargetMode;
   /** Keep selected targets, then choose the remaining fill targets randomly. */
@@ -369,6 +386,11 @@ export type SkillTargeting = {
 
 /** 钩子/效果的通用过滤。引擎只做匹配，不要在这里写门派名。 */
 export type EffectWhen = {
+  resolvedStatusIds?: StatusId[];
+  resolvedStatusKinds?: string[];
+  statusResults?: StatusApplyResult[];
+  statusHit?: StatusHit;
+  targetHasNegativeSpellResistance?: boolean;
   /** 不响应器诀调用的子技能；普通法连仍属于当前行动。 */
   rootActionOnly?: boolean;
   sameAttackTarget?: boolean;
@@ -385,6 +407,7 @@ export type EffectWhen = {
   removedStatusKind?: string;
   removedStatusCategory?: StatusCategory;
   removedStatusDispellable?: boolean;
+  removedStatusWasSeal?: boolean;
   /** 任一指定控制旗标符合即可。 */
   removedStatusFlags?: StatusFlag[];
   excludedRemovedStatusFlags?: StatusFlag[];
@@ -396,7 +419,17 @@ export type EffectWhen = {
   pvp?: boolean;
   teamUniqueTag?: string;
   targetEnemy?: boolean;
+  /** 目标是其他友方，不含自己。 */
+  targetOtherAlly?: boolean;
   targetHasStandingPet?: boolean;
+  sourceHasStandingPet?: boolean;
+  sourceKind?: UnitKind;
+  sourceOwnedPetStatusKinds?: string[];
+  targetOwnerStatusKinds?: string[];
+  /** A target status applied by the attacking pet's owner. */
+  targetStatusFromSourceOwnerKinds?: string[];
+  targetHasSeal?: boolean;
+  petEntryKind?: 'initial' | 'switch';
   actionSucceeded?: boolean;
   actionHealedTarget?: boolean;
   actionKilledTarget?: boolean;
@@ -455,20 +488,36 @@ export type EffectWhen = {
   sourceTags?: string[];
   oncePerBattle?: boolean;
   oncePerRound?: boolean;
+  oncePerRoundTarget?: boolean;
   requireKind?: DamageKind;
   sourceResource?: { id: string; min?: number; max?: number };
   /** 召唤者身上须带有其中一种状态。 */
   ownerStatusKinds?: string[];
   sourceDefending?: boolean;
   damageOrigins?: DamageOrigin[];
+  retaliationDamage?: boolean;
   sourceStanding?: boolean;
 };
 
 type EffectCore =
+  | { type: typeof EffectType.InvokeSkill; skillId: SkillId }
   | { type: typeof EffectType.InvokeAttackSkills }
-  | { type: typeof EffectType.Repeat; min: number; max: number; effects: SkillEffect[] }
+  | {
+      type: typeof EffectType.Repeat;
+      min: number;
+      max: number;
+      effects: SkillEffect[];
+    }
   | { type: typeof EffectType.ModifyFact; key: string; value: Expr }
-  | { type: typeof EffectType.ModifyStatusDuration; kinds?: string[]; categories?: StatusCategory[]; maxCount?: number; random?: boolean; amount: Expr; ownedOnly?: boolean }
+  | {
+      type: typeof EffectType.ModifyStatusDuration;
+      kinds?: string[];
+      categories?: StatusCategory[];
+      maxCount?: number;
+      random?: boolean;
+      amount: Expr;
+      ownedOnly?: boolean;
+    }
   | {
       type: typeof EffectType.RandomBranch;
       branchId: string;
@@ -522,11 +571,19 @@ type EffectCore =
       origin?: DamageOrigin;
       cannotKill?: boolean;
     }
-  | { type: typeof EffectType.Heal; power: Expr; healMaxHp?: boolean; fixedBase?: boolean; includeHealPower?: boolean }
+  | {
+      type: typeof EffectType.Heal;
+      power: Expr;
+      healMaxHp?: boolean;
+      fixedBase?: boolean;
+      includeHealPower?: boolean;
+    }
   | {
       type: typeof EffectType.RestoreHp;
       power: Expr;
       maxGainPerAction?: Expr;
+      /** Effective HP restored to each target by this source and skill in one round. */
+      maxGainPerRound?: Expr;
       /** Increment this owner's combat fact once only if the effect restores HP. */
       gainCounter?: string;
       revive?: boolean;
@@ -534,7 +591,14 @@ type EffectCore =
       clearStatuses?: boolean;
     }
   | { type: typeof EffectType.RestoreMp; power: Expr }
-  | { type: typeof EffectType.Revive; hp?: Expr; hpRatio?: Expr; respectHealTaken?: boolean }
+  | {
+      type: typeof EffectType.Revive;
+      hp?: Expr;
+      hpRatio?: Expr;
+      respectHealTaken?: boolean;
+      /** Pay exact HP from the revived player's standing pet before revival. */
+      ownedPetHpCostRatio?: Expr;
+    }
   | {
       type: typeof EffectType.ApplyStatus;
       statusId: StatusId;
@@ -543,6 +607,8 @@ type EffectCore =
       storeTarget?: boolean;
       /** 封印类走 sealHitChance，否则必中 */
       hit?: StatusHit;
+      /** Multiplies the ordinary resolved seal chance; immunity still applies. */
+      chanceFactor?: Expr;
     }
   | {
       type: typeof EffectType.RemoveStatus;
@@ -596,7 +662,7 @@ type EffectCore =
       power: Expr;
       duration: Expr;
     }
-  | { type: typeof EffectType.ModifyStrike; factor?: Expr; add?: Expr }
+  | { type: typeof EffectType.ModifyStrike; factor?: Expr; add?: Expr; finalAdd?: Expr }
   | { type: typeof EffectType.ModifyDefenseIgnore; factor?: Expr; add?: Expr }
   | { type: typeof EffectType.ModifyHeal; factor?: Expr; add?: Expr }
   | { type: typeof EffectType.ModifyBarrier; factor?: Expr; add?: Expr }
@@ -626,6 +692,10 @@ export type RandomBranchEffect = Extract<
 >;
 
 export type SkillHook = {
+  /** Reuse the triggering skill's level, identity and seal parameters. */
+  effectSkill?: 'eventSkill';
+  /** Keep trigger budgets on the owner, but apply effects as the triggering actor. */
+  effectSource?: 'eventSource';
   on: HookName;
   sourceIsEnemy?: boolean;
   /** Damage returned to an attacker; may be suppressed by its innate capability. */
@@ -637,6 +707,7 @@ export type SkillHook = {
   targetIsSelf?: boolean;
   sourceIsSelf?: boolean;
   sourceIsOwnedPet?: boolean;
+  targetIsOwnedPet?: boolean;
   requireKind?: DamageKind;
   /** hookSource=反击/反震打回来；hookTarget=连击再打原目标；others=其他敌人 */
   aim?: HookAim;
@@ -675,7 +746,15 @@ export type CombatModifier = {
   when?: EffectWhen;
   /** 同组队伍光环只取一次；来源倒地时失效。 */
   teamAura?: string;
+  /** Applies only to this owner's standing pet while the owner is standing. */
+  ownedPetAura?: boolean;
   sealChanceFactor?: Expr;
+  sealHitAdd?: Expr;
+  sealChanceCeilAdd?: Expr;
+  /** Adjustment supplied by the seal target, after the caster's ceiling bonus. */
+  sealChanceCeilTakenAdd?: Expr;
+  sealAlwaysHit?: boolean;
+  bypassNegativeSpellResistance?: boolean;
   sealChanceAdd?: Expr;
   statusDurationAdd?: { statusId: string; amount: Expr };
   ignoreSealStatusKinds?: string[];
@@ -689,11 +768,15 @@ export type CombatModifier = {
   /** Multiplies the complete strike result, including flat result additions. */
   damageResultFactor?: Expr;
   physicalAttackAdd?: Expr;
+  physicalDefenseAdd?: Expr;
+  magicDefenseAdd?: Expr;
   critChanceAdd?: Expr;
   critMultiplierAdd?: Expr;
   defenseIgnoreAdd?: Expr;
   protectedDamageBonus?: Expr;
   ignoreProtection?: boolean;
+  /** Keep an attacker at 1 HP until its action ends after lethal fixed retaliation. */
+  deferFatalRetaliation?: boolean;
   splash?: { factor: number; count: Expr };
   mirrorToTargetPet?: boolean;
   recoverySkipChance?: Expr;
@@ -743,6 +826,7 @@ export type SkillDef = {
   splash?: SplashSpec;
   /** 封印底（单位为 %，55 表示 55%）；缺省由 rules 的 sealChanceBase 决定 */
   sealBase?: number;
+  sealChanceCeil?: number;
   targeting: SkillTargeting;
   /** 按 targeting 的最大候选人数预检法力；准备完成后截取实际人数并按 costMp 结算。
    * 准备阶段不得增加候选人数或法力标价；只用于先承受风险、再决定出手规模的技能。
@@ -755,13 +839,51 @@ export type SkillDef = {
   /** 同单位带了列出的技能则本被动不生效（高级连击 vs 连击） */
   conflicts?: SkillId[];
   /** 开战即生效的能力，不占状态栏（感知看破隐身、简易耗蓝） */
-  innate?: { criticalExtraTakenFactor?: number; physicalBurst?: { chance: number; factor: number; derivedSkillIds?: string[] }; negativeSpellResistance?: number; sealHitTakenFactor?: number; delayedRevivalRounds?: number; preventDelayedRevival?: boolean; rejectHpRecovery?: boolean; rejectBuffs?: boolean; damageToDelayedRevival?: number; damageFromDelayedRevival?: number; immuneStatusCategories?: StatusCategory[]; immuneStatusKinds?: string[]; buffDuration?: { factor: number; maxExtra: number }; entryStatus?: { statusId: string; minDuration: number; maxDuration: number }; revealStealth?: boolean; mpCostWaiverChance?: number; mpCostFactor?: number; spellMpCostFactor?: number; suppressSpellRetaliation?: boolean; spellRepeat?: { chance: number; factor: number }; spellFluctuation?: { min: number; max: number }; suppressPhysicalRetaliation?: boolean; ignoreParry?: boolean };
+  innate?: {
+    criticalExtraTakenFactor?: number;
+    physicalBurst?: {
+      chance: number;
+      factor: number;
+      derivedSkillIds?: string[];
+    };
+    negativeSpellResistance?: number;
+    sealHitTakenFactor?: number;
+    delayedRevivalRounds?: number;
+    preventDelayedRevival?: boolean;
+    rejectHpRecovery?: boolean;
+    rejectBuffs?: boolean;
+    damageToDelayedRevival?: number;
+    damageFromDelayedRevival?: number;
+    immuneStatusCategories?: StatusCategory[];
+    immuneStatusKinds?: string[];
+    buffDuration?: { factor: number; maxExtra: number };
+    entryStatus?: {
+      statusId: string;
+      minDuration: number;
+      maxDuration: number;
+    };
+    revealStealth?: boolean;
+    mpCostWaiverChance?: number;
+    /** 施疗加成，在受疗倍率之前乘到治疗基数上。 */
+    healDealtAdd?: number;
+    mpCostFactor?: number;
+    spellMpCostFactor?: number;
+    suppressSpellRetaliation?: boolean;
+    spellRepeat?: { chance: number; factor: number };
+    spellFluctuation?: { min: number; max: number };
+    suppressPhysicalRetaliation?: boolean;
+    ignoreParry?: boolean;
+  };
 };
 
 /** 状态模板。字段是能力开关，不要为某个门派加专用字段。 */
 export type StatusDef = {
+  /** Ignore the first hostile root action against this unit each round. */
+  interceptHostileAction?: boolean;
   /** Command restrictions also apply to preflight/UI; resting is not a seal. */
   blockedCommands?: CommandType[];
+  /** Restrict skills from these schools while leaving other skills and basic commands available. */
+  blockedSkillSchools?: string[];
   blocksNonArtSkills?: boolean;
   blocksArts?: boolean;
   protectsTarget?: boolean;
@@ -773,6 +895,8 @@ export type StatusDef = {
   /** 后续回合末由施法者支付；法力不足或施法者离场时移除此状态。 */
   upkeepMp?: { self: number; other: number };
   sourceBound?: boolean;
+  /** 普通护盾之后，以1点MP抵消1点伤害；多项取最高比例。 */
+  mpShieldRatio?: number;
   damageTakenFromSource?: number;
   immuneToSeal?: boolean;
   physicalDefenseIgnore?: number;
@@ -780,10 +904,15 @@ export type StatusDef = {
   onExpire?: { statusId: StatusId; duration: number };
   id: StatusId;
   name: string;
+  /** 玩家可见说明。不参与战斗结算。 */
+  description?: string;
   kind: string;
   category?: StatusCategory;
+  /** Distinguishes ordinary seals from other control statuses. */
+  isSeal?: boolean;
   blocksAction?: boolean;
   blocksSpell?: boolean;
+  blocksDamagingSpells?: boolean;
   blocksPhysical?: boolean;
   blocksRevive?: boolean;
   /** 倒地不清（锢魂：死亡期间仍禁止复活） */
@@ -794,6 +923,8 @@ export type StatusDef = {
   revealStealth?: boolean;
   actFirst?: boolean;
   breakOnDamage?: boolean;
+  /** Strict single-hit HP-loss threshold; barriers and excess damage do not count. */
+  breakOnDamageAbove?: number;
   commandPolicy?: CommandPolicy;
   speedMod?: Expr;
   attrMods?: Partial<Record<AttrName, Expr>>;
@@ -804,7 +935,16 @@ export type StatusDef = {
   healingPerRound?: Expr;
   /** Consumed after physical/spell action damage, including barriers; fixed damage is excluded. */
   consumeAfterDamagingAction?: boolean;
-  onTick?: { type: TickKind; ratioOfMaxHp?: number; ratioOfMaxMp?: number; hpCap?: Expr; mpCap?: Expr; mpPower?: Expr; snapshot?: boolean };
+  onTick?: {
+    type: TickKind;
+    ratioOfMaxHp?: number;
+    ratioOfMaxMp?: number;
+    hpCap?: Expr;
+    mpCap?: Expr;
+    hpPower?: Expr;
+    mpPower?: Expr;
+    snapshot?: boolean;
+  };
   /** 施加当回合结束也扣持续（复活当回合护体） */
   expireSameRound?: boolean;
   /** 承伤分流：目标留下 keep，其余 toCaster 打到状态来源 */
@@ -875,6 +1015,7 @@ export type FormulaSet = {
     skillLevel?: number,
     sealBase?: number,
     additiveChance?: number,
+    ceiling?: number,
   ): number;
   fleeChance(unit: Unit, enemies: Unit[]): number;
 };
@@ -960,6 +1101,8 @@ export type BattleEvent =
       unitId: UnitId;
       amount: number;
       mpAfter: number;
+      absorbedDamage?: number;
+      statusId?: StatusId;
     }
   | {
       type: typeof EventType.HpCost;
@@ -997,19 +1140,23 @@ export type BattleEvent =
       barrierId: string;
       before: number;
       after: number;
-      reason: 'applied' | 'refreshed' | 'absorbed' | 'expired' | 'downed' | 'decayed';
+      reason:
+        'applied' | 'refreshed' | 'absorbed' | 'expired' | 'downed' | 'decayed';
     }
   | {
       type: typeof EventType.StatusApplied;
       unitId: UnitId;
       statusId: StatusId;
       duration: number;
+      untilBattleEnd?: true;
+      sourceId?: UnitId;
     }
   | {
       type: typeof EventType.StatusRemoved;
       unitId: UnitId;
       statusId: StatusId;
       reason: string;
+      sourceId?: UnitId;
     }
   | {
       type: typeof EventType.MechanicTriggered;
@@ -1070,10 +1217,17 @@ export type CreateBattleInput = {
 };
 
 export type ExprEnv = {
+  removedStatusRounds?: number;
+  removedStatusSkillLevel?: number;
+  statusDuration?: number;
+  statusChance?: number;
+  statusDefs?: ReadonlyMap<string, StatusDef>;
+  skills?: ReadonlyMap<string, SkillDef>;
   allyPetSkillUnused?: boolean;
   normalTargetIds?: string[];
   killedTargetIds?: string[];
-  state?: Pick<BattleState, "round" | "units">;
+  state?: Pick<BattleState, 'round' | 'units'> &
+    Partial<Pick<BattleState, 'result'>>;
   skillLevel: number;
   targets: number;
   source: Unit;
@@ -1081,6 +1235,11 @@ export type ExprEnv = {
   damage?: number;
   /** 实际气血损失，已排除过量伤害。 */
   hpDamage?: number;
+  /** 受疗倍率之前的治疗基数。 */
+  healBase?: number;
+  heal?: number;
+  /** 本次出手技能的实际资源消耗，不含折扣前标价。 */
+  resourceCost?: number;
   impactDamage?: number;
   targetStatusStacks?: number;
   originalResourceCost?: number;

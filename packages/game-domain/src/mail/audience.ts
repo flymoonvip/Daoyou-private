@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import { SPONSORSHIP_TIER_IDS } from '../sponsorship.js';
-import { ALL_REALM_STAGE_VALUES, REALM_VALUES } from '@daoyou/constants/realms';
-import { getRealmStageRank } from '../progression/realms.js';
+import { REALM_STAGE_VALUES, REALM_VALUES } from '@daoyou/constants/realms';
 
 
 export const InstantSchema = z.string().datetime({ offset: true });
@@ -9,14 +8,17 @@ export const InstantSchema = z.string().datetime({ offset: true });
 export const MailRealmSchema = z
   .object({
     realm: z.enum(REALM_VALUES),
-    stage: z.enum(ALL_REALM_STAGE_VALUES),
+    stage: z.enum(REALM_STAGE_VALUES),
   })
   .strict();
 
 export type MailRealm = z.infer<typeof MailRealmSchema>;
 
 export function mailRealmRank(value: MailRealm): number {
-  return getRealmStageRank(value.realm, value.stage);
+  return (
+    REALM_VALUES.indexOf(value.realm) * REALM_STAGE_VALUES.length +
+    REALM_STAGE_VALUES.indexOf(value.stage)
+  );
 }
 
 

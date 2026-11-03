@@ -25,6 +25,4 @@ export interface WildSettlement {
   round: number;
   entry: WildResources;
   final: WildResources;
-  /** 敌方参战单位的最高等级，用于战斗归零后的境界差判定。 */
-  enemyLevel?: number;
 }

@@ -50,6 +50,8 @@
                     "afterStrike",
                     "onFatal",
                     "onStatusRemoved",
+                    "onStatusResolved",
+                    "onHostileActionIntercepted",
                     "onDeath",
                     "onRoundStart",
                     "onRoundEnd",
@@ -58,6 +60,8 @@
                     "onCritRoll",
                     "onHitRoll",
                     "onHealCalc",
+                    "afterHeal",
+                    "onPetSummoned",
                     "onBarrierCalc",
                     "onWoundCalc"
                   ]
@@ -83,6 +87,7 @@
                   "type": "string",
                   "enum": [
                     "self",
+                    "ownedPet",
                     "hookTarget",
                     "hookSource",
                     "others"
@@ -866,6 +871,7 @@
               "items": {
                 "type": "string",
                 "enum": [
+                  "blocksDamagingSpells",
                   "blocksAction",
                   "blocksSpell",
                   "blocksPhysical",

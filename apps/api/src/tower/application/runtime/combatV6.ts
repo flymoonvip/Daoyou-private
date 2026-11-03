@@ -35,7 +35,7 @@ import {
 } from '@daoyou/game-rules/tower';
 import { planTowerReward, towerRewardPreviews } from '@daoyou/game-rules/rewards/tower';
 import type { CultivatorCondition } from '@daoyou/game-domain/condition';
-import type { RealmStage, RealmType } from '@daoyou/constants/realms';
+import type { RealmType } from '@daoyou/constants/realms';
 import { eq, sql } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import { db } from '@server/lib/drizzle/db.js';
@@ -53,7 +53,6 @@ import {
 } from '@server/lib/repositories/combatV6ReplayRepository.js';
 import { claimMessageForConsumer } from '@server/lib/repositories/messageConsumptionRepository.js';
 import { lockCultivatorForStateMutation } from '@server/lib/repositories/playerStateRepository.js';
-import { resolveBattleDeath } from '@server/lib/lifespan/handleLifespan.js';
 import {
   getOrPublishTowerWeek,
   readTowerPublishedWeek,
@@ -550,7 +549,6 @@ export async function changeTowerBattle(
           await save(owner, run, lease);
         }
       }
-      let invalidateDeath: (() => Promise<void>) | undefined;
       const changes = await db.transaction(async (tx) => {
         const changes: ResourceChange[] = [];
         lease.assertHeld();
@@ -561,31 +559,14 @@ export async function changeTowerBattle(
         {
           const unit = host.state.units.find((u) => u.id === host.playerId)!;
           const [row] = await tx
-            .select({ condition: cultivators.condition, realm: cultivators.realm, realmStage: cultivators.realm_stage })
+            .select({ condition: cultivators.condition })
             .from(cultivators)
             .where(eq(cultivators.id, owner));
           if (!row?.condition) throw new TowerV6Error('角色状态尚未初始化');
-          let condition = ConditionService.applyCombatV6Resources(
+          const condition = ConditionService.applyCombatV6Resources(
             row.condition as CultivatorCondition,
             unit.attrs,
           );
-          // 气血归零即触发战斗结局判定；战斗内不再锁 1 点血。
-          if (unit.attrs.hp <= 0) {
-            const enemyLevel = Math.max(
-              0,
-              ...host.state.units
-                .filter((u) => u.side !== unit.side)
-                .map((u) => u.level),
-            );
-            const resolved = await resolveBattleDeath(owner, tx, {
-              playerRealm: row.realm as RealmType,
-              playerRealmStage: row.realmStage as RealmStage,
-              enemyLevel,
-              condition,
-            });
-            condition = resolved.condition;
-            invalidateDeath = resolved.invalidateDeath;
-          }
           await tx
             .update(cultivators)
             .set({ condition })
@@ -683,7 +664,6 @@ export async function changeTowerBattle(
         return changes;
       });
       publishResourceEvents(changes);
-      if (invalidateDeath) await invalidateDeath();
       lease.assertHeld();
       receipt = await readTowerRewardState(owner);
       run.rewards = towerRewards(receipt, run.season.seasonKey);

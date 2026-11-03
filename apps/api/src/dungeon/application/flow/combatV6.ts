@@ -13,7 +13,6 @@ import {
 } from '@server/lib/repositories/combatV6BeastRepository.js';
 import { archiveCombatV6Replay } from '@server/lib/repositories/combatV6ReplayRepository.js';
 import { lockCultivatorForStateMutation } from '@server/lib/repositories/playerStateRepository.js';
-import { resolveBattleDeath } from '@server/lib/lifespan/handleLifespan.js';
 import { assembleCombatV6WildPlayer } from '@server/combat/application/CombatV6BuildService.js';
 import { ConditionService } from '@server/cultivator/application/ConditionService.js';
 import { getCultivatorPreHeavenFates } from '@server/cultivator/application/readers/CultivatorProfileRepository.js';
@@ -29,6 +28,7 @@ import {
 import { createCombatV6Replay } from '@daoyou/game-rules/combat/replay';
 import { liveReplayDelta } from '@daoyou/game-rules/combat/playback';
 import type { CombatV6CommandGroup } from '@daoyou/game-domain/combat';
+import type { DungeonTemplate } from '@daoyou/game-domain/combat/challenges';
 import type { DungeonEncounterView } from '@daoyou/game-domain/dungeon';
 import type { DungeonSessionView } from '@daoyou/contracts/combat/dungeon';
 import {
@@ -39,13 +39,16 @@ import {
 import { type DungeonBattleSnapshot } from '@daoyou/game-domain/combat/challenges';
 import { carryDungeonBeastResources, createDungeonHost, DungeonHost } from '@daoyou/game-rules/combat/dungeon/host';
 import { projectCharacterToCombatV6 } from '@daoyou/game-rules/combat/projection';
-import { getRealmEntryLevel, getRealmStageLevel as combatCharacterLevel } from '@daoyou/game-domain/progression';
+import { getRealmStageLevel as combatCharacterLevel } from '@daoyou/game-domain/progression';
 import { evaluateFateContext } from '@daoyou/game-rules/character/fates';
 import { getMapNode } from '@daoyou/game-content/world/map';
-import { resolveDungeonMapConfig } from '@daoyou/game-rules/world/dungeon';
+import {
+  clampDungeonEnemyRealmStage,
+  resolveDungeonMapConfig,
+} from '@daoyou/game-rules/world/dungeon';
 import { appendDungeonReward } from '@daoyou/game-rules/rewards/dungeon';
 import type { CultivatorCondition } from '@daoyou/game-domain/condition';
-import type { RealmStage, RealmType } from '@daoyou/constants/realms';
+import type { RealmType } from '@daoyou/constants/realms';
 import { and, eq, ne } from 'drizzle-orm';
 import { randomInt, randomUUID } from 'node:crypto';
 import { hasActiveDungeon } from '@server/dungeon/application/flow/occupancy.js';
@@ -94,29 +97,39 @@ export async function dungeonPlayer(owner: string, tx: DbExecutor = db) {
     },
   };
 }
-export function dungeonLevel(mapId: string) {
-  const map = getMapNode(mapId);
+function dungeonBattleSetup(state: DungeonState) {
+  const map = getMapNode(state.mapNodeId);
   if (!map || !('realm_requirement' in map)) throw new Error('秘境地图无效');
-  return getRealmEntryLevel(map.realm_requirement as RealmType);
+  const mapConfig = resolveDungeonMapConfig(map);
+  const battle = state.pendingAction?.costs.find(
+    (cost) => cost.type === 'battle',
+  );
+  const stage = clampDungeonEnemyRealmStage(
+    battle?.metadata?.realm_stage ?? '中期',
+    mapConfig,
+  );
+  const template: DungeonTemplate =
+    battle?.metadata?.is_boss || state.currentRound >= state.maxRounds
+      ? 'boss'
+      : state.currentRound >= 3
+        ? 'elite'
+        : 'normal';
+  return {
+    realm: map.realm_requirement as RealmType,
+    stage,
+    template,
+    tier: mapConfig.difficultyTier,
+  };
 }
 export async function prepareDungeonEncounter(
   state: DungeonState,
 ): Promise<DungeonEncounterPayload> {
   const { player } = await dungeonPlayer(state.cultivatorId);
-  const template =
-    state.currentRound >= state.maxRounds
-      ? 'boss'
-      : state.currentRound >= 3
-        ? 'elite'
-        : 'normal';
-  const level = dungeonLevel(state.mapNodeId);
-  const map = getMapNode(state.mapNodeId)!;
+  const encounter = dungeonBattleSetup(state);
   const host = createDungeonHost(
     player,
-    level,
-    template,
+    encounter,
     randomInt(0, 0x7fffffff),
-    resolveDungeonMapConfig(map).difficultyTier,
   );
   // Carry resources across encounters within this run without changing the persistent beast schema.
   const snapshot = host.runtimeSnapshot();
@@ -163,6 +176,7 @@ export function beginDungeonBattle(
   prepared: DungeonEncounterPayload,
 ): DungeonBattlePayload {
   const restored = new DungeonHost(prepared.encounter);
+  const encounter = dungeonBattleSetup(state);
   return {
     session: {
       battleId: randomUUID(),
@@ -171,8 +185,8 @@ export function beginDungeonBattle(
       enemyData: {
         name: prepared.preview.enemies[0],
         realm: state.playerInfo.realm,
-        stage: '初期',
-        level: String(dungeonLevel(state.mapNodeId)),
+        stage: encounter.stage,
+        level: String(combatCharacterLevel(encounter.realm, encounter.stage)),
         difficulty: 1,
       },
     },
@@ -253,9 +267,8 @@ export async function changeDungeonBattle(
       timeoutMs: 30000,
       retries: 0,
     },
-    async (lease) => {
-      let invalidateDeath: (() => Promise<void>) | undefined;
-      const result = await db.transaction(async (tx) => {
+    async (lease) =>
+      db.transaction(async (tx) => {
         await lockCultivatorForStateMutation(tx, actor.cultivatorId);
         const found = await readRun(actor.cultivatorId, id, tx);
         if (!found) throw new Error('遭遇战不存在');
@@ -295,41 +308,19 @@ export async function changeDungeonBattle(
         if (host.finished && !payload.settled) {
           const final = host.state.units.find((u) => u.id === host.playerId)!;
           const [row] = await tx
-            .select({ condition: cultivators.condition, realm: cultivators.realm, realmStage: cultivators.realm_stage })
+            .select({ condition: cultivators.condition })
             .from(cultivators)
             .where(eq(cultivators.id, actor.cultivatorId));
           if (!row?.condition) throw new Error('角色资源缺失');
-          // 气血可以归零：战斗结算不再锁 1 点血，归零即触发战斗结局判定。
-          const hp = Math.max(0, Math.floor(final.attrs.hp));
-          let condition = ConditionService.applyCombatV6Resources(
+          const condition = ConditionService.applyCombatV6Resources(
             row.condition as CultivatorCondition,
             {
-              hp,
+              hp: Math.max(1, final.attrs.hp),
               mp: final.attrs.mp,
               maxHp: final.attrs.maxHp,
               maxMp: final.attrs.maxMp,
             },
           );
-          if (hp <= 0) {
-            const enemyLevel = Math.max(
-              0,
-              ...host.state.units
-                .filter((u) => u.side !== final.side)
-                .map((u) => u.level),
-            );
-            const resolved = await resolveBattleDeath(
-              actor.cultivatorId,
-              tx,
-              {
-                playerRealm: row.realm as RealmType,
-                playerRealmStage: row.realmStage as RealmStage,
-                enemyLevel,
-                condition,
-              },
-            );
-            condition = resolved.condition;
-            invalidateDeath = resolved.invalidateDeath;
-          }
           await tx
             .update(cultivators)
             .set({ condition })
@@ -413,10 +404,7 @@ export async function changeDungeonBattle(
           ...view(payload, after),
           ...(!command ? { playback: playback.playback } : {}),
         };
-      });
-      if (invalidateDeath) await invalidateDeath();
-      return result;
-    },
+      }),
   );
 }
 
