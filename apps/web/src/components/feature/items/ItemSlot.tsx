@@ -8,8 +8,8 @@ import {
   type ReactNode,
 } from 'react';
 import { itemPresentation } from './itemPresentation';
-import { type DisplayItem } from './presentation/types.js';
 import { ItemPreview } from './ItemPreview';
+import { type DisplayItem, type PreviewOptions } from './presentation/types.js';
 
 export function InventoryGrid({
   children,
@@ -49,26 +49,32 @@ export function ItemSlot({
   item,
   children,
   quantityLabel = '持有',
+  previewOptions,
+  renderItemPreview,
   ...props
 }: SlotProps & {
   item?: DisplayItem;
   children?: (close: () => void) => ReactNode;
   quantityLabel?: '持有' | '库存' | '奖励' | '投入' | '产出';
+  previewOptions?: PreviewOptions;
+  renderItemPreview?: (close: () => void) => ReactNode;
 }) {
   return (
     <PreviewSlot
       {...props}
       item={item ? { ...item, ...itemPresentation(item) } : undefined}
       renderPreview={(close) =>
-        item && (
-          <ItemPreview
-            item={item}
-            options={{ hideQuantity: true }}
-            quantityLabel={quantityLabel}
-            close={close}
-            actions={children?.(close)}
-          />
-        )
+        renderItemPreview
+          ? renderItemPreview(close)
+          : item && (
+              <ItemPreview
+                item={item}
+                options={{ ...previewOptions, hideQuantity: true }}
+                quantityLabel={quantityLabel}
+                close={close}
+                actions={children?.(close)}
+              />
+            )
       }
     />
   );

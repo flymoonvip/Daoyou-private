@@ -120,7 +120,8 @@ export type CombatV6VersionStamp = {
     | 'daoyou_rules_v8'
     | 'daoyou_rules_v9'
     | 'daoyou_rules_v10'
-    | 'daoyou_rules_v11';
+    | 'daoyou_rules_v11'
+    | 'daoyou_rules_v12';
   contentVersion:
     | 'daoyou_wild_inventory_content_v1'
     | 'daoyou_wild_seeking_content_v2'
@@ -133,6 +134,7 @@ export type CombatV6VersionStamp = {
     | 'combat-v6-tower-v6'
     | 'combat-v6-tower-v7'
     | 'combat-v6-tower-v8'
+    | 'combat-v6-tower-v9'
     | 'combat-v6-ranking-v1'
     | 'combat-v6-sect-task-v1'
     | 'combat-v6-breakthrough-v1'
@@ -245,6 +247,14 @@ export type Unit = {
   spellActionsSinceEntry?: number;
   /** 所有伤害路径的实际掉血累计；不含护盾、过量伤害和技能气血成本。 */
   hpDamageThisRound?: { round: number; amount: number };
+  /** 所有真实气血减少，包括技能代价、伤势及上限变化。 */
+  hpLossThisRound?: { round: number; amount: number };
+  /** 有界行动记忆；不保存招式历史列表。 */
+  actionHistory?: {
+    lastAttackTargetId?: UnitId;
+    lastAttackKind?: DamageKind;
+    lastIncomingAttack?: { sourceId: UnitId; skillId: SkillId };
+  };
   skillUses?: Record<string, number>;
   /** Paid active-skill uses by this unit; all allied pets contribute to novelty. */
   skillsUsedThisRound?: { round: number; skillIds: SkillId[] };
@@ -359,6 +369,11 @@ export type SkillTargeting = {
 
 /** 钩子/效果的通用过滤。引擎只做匹配，不要在这里写门派名。 */
 export type EffectWhen = {
+  /** 不响应器诀调用的子技能；普通法连仍属于当前行动。 */
+  rootActionOnly?: boolean;
+  sameAttackTarget?: boolean;
+  previousAttackKind?: DamageKind;
+  repeatedIncomingSkill?: boolean;
   /** A spell repeat may deal damage without repeating this attached effect. */
   excludeSpellRepeat?: boolean;
   expression?: Expr;
@@ -368,6 +383,13 @@ export type EffectWhen = {
   targetOwnedStatus?: { kind: string; appliedThisRound?: boolean };
   enemyStatusCount?: { kind: string; min: number };
   removedStatusKind?: string;
+  removedStatusCategory?: StatusCategory;
+  removedStatusDispellable?: boolean;
+  /** 任一指定控制旗标符合即可。 */
+  removedStatusFlags?: StatusFlag[];
+  excludedRemovedStatusFlags?: StatusFlag[];
+  statusRemovedByAlly?: boolean;
+  dotStatusIds?: StatusId[];
   statusRemoveReason?: string;
   originalResourceCostMax?: number;
   oncePerActionTarget?: boolean;
@@ -376,6 +398,7 @@ export type EffectWhen = {
   targetEnemy?: boolean;
   targetHasStandingPet?: boolean;
   actionSucceeded?: boolean;
+  actionHealedTarget?: boolean;
   actionKilledTarget?: boolean;
   /** 包括被致命恢复救回的目标。 */
   actionReducedTargetToZero?: boolean;
@@ -389,6 +412,9 @@ export type EffectWhen = {
   sourceHasBarrier?: boolean;
   targetHasBarrier?: boolean;
   sourceStatusCategories?: StatusCategory[];
+  sourceStatusDispelClasses?: string[];
+  /** Restrict the source-status class predicate to statuses applied by an enemy. */
+  sourceStatusEnemyApplied?: boolean;
   sourceRemovableControl?: boolean;
   skillIds?: SkillId[];
   skillTags?: SkillTag[];
@@ -404,6 +430,8 @@ export type EffectWhen = {
   targetAbsentStatusIds?: StatusId[];
   targetAbsentStatusKinds?: string[];
   targetStatusCategories?: StatusCategory[];
+  targetStatusDispelClasses?: string[];
+  targetStatusEnemyApplied?: boolean;
   targetAbsentStatusCategories?: StatusCategory[];
   targetStatusStack?: {
     statusId?: StatusId;
@@ -429,6 +457,8 @@ export type EffectWhen = {
   oncePerRound?: boolean;
   requireKind?: DamageKind;
   sourceResource?: { id: string; min?: number; max?: number };
+  /** 召唤者身上须带有其中一种状态。 */
+  ownerStatusKinds?: string[];
   sourceDefending?: boolean;
   damageOrigins?: DamageOrigin[];
   sourceStanding?: boolean;
@@ -497,6 +527,8 @@ type EffectCore =
       type: typeof EffectType.RestoreHp;
       power: Expr;
       maxGainPerAction?: Expr;
+      /** Increment this owner's combat fact once only if the effect restores HP. */
+      gainCounter?: string;
       revive?: boolean;
       allowFatal?: boolean;
       clearStatuses?: boolean;
@@ -529,6 +561,9 @@ type EffectCore =
   | { type: typeof EffectType.EmitMechanic; mechanicId: string; name: string }
   | {
       type: typeof EffectType.Dispel;
+      enemyAppliedOnly?: boolean;
+      /** Additional category restriction; selectors below remain a union. */
+      requireCategories?: StatusCategory[];
       kinds?: string[];
       statusIds?: StatusId[];
       categories?: StatusCategory[];
@@ -537,6 +572,7 @@ type EffectCore =
       random?: boolean;
       chance?: number;
       chanceByClass?: Record<string, number>;
+      dispelClasses?: string[];
       includeStatusFlags?: StatusFlag[];
       excludeStatusFlags?: StatusFlag[];
       /** 仅驱散由宗门内容定义的状态。 */
@@ -591,6 +627,7 @@ export type RandomBranchEffect = Extract<
 
 export type SkillHook = {
   on: HookName;
+  sourceIsEnemy?: boolean;
   /** Damage returned to an attacker; may be suppressed by its innate capability. */
   retaliation?: boolean;
   /** First-hit guard, bypassed by an attacker with ignoreParry. */
@@ -628,8 +665,10 @@ export type SplashSpec = {
 /** 技能声明。主动效果在 effects，被动在 hooks；引擎不认技能 id。 */
 /** 连续修正由拥有该技能的单位提供；不在核心识别内容 ID。 */
 export type CombatModifier = {
-  /** Extra barrier destruction; never amplifies damage to HP. */
+  /** Multiplies the damage-to-barrier conversion before computing HP remainder. */
   barrierDamageBonus?: Expr;
+  /** Drains remaining barriers after ordinary absorption, without changing HP damage. */
+  barrierDrainBonus?: Expr;
   /** Applied once before barriers, including periodic and derived damage. */
   allDamageTakenBonus?: Expr;
   hitAdd?: Expr;
@@ -702,7 +741,7 @@ export type SkillDef = {
   schoolTerm?: SchoolTerm;
   /** 群法分灵；没有则系数 1 */
   splash?: SplashSpec;
-  /** 封印底（百分点，如 55）；缺省由 rules 的 sealChanceBase 决定 */
+  /** 封印底（单位为 %，55 表示 55%）；缺省由 rules 的 sealChanceBase 决定 */
   sealBase?: number;
   targeting: SkillTargeting;
   /** 按 targeting 的最大候选人数预检法力；准备完成后截取实际人数并按 costMp 结算。
@@ -795,6 +834,8 @@ export type ActionScope = {
 };
 
 export type StrikeFormulaInput = {
+  percentageDamage?: boolean;
+  origin?: DamageOrigin;
   family: FormulaFamily | (string & {});
   kind: DamageKind;
   source: Unit;

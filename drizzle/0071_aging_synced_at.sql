@@ -1,0 +1,1 @@
+ALTER TABLE "wanjiedaoyou_cultivators" ADD COLUMN IF NOT EXISTS "aging_synced_at" timestamp DEFAULT now() NOT NULL;

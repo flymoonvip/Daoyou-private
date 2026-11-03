@@ -1,5 +1,5 @@
 {
-  "id": "c8b8c510-8fe2-4c3e-9f89-b6fc33e26390",
+  "id": "5db4e6bc-e49a-4d64-847f-d5d11c69a29e",
   "prevId": "14456fd4-7b44-4ebe-8f7a-9375340d8f80",
   "version": "7",
   "dialect": "postgresql",
@@ -3658,13 +3658,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": 100
-        },
-        "aging_synced_at": {
-          "name": "aging_synced_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
         },
         "closed_door_years_total": {
           "name": "closed_door_years_total",
@@ -8621,7 +8614,13 @@
           "name": "cultivator_id",
           "type": "uuid",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
+        },
+        "subscription_term_id": {
+          "name": "subscription_term_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
         },
         "grant_date": {
           "name": "grant_date",
@@ -8676,6 +8675,27 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "sponsorship_daily_grants_term_date_uidx": {
+          "name": "sponsorship_daily_grants_term_date_uidx",
+          "columns": [
+            {
+              "expression": "subscription_term_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "grant_date",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
@@ -8689,7 +8709,20 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "wanjiedaoyou_sponsorship_daily_grants_subscription_term_id_wanjiedaoyou_sponsorship_subscription_terms_id_fk": {
+          "name": "wanjiedaoyou_sponsorship_daily_grants_subscription_term_id_wanjiedaoyou_sponsorship_subscription_terms_id_fk",
+          "tableFrom": "wanjiedaoyou_sponsorship_daily_grants",
+          "tableTo": "wanjiedaoyou_sponsorship_subscription_terms",
+          "columnsFrom": [
+            "subscription_term_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
           "onUpdate": "no action"
         },
         "wanjiedaoyou_sponsorship_daily_grants_mail_id_wanjiedaoyou_mails_id_fk": {
@@ -9182,6 +9215,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "recipient_cultivator_id": {
+          "name": "recipient_cultivator_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
         "config_snapshot": {
           "name": "config_snapshot",
           "type": "jsonb",
@@ -9345,6 +9384,19 @@
           ],
           "onDelete": "set null",
           "onUpdate": "no action"
+        },
+        "wanjiedaoyou_sponsorship_orders_recipient_cultivator_id_wanjiedaoyou_cultivators_id_fk": {
+          "name": "wanjiedaoyou_sponsorship_orders_recipient_cultivator_id_wanjiedaoyou_cultivators_id_fk",
+          "tableFrom": "wanjiedaoyou_sponsorship_orders",
+          "tableTo": "wanjiedaoyou_cultivators",
+          "columnsFrom": [
+            "recipient_cultivator_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -9457,7 +9509,7 @@
           "name": "cultivator_id",
           "type": "uuid",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "provider": {
           "name": "provider",
@@ -9536,11 +9588,17 @@
         }
       },
       "indexes": {
-        "sponsorship_terms_cultivator_plan_uidx": {
-          "name": "sponsorship_terms_cultivator_plan_uidx",
+        "sponsorship_terms_provider_user_plan_uidx": {
+          "name": "sponsorship_terms_provider_user_plan_uidx",
           "columns": [
             {
-              "expression": "cultivator_id",
+              "expression": "provider",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "provider_user_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -9553,6 +9611,21 @@
             }
           ],
           "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "sponsorship_terms_cultivator_idx": {
+          "name": "sponsorship_terms_cultivator_idx",
+          "columns": [
+            {
+              "expression": "cultivator_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -9611,7 +9684,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
+          "onDelete": "set null",
           "onUpdate": "no action"
         },
         "wanjiedaoyou_sponsorship_subscription_terms_source_order_id_wanjiedaoyou_sponsorship_orders_id_fk": {

@@ -213,6 +213,10 @@
         },
         "dodge": {
           "$ref": "#/$defs/__schema0"
+        },
+        "cultivate": {
+          "type": "integer",
+          "$ref": "#/$defs/__schema0"
         }
       },
       "required": [
@@ -225,7 +229,8 @@
         "magicDef",
         "speed",
         "hit",
-        "dodge"
+        "dodge",
+        "cultivate"
       ],
       "additionalProperties": false
     }

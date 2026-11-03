@@ -1,9 +1,7 @@
-import { DamageKind, FormulaFamily, UnitKind } from '@daoyou/combat-core/enums';
+import { DamageKind, DamageOrigin, FormulaFamily, UnitKind } from '@daoyou/combat-core/enums';
 import { type FormulaSet, type SchoolTerm, type SplashSpec, type StrikeFormulaInput, type Unit } from '@daoyou/combat-core/types';
 import { DaoyouRule } from "@daoyou/game-content/combat/tuning"
-import { REALM_VALUES } from '@daoyou/constants/realms';
-import { getLevelRealmStage } from '@daoyou/game-domain/progression';
-import { getRealmDamagePressureMultiplier } from '../../progression/attributes.js';
+import { cultivationModifiers } from './cultivation.js';
 
 function clamp(min: number, max: number, value: number): number {
   return Math.min(max, Math.max(min, value))
@@ -25,12 +23,8 @@ export function splashFactor(splash: SplashSpec | undefined, targetCount: number
 }
 
 export function applyCultivate(base: number, diff: number): number {
-  const effectiveDiff = clamp(
-    DaoyouRule.damageCultivateDiffMin,
-    DaoyouRule.damageCultivateDiffMax,
-    diff,
-  )
-  return base * (1 + effectiveDiff * DaoyouRule.cultivateRate) + effectiveDiff * DaoyouRule.cultivateFlat
+  const modifier = cultivationModifiers(diff)
+  return base * (1 + modifier.damageRate) + modifier.damageFlat
 }
 
 export function physicalBase(atk: number, def: number): number {
@@ -103,25 +97,19 @@ const families: Record<string, (input: StrikeFormulaInput) => number> = {
   [FormulaFamily.Spell]: magicStrike,
   [FormulaFamily.Dragon]: magicStrike,
   [FormulaFamily.Judge]: (input) => finish(input.power),
-  [FormulaFamily.Fixed]: (input) => finish(input.power),
+  [FormulaFamily.Fixed]: (input) => finish(
+    input.percentageDamage || (input.origin ?? DamageOrigin.ActionDirect) !== DamageOrigin.ActionDirect
+      ? input.power
+      : applyCultivate(input.power, input.source.attrs.spellCultivate - input.target.attrs.resistSpellCultivate),
+  ),
 }
 
-/** 大境界序号（炼气 0 … 化神 4），由人物等级反查。 */
-function realmRank(unit: Unit): number {
-  return Math.max(0, REALM_VALUES.indexOf(getLevelRealmStage(unit.level).realm))
-}
-
-/** 所有普通攻击/技能伤害的统一出口：先按本族公式结算，再施加境界压制。 */
 export function baseDamage(input: StrikeFormulaInput): number {
-  const compute =
-    families[input.family] ??
-    families[
-      input.kind === DamageKind.Physical ? FormulaFamily.Physical : FormulaFamily.Spell
-    ]
-  const raw = compute(input)
-  const realmDelta = realmRank(input.source) - realmRank(input.target)
-  if (realmDelta === 0) return raw
-  return finish(raw * getRealmDamagePressureMultiplier(realmDelta))
+  const compute = families[input.family]
+  if (compute) return compute(input)
+  return families[
+    input.kind === DamageKind.Physical ? FormulaFamily.Physical : FormulaFamily.Spell
+  ](input)
 }
 
 export const daoyouFormulas: FormulaSet = {
@@ -164,9 +152,7 @@ export const daoyouFormulas: FormulaSet = {
     const percent =
       basePercent +
       (level - target.level) * DaoyouRule.sealLevelWeight +
-      DaoyouRule.sealCultivateWeight * Math.tanh(
-        (source.attrs.spellCultivate - target.attrs.resistSpellCultivate) / DaoyouRule.sealCultivateScale,
-      ) +
+      cultivationModifiers(source.attrs.spellCultivate - target.attrs.resistSpellCultivate).sealPercent +
       ((source.attrs.sealHit - target.attrs.sealResist) / pointScale) * 100 +
       additiveChance * 100
     const floor = DaoyouRule.sealChanceFloor * 100

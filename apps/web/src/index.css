@@ -1,25 +1,9 @@
 @import 'tailwindcss';
-
-/* 引入本地字体 */
-@font-face {
-  font-family: 'LXGWWenKai';
-  src: url('/assets/fonts/LXGWWenKaiLite-Regular.ttf')
-    format('truetype');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Ma Shan Zheng';
-  src: url('/assets/fonts/MaShanZheng-Regular.ttf')
-    format('truetype');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
+@import './assets/fonts/daoyou-emoji.css';
 
 @theme {
+  --font-emoji: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji',
+    'Daoyou Emoji';
   /* 色彩系统 */
   --color-bgpaper: #f8f3e6;
   --color-paper: #f8f3e6;
@@ -74,19 +58,23 @@
   --color-tier-tian: #e0b304;
   --color-tier-xian: #801dae;
   --color-tier-shen: #c1121f;
+  --color-realm-huashen: #5b58a6;
 }
 
 @theme inline {
   --color-background: var(--color-bgpaper);
   --color-foreground: var(--color-ink);
   --font-sans: var(--font-lxgwwenkai);
-  --font-heading: 'Ma Shan Zheng';
+  --font-heading: var(--font-ma-shan-zheng);
 }
 
 :root {
-  /* 字体变量 */
-  --font-lxgwwenkai: 'LXGWWenKai', 'STFangsong', FangSong, 'Songti SC', SimSun, serif;
-  --font-ma-shan-zheng: 'Ma Shan Zheng', cursive;
+  /* 正文先用中文字体，太极等已有符号保持文楷。系统表情排在雅黑之前，
+     避免中文回退字体把表情画成黑白。图标另用 --font-emoji。 */
+  --font-lxgwwenkai: 'LXGWWenKai', 'Segoe UI Emoji', 'Apple Color Emoji',
+    'Noto Color Emoji', 'STFangsong', FangSong, 'Songti SC', SimSun, serif;
+  --font-ma-shan-zheng: 'Ma Shan Zheng', 'Segoe UI Emoji', 'Apple Color Emoji',
+    'Noto Color Emoji', cursive;
 }
 
 .app-safe-area-page {

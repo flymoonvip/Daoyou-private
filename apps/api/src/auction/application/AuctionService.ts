@@ -4,7 +4,11 @@ import {
   type AuctionListRequest,
 } from '@daoyou/contracts/auction';
 import { AUCTION_PRIVATE_LISTING_TALISMAN_SCENARIO } from '@daoyou/game-content/social/config';
-import { AUCTION_MAX_TRANSACTION_TOTAL } from '@daoyou/game-domain/auction';
+import {
+  AUCTION_MAX_ACTIVE_LISTINGS,
+  AUCTION_MAX_TRANSACTION_TOTAL,
+  AUCTION_MAX_UNIT_PRICE,
+} from '@daoyou/game-domain/auction';
 import type { MailAttachment } from '@daoyou/game-domain/mail';
 import {
   auctionBlockReason,
@@ -12,6 +16,7 @@ import {
   auctionItemPriceCap,
   auctionItemQuality,
   auctionListingStackLimit,
+  auctionSellerReceiptAllows,
   AuctionSnapshotSchema,
   calculateAuctionSettlement,
 } from '@daoyou/game-rules/auction';
@@ -61,7 +66,10 @@ export class AuctionServiceError extends Error {
     this.name = 'AuctionServiceError';
   }
 }
-type AuctionMutationOptions = { tx?: DbTransaction; deferCacheClear?: boolean };
+export type AuctionMutationOptions = {
+  tx?: DbTransaction;
+  deferCacheClear?: boolean;
+};
 type Listing = auctionRepository.AuctionListing;
 
 function listingAttachment(listing: Listing, quantity: number): MailAttachment {
@@ -132,6 +140,14 @@ export class AuctionOperations {
     return auctionRepository.findActiveListings(options, this.database);
   }
 
+  async listingSlots(sellerId: string) {
+    const summary = await auctionRepository.summarizeActiveBySeller(
+      sellerId,
+      this.database,
+    );
+    return { ...summary, limit: AUCTION_MAX_ACTIVE_LISTINGS };
+  }
+
   async clearCache() {
     const keys = await this.cache.keys('auction:listings:*');
     if (keys.length) await this.cache.del(...keys);
@@ -143,8 +159,14 @@ export class AuctionOperations {
     targetCultivatorId: string | undefined,
     tx: DbTransaction,
   ) {
-    if ((await auctionRepository.countActiveBySeller(owner, tx)) >= 5)
-      throw new AuctionServiceError('MAX_LISTINGS', '寄售位已满（最多5个）');
+    if (
+      (await auctionRepository.countActiveBySeller(owner, tx)) >=
+      AUCTION_MAX_ACTIVE_LISTINGS
+    )
+      throw new AuctionServiceError(
+        'MAX_LISTINGS',
+        `寄售位已满（最多${AUCTION_MAX_ACTIVE_LISTINGS}个）`,
+      );
     let targetCultivatorName: string | undefined;
     if (visibility === 'private') {
       if (!targetCultivatorId)
@@ -339,6 +361,11 @@ export class AuctionOperations {
             AUCTION_MAX_TRANSACTION_TOTAL.toLocaleString() +
             ' 灵石',
         );
+      if (!auctionSellerReceiptAllows(listing.price, quantity))
+        throw new AuctionServiceError(
+          'INVALID_QUANTITY',
+          '单次购买件数过多，请分次购买',
+        );
       const [buyer] = await tx
         .select({ userId: schema.cultivators.userId })
         .from(schema.cultivators)
@@ -480,6 +507,13 @@ export class AuctionOperations {
       visibility,
       targetCultivatorId,
     } = input;
+    if (price > AUCTION_MAX_UNIT_PRICE)
+      throw new AuctionServiceError(
+        'INVALID_PRICE',
+        '该灵兽单价不得超过 ' +
+          AUCTION_MAX_UNIT_PRICE.toLocaleString() +
+          ' 灵石',
+      );
     await assertBeastIdle(owner);
     const [row] = await tx
       .select()

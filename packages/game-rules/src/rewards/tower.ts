@@ -6,10 +6,11 @@ import { rollDrops } from '../drops/index.js';
 import { SeededRng } from '@daoyou/combat-core/rng';
 import { isOpenEquipmentLevel } from '@daoyou/game-domain/equipment';
 import { equipmentRealm } from '../equipment/realm.js';
-import { getRealmEntryLevel } from '@daoyou/game-domain/progression';
+import { getRealmStageLevel as combatCharacterLevel } from '@daoyou/game-domain/progression';
 import { itemDefinition } from '../inventory/index.js';
 import { hashTowerSeed } from '../tower/helpers.js';
-import type { RealmType } from '@daoyou/constants/realms';
+import { REALM_ORDER, type RealmType } from '@daoyou/constants/realms';
+import { CHARACTER_MANUALS_V1 } from '@daoyou/game-content/manuals';
 import { TOWER_REWARD_PACK } from './tower-pack.js';
 
 function eligibleRewardItems(
@@ -21,14 +22,21 @@ function eligibleRewardItems(
     drop.source.kind === 'item'
       ? [drop.source.definitionId]
       : pack.pools[drop.source.poolId].entries;
-  const level = getRealmEntryLevel(realm);
+  const level = combatCharacterLevel(realm, '初期');
+  const advanced = REALM_ORDER[realm] >= REALM_ORDER['化神'];
   return ids.filter((id) => {
     const item = itemDefinition(id);
-    return (
-      item.kind !== 'blueprint' ||
-      (isOpenEquipmentLevel(item.level!) &&
-        equipmentRealm(item.level!).requiredLevel <= level)
-    );
+    if (item.kind === 'blueprint')
+      return (
+        isOpenEquipmentLevel(item.level!) &&
+        equipmentRealm(item.level!).requiredLevel <= level
+      );
+    if (item.kind !== 'manual_jade') return true;
+    const manual = CHARACTER_MANUALS_V1.find((row) => row.id === item.manualId);
+    if (!manual) return false;
+    return advanced
+      ? REALM_ORDER[manual.realm] >= REALM_ORDER['化神']
+      : manual.realm === realm;
   });
 }
 
@@ -40,7 +48,7 @@ export function towerRewardPreviews(
     .map((row) => ({
       floor: row.floor,
       spiritStones:
-        getRealmEntryLevel(realm) * row.spiritStonesPerLevel,
+        combatCharacterLevel(realm, '初期') * row.spiritStonesPerLevel,
       reputation: row.reputation,
       drops: row.drops.map((drop) => ({
         id: drop.id,
@@ -54,7 +62,7 @@ export function towerRewardPreviews(
             : pack.pools[drop.source.poolId].label,
         realmLimited:
           drop.source.kind === 'pool' &&
-          pack.pools[drop.source.poolId].kind === 'blueprint',
+          pack.pools[drop.source.poolId].kind !== 'beast_book',
       })),
     }))
     .sort((a, b) => a.floor - b.floor);
@@ -69,7 +77,7 @@ export function planTowerReward(
 ): TowerReward {
   const row = pack.floors.find((row) => row.floor === floor);
   if (!row) throw new Error('无效的幻境奖励楼层');
-  const level = getRealmEntryLevel(realm);
+  const level = combatCharacterLevel(realm, '初期');
   const items: TowerReward['items'] = [];
   if (row.drops.length) {
     const result = rollDrops(

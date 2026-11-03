@@ -13,6 +13,7 @@ import {
 } from '@daoyou/game-rules/combat/wild';
 import { CHARACTER_MANUALS_V1 } from '@daoyou/game-content/manuals';
 import { manualEffectLines } from '@daoyou/game-rules/manuals/presentation';
+import { isAdvancedManual } from '@daoyou/game-rules/manuals/projection';
 import { EQUIPMENT_SLOT_NAMES } from '@daoyou/game-domain/equipment';
 import {
   MATERIAL_TYPE_NAMES,
@@ -122,7 +123,8 @@ export const manualAdapter: ItemAdapter = (item, def) => {
     preview: (options) => ({
       header: [
         field('类型', '功法玉简'),
-        field('传承境界', manual.realm),
+        field('功法类别', isAdvancedManual(manual) ? '高阶功法' : '基础功法'),
+        field('要求', `${manual.realm}及以上`),
         quantity(item, options),
       ],
       sections: [
@@ -209,7 +211,7 @@ export const refinementAdapter: ItemAdapter = (item, def) => {
       ],
       description:
         dew.color === 'gold'
-          ? '元婴及以上灵兽须用此露。洗炼所得与普通归元灵露相同。'
+          ? '炼虚及以上灵兽须用此露。洗炼所得与普通归元灵露相同。'
           : '涤去后天积累。',
     }),
   };
