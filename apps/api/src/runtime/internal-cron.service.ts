@@ -15,6 +15,7 @@ import {
   runWorldAgingTickJob,
 } from '@server/runtime/jobs/internalCron.js';
 import { redPacketService } from '@server/social/application/RedPacketService.js';
+import { runScenarioGeneration } from '@server/dungeon/application/mystery/ScenarioLibrary.js';
 @Injectable()
 export class InternalCronService {
   constructor(
@@ -45,6 +46,9 @@ export class InternalCronService {
   }
   materialLibraryGeneration(scheduledAt?: Date) {
     return runMaterialLibraryDailyGenerationJob(scheduledAt);
+  }
+  dungeonScenarioGeneration() {
+    return runScenarioGeneration();
   }
   sponsorshipReconcile() {
     return runSponsorshipReconcileJob(false);

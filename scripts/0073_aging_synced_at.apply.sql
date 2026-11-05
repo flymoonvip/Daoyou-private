@@ -1,15 +1,17 @@
--- 应用 Daoyou 迁移 0071_aging_synced_at
+-- 应用 Daoyou 迁移 0073_aging_synced_at
 --
 -- 背景：人界纪年法上线后，现实时间（12 小时 = 游戏 1 年）会驱动角色自然衰老，
 --       需要在角色表新增「年龄结算锚点」列 aging_synced_at。
+--       与官方云游探秘的 0071/0072 迁移合并后，本迁移重编号为 0073。
 --
 -- 目标库：PostgreSQL（Drizzle，正文迁移目录 ./drizzle，表前缀 wanjiedaoyou_）
--- 用法：  psql "$DATABASE_URL" -f 0071_aging_synced_at.apply.sql
+-- 用法：  psql "$DATABASE_URL" -f 0073_aging_synced_at.apply.sql
 --        （或直接粘贴到数据库控制台执行）
 --
 -- 特性：可安全重复执行（幂等）；执行后会同步写入 Drizzle 迁移账本
---       （drizzle.__drizzle_migrations），使后续 `drizzle-kit migrate` 跳过 0071。
--- 前置：库中已应用 0001 ~ 0070，drizzle.__drizzle_migrations 账本已存在。
+--       （drizzle.__drizzle_migrations），使后续 `drizzle-kit migrate` 跳过 0073。
+-- 前置：库中已应用 0001 ~ 0072（含官方 0071_dungeon_scenario_library、
+--       0072_dungeon_jobs_per_node_queue），drizzle.__drizzle_migrations 账本已存在。
 
 BEGIN;
 
@@ -17,7 +19,7 @@ ALTER TABLE "wanjiedaoyou_cultivators"
   ADD COLUMN IF NOT EXISTS "aging_synced_at" timestamp DEFAULT now() NOT NULL;
 
 -- 与迁移文件一致，登记到 Drizzle 账本：
---   hash       = sha256(0071_aging_synced_at.sql)
+--   hash       = sha256(0073_aging_synced_at.sql)（SQL 内容与原 0071 版相同，哈希不变）
 --   created_at = 迁移日志 meta/_journal.json 中该条目的 when 值
 INSERT INTO drizzle.__drizzle_migrations (hash, created_at)
 SELECT

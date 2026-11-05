@@ -9,7 +9,6 @@ import {
   isAccountDeletionConfirmation,
 } from '@app/lib/auth/accountDeletion';
 import type { AuthActionError } from '@app/lib/auth/authState';
-import { toAuthActionError } from '@app/lib/auth/authState';
 import { deleteAccount, signOutSession } from '@app/lib/auth/session';
 import { useSession } from '@app/lib/auth/useSession';
 import { clientEnv } from '@app/lib/env';

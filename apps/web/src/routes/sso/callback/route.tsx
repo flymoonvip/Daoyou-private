@@ -14,18 +14,14 @@ export default function SsoCallbackRoute() {
   const navigate = useNavigate();
   const ticket = searchParams.get('ticket');
   const startedRef = useRef(false);
-  const [message, setMessage] = useState('正在完成登录……');
-  const [failed, setFailed] = useState(false);
+  const [message, setMessage] = useState(
+    ticket ? '正在完成登录……' : '缺少登录凭证，请重新登录。',
+  );
+  const [failed, setFailed] = useState(!ticket);
 
   useEffect(() => {
-    if (startedRef.current) return;
+    if (!ticket || startedRef.current) return;
     startedRef.current = true;
-
-    if (!ticket) {
-      setFailed(true);
-      setMessage('缺少登录凭证，请重新登录。');
-      return;
-    }
 
     let cancelled = false;
 
