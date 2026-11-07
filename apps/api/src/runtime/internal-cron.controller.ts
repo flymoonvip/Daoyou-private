@@ -65,4 +65,8 @@ export class InternalCronController {
   worldAgingTick() {
     return this.jobs.worldAgingTick();
   }
+  @Get('external-callback-relay')
+  externalCallbackRelay() {
+    return this.jobs.externalCallbackRelay();
+  }
 }

@@ -86,6 +86,12 @@ export const DOMAIN_EVENT_CONSUMERS = {
     filterSubject: `${DOMAIN_EVENT_SUBJECT_PREFIX}.sponsorship.order-received.v1`,
     concurrency: 4,
   },
+  // 成就引擎：订阅全部领域事件，在处理器内按类型分发；不关心的类型直接确认
+  achievementProjector: {
+    name: 'achievement-projector-v1',
+    filterSubject: `${DOMAIN_EVENT_SUBJECT_PREFIX}.>`,
+    concurrency: 4,
+  },
 } as const;
 
 const DOMAIN_EVENT_STREAM_CONFIG: Partial<StreamConfig> = {

@@ -2492,3 +2492,104 @@ export const wandererBookSales = pgTable(
     check('wanderer_book_sales_count_check', sql`${table.sales} >= 0`),
   ],
 );
+
+// ===== 「万界道友」活动（主站 activityId=1000009）外部降世 =====
+
+/**
+ * 外部降世账本：主站每一次封印对应一行，journeyId 为幂等键。
+ * 主站服务端直连 /internal/daoyou/create 建号；重复调用命中本表直接返回原 cultivatorId。
+ * 死亡/首次入世等状态也记在这里，供主站 journey-status 对账。
+ */
+export const externalJourneys = pgTable(
+  'wanjiedaoyou_external_journeys',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    journeyId: varchar('journey_id', { length: 64 }).notNull(),
+    // 主站用户 ID（= better_auth.user.externalAuthId）
+    externalUserId: varchar('external_user_id', { length: 64 }).notNull(),
+    userId: uuid('user_id').notNull(),
+    cultivatorId: uuid('cultivator_id').notNull(),
+    avatarId: integer('avatar_id').notNull(),
+    characterName: varchar('character_name', { length: 100 }).notNull(),
+    gender: varchar('gender', { length: 10 }),
+    combatPower: integer('combat_power').notNull().default(0),
+    combatSampleDays: integer('combat_sample_days').notNull().default(1),
+    starterTier: integer('starter_tier').notNull().default(1),
+    aptitude: varchar('aptitude', { length: 10 }),
+    // active | dead
+    status: varchar('status', { length: 16 }).notNull().default('active'),
+    enteredAt: timestamp('entered_at'),
+    diedAt: timestamp('died_at'),
+    // 建号请求摘要（不含主站原始资产信息）
+    payload: jsonb('payload').$type<Record<string, unknown>>().notNull().default({}),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at')
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    uniqueIndex('external_journeys_journey_unique').on(table.journeyId),
+    uniqueIndex('external_journeys_cultivator_unique').on(table.cultivatorId),
+    index('external_journeys_user_idx').on(table.userId, table.status),
+    index('external_journeys_external_user_idx').on(table.externalUserId),
+  ],
+);
+
+/**
+ * 道友 → 主站 HTTP 回调 outbox。现有 transactional_messages 只投递 NATS，
+ * 对外 HTTP 回调需要独立的重试队列：与业务事务同提交，中继按 next_attempt_at 指数退避投递。
+ */
+export const externalCallbacks = pgTable(
+  'wanjiedaoyou_external_callbacks',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    // achievement | cultivator-status
+    kind: varchar('kind', { length: 32 }).notNull(),
+    journeyId: varchar('journey_id', { length: 64 }),
+    cultivatorId: uuid('cultivator_id'),
+    externalUserId: varchar('external_user_id', { length: 64 }).notNull(),
+    payload: jsonb('payload').$type<Record<string, unknown>>().notNull(),
+    // 同一事实只入队一次（如 `${cultivatorId}:dead`、`${cultivatorId}:achievement:${id}`）
+    deduplicationKey: varchar('deduplication_key', { length: 160 }).notNull(),
+    attempts: integer('attempts').notNull().default(0),
+    nextAttemptAt: timestamp('next_attempt_at').notNull().defaultNow(),
+    deliveredAt: timestamp('delivered_at'),
+    lastError: text('last_error'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('external_callbacks_dedupe_unique').on(table.deduplicationKey),
+    index('external_callbacks_pending_idx')
+      .on(table.nextAttemptAt)
+      .where(sql`${table.deliveredAt} is null`),
+  ],
+);
+
+/** 玩家成就完成账本：每个成就 ID 每角色只完成一次 */
+export const playerAchievements = pgTable(
+  'wanjiedaoyou_player_achievements',
+  {
+    cultivatorId: uuid('cultivator_id').notNull(),
+    achievementId: varchar('achievement_id', { length: 96 }).notNull(),
+    unlockedAt: timestamp('unlocked_at').notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.cultivatorId, table.achievementId] }),
+    index('player_achievements_unlocked_idx').on(table.cultivatorId, table.unlockedAt),
+  ],
+);
+
+/** 计数类成就的累计计数：只累加（upsert），成就规则读计数判阈值 */
+export const playerCounters = pgTable(
+  'wanjiedaoyou_player_counters',
+  {
+    cultivatorId: uuid('cultivator_id').notNull(),
+    counterKey: varchar('counter_key', { length: 64 }).notNull(),
+    value: bigint('value', { mode: 'number' }).notNull().default(0),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.cultivatorId, table.counterKey] }),
+  ],
+);

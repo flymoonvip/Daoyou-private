@@ -28,6 +28,7 @@ import { NotFoundModule } from './http/not-found.module.js';
 import { HuntsModule } from './hunts/hunts.module.js';
 import { InscriptionsModule } from './inscriptions/inscriptions.module.js';
 import { InventoryModule } from './inventory/inventory.module.js';
+import { JourneyModule } from './journey/journey.module.js';
 import { LegacyItemsModule } from './legacy-items/legacy-items.module.js';
 import { MailModule } from './mail/mail.module.js';
 import { ManualsModule } from './manuals/manuals.module.js';
@@ -98,6 +99,7 @@ import { WandererModule } from './wanderer/wanderer.module.js';
     DungeonModule,
     TowerModule,
     TransferModule,
+    JourneyModule,
     // Namespace authorization fallbacks must follow every concrete route.
     NotFoundModule,
   ],

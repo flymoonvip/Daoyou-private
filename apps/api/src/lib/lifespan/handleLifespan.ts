@@ -3,6 +3,7 @@ import type { DbTransaction } from '@server/lib/drizzle/db.js';
 import { invalidateActiveCultivatorRef } from '@server/lib/auth/activeCultivator.js';
 import { findActiveCultivatorOwnerId } from '@server/lib/repositories/cultivatorRepository.js';
 import { updateCultivator } from '@server/cultivator/application/readers/CultivatorStateRepository.js';
+import { markJourneyCultivatorDead } from '@server/journey/application/JourneyLifecycle.js';
 import type { BreakthroughModifiers } from '@daoyou/game-domain/cultivation';
 import type {
   LifespanExhaustedStoryPayload,
@@ -69,6 +70,8 @@ export async function consumeLifespanAndHandleDepletion(
         },
         options.tx,
       );
+      // 「万界道友」转世角色：同一事务内记账并把死亡回调入 outbox，主站据此释放角色占用
+      await markJourneyCultivatorDead(cultivatorId, new Date(), options.tx);
       if (ownerId) {
         afterCommit = () => invalidateActiveCultivatorRef(ownerId);
       }

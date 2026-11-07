@@ -519,6 +519,13 @@
       "when": 1793112475245,
       "tag": "0073_aging_synced_at",
       "breakpoints": true
+    },
+    {
+      "idx": 74,
+      "version": "7",
+      "when": 1794024861271,
+      "tag": "0074_wanjiedaoyou_external_journeys",
+      "breakpoints": true
     }
   ]
 }

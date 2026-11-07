@@ -11,6 +11,7 @@ import {
   SectMembership,
 } from '@daoyou/game-rules/sect-organization';
 import type { Cultivator } from '@daoyou/game-domain/character';
+import { AchievementHooks } from '@server/achievements/application/AchievementService.js';
 import type { SectBenefitService } from '@server/sects/organization/SectBenefitService.js';
 import type { SectDomainEventDispatcherFactory } from '@server/sects/organization/SectDomainEventDispatcher.js';
 import {
@@ -218,6 +219,10 @@ export class SectMembershipApplicationService {
     const result = await context.memberships.loadState(cultivator.id!);
     if (!result) organizationError('晋升后的宗门身份不存在', 500);
     const discipleRank = result.discipleRank ?? 'registered';
+    // 成就：内门 / 真传 / 长老（提交后触发，失败只记日志）
+    if (discipleRank === 'inner') void AchievementHooks.unlock(cultivator.id!, 'sect.position.inner');
+    if (discipleRank === 'true') void AchievementHooks.unlock(cultivator.id!, 'sect.position.core');
+    if (result.office === 'elder') void AchievementHooks.unlock(cultivator.id!, 'sect.position.elder');
     const organization = organizationFor(context.modules, result.sectId);
     const membershipResource = {
       sectId: result.sectId,

@@ -1,4 +1,5 @@
 import { automaticCommands } from '@daoyou/game-rules/combat/auto';
+import { AchievementHooks } from '@server/achievements/application/AchievementService.js';
 import {
   combatV6Display,
   combatV6DisplayEvent,
@@ -709,6 +710,8 @@ export async function changeTowerBattle(
         } catch (error) {
           console.error('tower leaderboard update failed', error);
         }
+        // 成就：爬塔到达层数（max 语义，失败只记日志）
+        void AchievementHooks.recordMax(owner, 'tower.floor', run.highestFloor);
       }
     }
     return {

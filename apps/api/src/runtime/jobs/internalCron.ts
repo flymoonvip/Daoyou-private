@@ -40,6 +40,12 @@ import {
   sendSponsorshipAdminDigest,
 } from '@server/sponsorship/application/SponsorshipApplicationService.js';
 import { reconcileSubscriptionTerms } from '@server/sponsorship/application/SubscriptionPassService.js';
+import { AchievementHooks } from '@server/achievements/application/AchievementService.js';
+import { relayExternalCallbacks } from '@server/journey/application/ExternalCallbackOutbox.js';
+import {
+  markJourneyCultivatorDead,
+  markJourneySurvivalDays,
+} from '@server/journey/application/JourneyLifecycle.js';
 import { and, eq, lt } from 'drizzle-orm';
 
 const RANK_REWARD_SETTLED_PREFIX = 'golden_rank:weekly_rewards:settled:';
@@ -468,6 +474,7 @@ export async function runWorldAgingTickJob(
 
     let processed = 0;
     const deadUserIds: string[] = [];
+    const agedCultivators: Array<{ id: string; age: number }> = [];
 
     await db.transaction(async (tx) => {
       for (const row of rows) {
@@ -479,15 +486,18 @@ export async function runWorldAgingTickJob(
         if (advanced.yearsGained <= 0) continue;
 
         if (advanced.age >= row.lifespan) {
+          const diedAt = new Date(nowMs);
           await tx
             .update(cultivators)
             .set({
               age: advanced.age,
               agingSyncedAt: new Date(advanced.anchorMs),
               status: 'dead',
-              diedAt: new Date(nowMs),
+              diedAt,
             })
             .where(eq(cultivators.id, row.id));
+          // 「万界道友」转世角色离线寿尽：没有玩家会话，死亡回调必须经 outbox 发出，主站据此释放占用
+          await markJourneyCultivatorDead(row.id, diedAt, tx);
           deadUserIds.push(row.userId);
         } else {
           await tx
@@ -497,6 +507,7 @@ export async function runWorldAgingTickJob(
               agingSyncedAt: new Date(advanced.anchorMs),
             })
             .where(eq(cultivators.id, row.id));
+          agedCultivators.push({ id: row.id, age: advanced.age });
         }
         processed += 1;
       }
@@ -505,11 +516,27 @@ export async function runWorldAgingTickJob(
     for (const userId of deadUserIds) {
       await invalidateActiveCultivatorRef(userId);
     }
+    // 年龄类成就（百岁 / 五百岁 / 千岁）与「入世三十日」在衰老结算后评估，失败只记日志
+    for (const aged of agedCultivators) {
+      await AchievementHooks.recordMax(aged.id, 'lifespan.age', aged.age);
+    }
+    await markJourneySurvivalDays(nowMs);
 
     return {
       success: true,
       processed,
       skipped: false,
     };
+  });
+}
+
+/**
+ * 「万界道友」道友 → 主站回调中继的手动触发入口（联调 / 补投）。
+ * 常态下由进程内 15 秒一轮的中继自动投递；这里只是把到期回调立即推一遍。
+ */
+export async function runExternalCallbackRelayJob(): Promise<CronJobResult> {
+  return withJobLock('external-callback-relay', async () => {
+    const delivered = await relayExternalCallbacks(200);
+    return { success: true, processed: delivered, skipped: false };
   });
 }

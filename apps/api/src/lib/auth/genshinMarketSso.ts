@@ -1,5 +1,21 @@
 import { getRuntimeEnvironment } from '@server/lib/config/environment.js';
 
+/**
+ * 「万界道友」活动转世载荷：票据携带 journeyId 时主站附带已存在角色的信息。
+ * 兑换只用于登录：道友按 cultivatorId 加载已存在的角色，不得据此新建。
+ */
+export type GenshinMarketJourney = {
+  journeyId: string;
+  avatarId: number;
+  generation: number;
+  characterName: string;
+  gender: 'male' | 'female' | 'unknown';
+  combatPower: number;
+  combatSampleDays: number;
+  cultivatorId: string;
+  sacrifice: { totalValue: number; tier: number };
+};
+
 /** 原神市场兑换接口返回的身份快照 */
 export type GenshinMarketIdentity = {
   userId: string;
@@ -7,6 +23,8 @@ export type GenshinMarketIdentity = {
   email: string;
   nickname: string | null;
   role: string;
+  /** 仅活动入口（票据带 journeyId）时存在 */
+  journey?: GenshinMarketJourney | null;
 };
 
 export type SsoRedeemFailure =

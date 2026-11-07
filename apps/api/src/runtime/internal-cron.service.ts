@@ -13,6 +13,7 @@ import {
   runSponsorshipCleanupJob,
   runSponsorshipReconcileJob,
   runWorldAgingTickJob,
+  runExternalCallbackRelayJob,
 } from '@server/runtime/jobs/internalCron.js';
 import { redPacketService } from '@server/social/application/RedPacketService.js';
 import { runScenarioGeneration } from '@server/dungeon/application/mystery/ScenarioLibrary.js';
@@ -64,5 +65,8 @@ export class InternalCronService {
   }
   worldAgingTick() {
     return runWorldAgingTickJob();
+  }
+  externalCallbackRelay() {
+    return runExternalCallbackRelayJob();
   }
 }

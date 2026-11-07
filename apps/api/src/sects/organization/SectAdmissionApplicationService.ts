@@ -1,6 +1,7 @@
 import type { ResourceChangeDescriptor } from '@daoyou/contracts/resources';
 import type { SectContextData } from '@daoyou/contracts/sect';
 import type { SectAdmissionContext, SectRuntime } from '@daoyou/game-rules/sect-organization';
+import { AchievementHooks } from '@server/achievements/application/AchievementService.js';
 import { SectError } from '@server/sects/application/SectError.js';
 import type {
   SectAdmissionRepository,
@@ -62,6 +63,8 @@ export class SectAdmissionApplicationService {
       sectId,
       module.organization.construction.facilities,
     );
+    // 成就：首次拜入宗门（提交后触发，失败只记日志）
+    void AchievementHooks.unlock(cultivatorId, 'sect.join.first');
     return (await this.repository.load(cultivatorId))!;
   }
 

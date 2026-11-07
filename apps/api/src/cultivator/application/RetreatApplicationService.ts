@@ -1,4 +1,5 @@
 import { consumeLifespanAndHandleDepletion } from '@server/lib/lifespan/handleLifespan.js';
+import { AchievementHooks } from '@server/achievements/application/AchievementService.js';
 import { createDomainEvent } from '@server/lib/mq/domainEventWriter.js';
 import { publishTransactionalMessageBestEffort } from '@server/lib/mq/transactionalMessagePublisher.js';
 import {
@@ -131,6 +132,9 @@ export function executeRetreatCommand(args: {
             lease,
             journal,
           });
+        // 成就：闭关次数 / 年龄里程碑（提交后触发，失败只记日志）
+        void AchievementHooks.increment(args.cultivatorId, 'cultivate.retreat', 1);
+        void AchievementHooks.recordMax(args.cultivatorId, 'lifespan.age', cultivator.age + args.years);
         return {
           committed,
           storySource: lifespanStoryPayload
@@ -208,6 +212,11 @@ export function executeRetreatCommand(args: {
         source: 'retreat_breakthrough',
         cultivatorId: args.cultivatorId,
       });
+      // 成就：突破连胜 / 首次失败（成功次数与境界成就由 cultivator.realm.changed 事件投影）
+      void AchievementHooks.streak(args.cultivatorId, 'breakthrough.streak.current', 'breakthrough.streak', result.summary.success);
+      if (!result.summary.success) {
+        void AchievementHooks.unlock(args.cultivatorId, 'breakthrough.fail.first');
+      }
       return {
         committed,
         storySource,

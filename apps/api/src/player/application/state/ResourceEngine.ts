@@ -13,6 +13,7 @@ import type {
   ResourceValidationResult,
 } from '@daoyou/game-domain/resources';
 import { getGameConceptLabel } from '@daoyou/game-content/presentation/concepts';
+import { markJourneyCultivatorDead } from '@server/journey/application/JourneyLifecycle.js';
 import { and, eq } from 'drizzle-orm';
 
 function createSettlement(): ResourceOperationSettlement {
@@ -187,10 +188,13 @@ export class ResourceEngine {
             .where(eq(schema.cultivators.id, args.cultivatorId))
             .limit(1);
           if (state?.status === 'active' && state.age >= state.lifespan) {
+            const diedAt = new Date();
             await args.tx
               .update(schema.cultivators)
-              .set({ status: 'dead' })
+              .set({ status: 'dead', diedAt })
               .where(eq(schema.cultivators.id, args.cultivatorId));
+            // 「万界道友」转世角色：死亡回调与业务同事务提交
+            await markJourneyCultivatorDead(args.cultivatorId, diedAt, args.tx);
             depleted = true;
           }
           break;

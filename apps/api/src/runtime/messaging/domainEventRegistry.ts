@@ -52,6 +52,12 @@ import { processSponsorshipOrder } from '@server/sponsorship/application/Sponsor
 import { projectRealmChangedRanking } from '@server/story/application/RealmChangedDomainEventProjector.js';
 import { projectStoryDomainEvent } from '@server/story/application/StoryDomainEventProjector.js';
 import { projectTaskDomainEvent } from '@server/tasks/application/TaskDomainEventProjector.js';
+import { projectAchievementDomainEvent } from '@server/achievements/application/AchievementDomainEventProjector.js';
+import {
+  startExternalCallbackRelay,
+  stopExternalCallbackRelay,
+} from '@server/journey/application/ExternalCallbackOutbox.js';
+import { DOMAIN_EVENT_TYPES } from '@daoyou/game-domain/events';
 
 let registered = false;
 
@@ -155,6 +161,12 @@ export async function registerMessageInfrastructure(
         acceptedTypes: ['sponsorship.order.received'],
         handle: handleSponsorshipOrderEvent,
       }),
+      startDomainEventConsumer({
+        consumerName: DOMAIN_EVENT_CONSUMERS.achievementProjector.name,
+        concurrency: DOMAIN_EVENT_CONSUMERS.achievementProjector.concurrency,
+        acceptedTypes: DOMAIN_EVENT_TYPES,
+        handle: handleAchievementEvent,
+      }),
     ]);
     const failures = starts.filter((result) => result.status === 'rejected');
     if (failures.length) {
@@ -164,11 +176,22 @@ export async function registerMessageInfrastructure(
       );
     }
     startTransactionalMessageRelay();
+    // 「万界道友」道友 → 主站 HTTP 回调中继（DB outbox，指数退避）
+    startExternalCallbackRelay();
     registered = true;
   } catch (error) {
     await shutdownMessageInfrastructure();
     throw error;
   }
+}
+
+async function handleAchievementEvent(event: DomainEventEnvelope) {
+  await executeDomainEvent({
+    consumerName: DOMAIN_EVENT_CONSUMERS.achievementProjector.name,
+    source: 'achievement_domain_event',
+    event,
+    handle: projectAchievementDomainEvent,
+  });
 }
 
 async function handleSectConstructionEvent(event: DomainEventEnvelope) {
@@ -278,6 +301,7 @@ export async function shutdownMessageInfrastructure(): Promise<void> {
   // A failed bootstrap may have opened consumers before registration completed.
   registered = false;
   await stopTransactionalMessageRelay();
+  await stopExternalCallbackRelay();
   await stopBackgroundCommandConsumer();
   await stopCombatV6Messaging();
   await stopDomainEventConsumers();

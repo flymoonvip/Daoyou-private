@@ -18,6 +18,7 @@
     "./body-cultivation/progress": "./dist/public/body-cultivation/progress.js",
     "./body-cultivation/training": "./dist/public/body-cultivation/training.js",
     "./character/creation": "./dist/character/creation/CharacterGenerator.js",
+    "./character/external-journey": "./dist/character/creation/externalJourney.js",
     "./character/display": "./dist/character/display.js",
     "./character/fates": "./dist/character/fates.js",
     "./combat/appearance": "./dist/combat/unit-appearance.js",

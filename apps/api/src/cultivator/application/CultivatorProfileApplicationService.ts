@@ -22,6 +22,7 @@ import { playerCommandExecutor } from '@server/player/application/state/CommandE
 import {
   deleteCultivator,
 } from '@server/cultivator/application/readers/CultivatorStateRepository.js';
+import { markJourneyCultivatorDead } from '@server/journey/application/JourneyLifecycle.js';
 
 type Actor = {
   userId: string;
@@ -84,9 +85,10 @@ export async function reincarnateActiveCultivator(args: {
       if (current.status === 'dead') {
         throw new Error('该角色已身死道消');
       }
+      const diedAt = new Date();
       const [updated] = await tx
         .update(cultivators)
-        .set({ status: 'dead', diedAt: new Date() })
+        .set({ status: 'dead', diedAt })
         .where(
           and(
             eq(cultivators.id, args.actor.cultivatorId),
@@ -97,6 +99,8 @@ export async function reincarnateActiveCultivator(args: {
       if (!updated) {
         throw new Error('角色状态已经变化，请刷新后重试');
       }
+      // 「万界道友」转世角色主动兵解同样算陨落：记账 + 死亡回调入 outbox
+      await markJourneyCultivatorDead(args.actor.cultivatorId, diedAt, tx);
       await tx.insert(breakthroughHistory).values({
         cultivatorId: args.actor.cultivatorId,
         from_realm: current.realm,

@@ -44,6 +44,11 @@ const environmentSchema = z
     // SSO_INTERNAL_SECRET 为两侧共享的内部密钥，用于兑换一次性票据。
     GENSHIN_MARKET_SSO_BASE_URL: z.url().optional(),
     SSO_INTERNAL_SECRET: z.string().min(32).optional(),
+    // 「万界道友」活动（主站 1000009）双向通道密钥，与 SSO 兑换密钥分离：
+    // DAOYOU_ENTRY_SECRET 校验主站 → 道友的建号/预检/状态查询；
+    // DAOYOU_CALLBACK_SECRET 用于道友 → 主站的成就/进度/死亡回调。
+    DAOYOU_ENTRY_SECRET: z.string().min(32).optional(),
+    DAOYOU_CALLBACK_SECRET: z.string().min(32).optional(),
     CRON_SECRET: z.string().optional(),
     TRANSFER_SERVER_ID: z.string().trim().regex(/^[A-Za-z0-9._-]{1,160}$/).optional(),
     TRANSFER_SIGNING_PRIVATE_KEY_B64: z.string().optional(),
@@ -85,6 +90,14 @@ const environmentSchema = z
         code: 'custom',
         path: ['SSO_INTERNAL_SECRET'],
         message: 'is required in production',
+      });
+    }
+    // 回调需要主站基址；只配回调密钥而无基址时回调永远发不出去
+    if (env.DAOYOU_CALLBACK_SECRET && !env.GENSHIN_MARKET_SSO_BASE_URL) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['DAOYOU_CALLBACK_SECRET'],
+        message: '配置万界道友回调密钥时必须同时配置 GENSHIN_MARKET_SSO_BASE_URL',
       });
     }
     if (env.NODE_ENV === 'production' && env.APP_ENV === 'local') {

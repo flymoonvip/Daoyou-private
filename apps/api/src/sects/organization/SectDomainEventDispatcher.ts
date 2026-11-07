@@ -3,6 +3,7 @@ import {
   SectTask,
   type SectDomainEvent,
 } from '@daoyou/game-rules/sect-organization';
+import { AchievementHooks } from '@server/achievements/application/AchievementService.js';
 import { organizationError } from '@server/sects/organization/applicationSupport.js';
 import type { SectTaskItemRewardGrantStrategyRegistry } from '@server/sects/organization/TaskRewardStrategies.js';
 import type {
@@ -178,6 +179,8 @@ class StandardSectDomainEventDispatcherFactory implements SectDomainEventDispatc
             .tasks.get(event.taskId);
           if (!definition)
             organizationError(`任务结算定义不存在：${event.taskId}`, 500);
+          // 成就：宗门任务完成次数（独立于任务结算事务，失败只记日志）
+          void AchievementHooks.increment(args.cultivatorId, 'sect.task', 1);
           const derived: SectDomainEvent[] = [];
           for (const rule of definition.fulfillment) {
             const strategy = this.fulfillments.require(rule.strategy);
