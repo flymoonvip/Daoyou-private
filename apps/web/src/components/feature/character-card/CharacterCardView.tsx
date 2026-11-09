@@ -3,6 +3,7 @@ import { GameIcon } from '@app/components/ui/GameIcon';
 import { tierColorMap } from '@app/components/ui/inkBadgeTiers';
 import { InkButton } from '@app/components/ui/InkButton';
 import { cn } from '@app/lib/cn';
+import { resolveSpineModel } from '@app/lib/spine/registry';
 import type {
   CharacterCard,
   CharacterCardBeast,
@@ -10,11 +11,24 @@ import type {
 } from '@daoyou/contracts/player/card';
 import { BEAST_SPECIES } from '@daoyou/game-content/beasts';
 import { SPONSORSHIP_TIER_META } from '@daoyou/game-domain/sponsorship';
-import { useLayoutEffect, useRef, useState } from 'react';
+import {
+  lazy,
+  Suspense,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import { BeastTradeDetails } from '../beasts/BeastTradePreview';
 import { itemPresentation } from '../items/itemPresentation';
 import { ItemPreview } from '../items/ItemPreview';
 import { MeritStamp } from '../merit/MeritStamp';
+
+// pixi.js 随组件按需加载，避免进入首屏主包。
+const SpineFigure = lazy(() =>
+  import('../spine/SpineFigure').then((module) => ({
+    default: module.SpineFigure,
+  })),
+);
 
 type CardDetail =
   | { kind: 'equipment'; item: CharacterCardEquipment }
@@ -156,6 +170,19 @@ export function CharacterCardView({
     setDetail(null);
     onDetailChange?.(false);
   };
+  const spineModel = resolveSpineModel(card.name);
+  const portrait = (
+    <GameIcon
+      value={
+        card.gender === '女'
+          ? 'icon:cultivator-female-avatar'
+          : 'icon:cultivator-male-avatar'
+      }
+      purpose="artwork"
+      label={`${card.name}的墨像`}
+      className="h-32 w-20 shrink-0"
+    />
+  );
 
   return (
     <div className="relative isolate text-sm">
@@ -189,16 +216,18 @@ export function CharacterCardView({
       ) : (
         <div className="space-y-3">
           <header className="flex items-center gap-3">
-            <GameIcon
-              value={
-                card.gender === '女'
-                  ? 'icon:cultivator-female-avatar'
-                  : 'icon:cultivator-male-avatar'
-              }
-              purpose="artwork"
-              label={`${card.name}的墨像`}
-              className="h-24 w-16 shrink-0"
-            />
+            {spineModel ? (
+              <Suspense fallback={portrait}>
+                <SpineFigure
+                  model={spineModel}
+                  label={`${card.name}的墨像`}
+                  className="h-32 w-20 shrink-0"
+                  fallback={portrait}
+                />
+              </Suspense>
+            ) : (
+              portrait
+            )}
             <div className="min-w-0 flex-1 space-y-2">
               <h2 className="text-xl leading-tight font-semibold break-words">
                 {card.name}

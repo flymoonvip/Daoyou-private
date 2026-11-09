@@ -5,7 +5,15 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['**/dist/**', 'apps/api/**', '.claude/**'] },
+  {
+    ignores: [
+      '**/dist/**',
+      'apps/api/**',
+      '.claude/**',
+      // Vendored pixi-spine runtime: logic mirrors the upstream source verbatim.
+      'apps/web/src/lib/spine/vendor/**',
+    ],
+  },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ['**/*.{ts,tsx}'],
