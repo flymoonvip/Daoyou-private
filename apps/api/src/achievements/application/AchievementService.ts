@@ -267,6 +267,7 @@ export function listAchievementDefinitions() {
     achievementId: def.id,
     title: def.title,
     desc: def.desc,
+    unlockText: def.unlockText,
     category: def.category,
     target: def.counter?.threshold ?? 1,
     counterKey: def.counter?.key,
