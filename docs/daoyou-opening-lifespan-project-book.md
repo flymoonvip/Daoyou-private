@@ -1,6 +1,6 @@
 # 万界道友 · 转世开局与寿元体系项目书
 
-> 版本：v15（2026-11-09）
+> 版本：v15（2026-11-10 校正）
 > 状态：分析／设计稿，未改动代码
 > 组成：
 > - 第一部分 寿元体系（原 lifespan-system-project-book.md v8）：现状基线、问题清单、方案对比与实施边界
@@ -12,6 +12,7 @@
 > v13 变更：新增 7.9 历练地点体系与重构方案——地图选点、城镇/野外分池、按地点产出、同地点 PVP 相遇，并列出对现有 yield 逻辑的重构范围
 > v14 变更：历练改为后台按年自动结算并写入日志，不再等待玩家领取；历练 PVP 败方自动退回最近安全区继续历练
 > v15 变更：历练日志永久保留并支持人生总结；人界纪年改为服务端运行时钟（停机暂停、启动续走）；补充地点清单、区域产出映射与配置结构
+> v15 校正（2026-11-10）：按当前代码复核全文事实，修正境界阶段（4 段而非 13 层）、时钟现状与目标的区分、迁移编号、历练地点命名（对齐 map.json）、初始属性与功法层数证据、前端入口路径，并清除“停机补算 24 年”等旧口径
 
 ---
 
@@ -63,12 +64,11 @@
 | --- | --- |
 | 已配置境界 | 炼气、筑基、金丹、元婴、化神、炼虚、合体、大乘、渡劫（共 9 个） |
 | 当前上限 | 渡劫圆满；`getNextStage` 到渡劫圆满才返回 `null` |
-| 炼气阶段 | 一层～十三层，共 13 段 |
-| 筑基及以上 | 初期／中期／后期／圆满，共 4 段 |
+| 境界阶段 | 所有境界统一为初期／中期／后期／圆满，共 4 段；9 境合计 36 段 |
 | 等级映射 | 炼气 5～20；筑基 25～40；金丹 45～60；元婴 65～80；化神 85～100；炼虚 105～120；合体 125～140；大乘 145～160；渡劫 165～180 |
 | 每阶段等级跨度 | 5 级 |
 
-代码：`packages/constants/src/realms.ts`、`packages/game-domain/src/progression/realms.ts`。
+代码：`packages/constants/src/realms.ts`、`packages/game-domain/src/progression/realms.ts`；`getNextStage` 在 `packages/game-rules/src/cultivation/breakthroughCalculator.ts`。
 
 境界表、破境演出、境界寿元表、副本寿元成本与经验表均已覆盖到渡劫：`REALM_VALUES` 含 9 个境界，`LIFESPAN_BONUS_BY_REALM` 与 `DUNGEON_LIFESPAN_COST_BASE` 都有炼虚～渡劫条目，`performance/breakthrough.ts` 也包含化神→炼虚、炼虚→合体、合体→大乘、大乘→渡劫四段破境演出。
 
@@ -160,10 +160,11 @@
 
 ### 2.5 人界纪年法与自然衰老
 
-人界纪年不是展示用的日期，而是寿元系统的被动时钟。
+人界纪年不是展示用的日期，而是寿元系统的被动时钟。下表为 **v15 目标口径**；首行是尚未替换的现状，落地前不能假设 `world_clock` 已存在。
 
 | 项目 | 规则 | 代码 |
 | --- | --- | --- |
+| 现状（v15 前） | 固定纪元 2026-10-18 00:00（UTC+8）+ 墙钟时间，停机期间仍照常衰老 | `GAME_CALENDAR_EPOCH_MS`、`advanceNaturalAging` |
 | 纪年起点 | 服务端首次建立世界时钟时登记「人界元年」，不再绑定北京时间 | 新增 `world_clock` 表；`GAME_CALENDAR_EPOCH_MS` 退役 |
 | 单次运行起点 | 服务端进程启动时刻（机器时间），本次运行只累计启动后的时长 | `process.uptime()` / 单调时钟 |
 | 停机 | 维护、重启、宕机期间时钟暂停，不推进年龄与历练 | `world_clock.accumulated_ms` |
@@ -188,9 +189,9 @@
 - **游戏内尺度**：100/200/500/1200/2000/3000/4000/5000/8000 年，用于闭关与修为预算；
 - **运行尺度**：1 游戏年 = 12 小时**服务端运行时长**，寿元是账号级运行倒计时，停机不流逝。
 
-> 下表现实天数仅用于内部测算，不作为玩家界面展示（v10 已定）。
+> 下表的"天"均按服务端 24 小时持续运行折算，仅用于内部测算，不作为玩家界面展示（v10/v15 已定）。
 
-| 境界 | 剩余寿元（初始 14～19 岁） | 现实可存活天数 | 约合 |
+| 境界 | 剩余寿元（初始 14～19 岁） | 运行可存活天数 | 约合 |
 | --- | --- | --- | --- |
 | 炼气 | 61～105 年 | 30.5～52.5 天 | 约 1.0～1.8 个月 |
 | 筑基 | 181～186 年 | 90.5～93 天 | 约 3.0～3.1 个月 |
@@ -202,7 +203,7 @@
 | 大乘 | 4981～4986 年 | 2490.5～2493 天 | 约 6.8 年 |
 | 渡劫 | 7981～7986 年 | 3990.5～3993 天 | 约 10.9 年 |
 
-含义：炼气角色即使完全不操作，约 41 天后也会自然老死；闭关本质上是把这段现实等待时间"提前烧掉"，换成修为。自然衰老与闭关使用同一个 `age`，因此二者会叠加消耗同一条寿命。
+含义：炼气角色即使完全不操作，累计运行约 41 天后也会自然老死；闭关本质上是把这段等待时间"提前烧掉"，换成修为。自然衰老与闭关使用同一个 `age`，因此二者会叠加消耗同一条寿命。
 
 ---
 
@@ -212,12 +213,12 @@
 
 - 入口：`runWorldAgingTickJob`（`apps/api/src/runtime/jobs/internalCron.ts`）
 - 规则：`advanceNaturalAging`（`packages/game-rules/src/world/aging.ts`）；每满 1 游戏年 `age += 1`，锚点向前移动一年并保留不足一年的零头
-- 时钟：`world_clock` 运行时钟；现实 12 小时**运行时长** = 1 游戏年，停机暂停（v15）
+- 时钟：现状为固定纪元 + 墙钟；v15 目标改为 `world_clock` 运行时钟（待实现），现实 12 小时**运行时长** = 1 游戏年，停机暂停
 - 调度：生产环境每 10 分钟扫描一次（`*/10 * * * *`），只处理 `aging_synced_at` 落后超过 1 游戏年的 active 角色
 - 死亡：`age >= lifespan` 时直接 `status = 'dead'` 并写 `died_at`，不走 `handleLifespan`、不生成寿元耗尽故事
 - 环境差异：`CronService` 只在 `NODE_ENV === 'production'` 启动；本地/dev 只能手动调用 `/internal/cron/world-aging-tick`
 
-作用：不依赖玩家操作、持续消耗同一条寿命的被动时钟。它把寿元从"修炼预算"变成了"账号存活时间"，也是炼气角色约 41 天后自然老死的直接原因。
+作用：不依赖玩家操作、持续消耗同一条寿命的被动时钟。它把寿元从"修炼预算"变成了"账号存活时间"，也是炼气角色累计运行约 41 天后自然老死的直接原因。
 
 ### 3.2 闭关：推进年龄
 
@@ -297,7 +298,7 @@ v10 已定统一命名与规则：对外统一使用「寿元」，人物与灵�
 - 折寿对象：败方的 `lifespan` 上限，不扣 `age`；`remaining = lifespan - age` 同步减少。
 - 计算公式：`折寿 = 境界基准值 × 结果倍率 × 战斗类型倍率`。
 
-| 境界 | 境界基础寿命 | 基准折寿 | 占基础寿命 | 折合现实 |
+| 境界 | 境界基础寿命 | 基准折寿 | 占基础寿命 | 折合运行时长 |
 | --- | --- | --- | --- | --- |
 | 炼气 | 100 | 4 | 4.0% | 2 天 |
 | 筑基 | 200 | 7 | 3.5% | 3.5 天 |
@@ -375,12 +376,12 @@ v10 已定统一命名与规则：对外统一使用「寿元」，人物与灵�
 
 补充：把灵根拉满（1.5×）、养元丹（最高 +100%）、宗门功法倍率全部叠满后，所需年数约可降到 1/3～1/2。即便如此，渡劫覆盖率也只到约 57%，任何境界都无法只靠寿元完成一次完整需求。
 
-### 4.1 自然衰老下的现实时间线
+### 4.1 自然衰老下的运行时间线
 
 上面的测算只考虑闭关。叠加人界纪年后，实际寿元消耗为：
 
 ```
-实际消耗 = 自然衰老（现实每 12 小时 +1 岁） + 闭关年数 + 副本折寿年数（扣上限）
+实际消耗 = 自然衰老（服务端每运行 12 小时 +1 岁） + 闭关年数 + 副本折寿年数（扣上限）
 ```
 
 | 境界 | 剩余寿元 | 完全不操作可存活 | 每天闭关 1 年的存活时间 | 每天闭关 10 年的存活时间 |
@@ -395,7 +396,7 @@ v10 已定统一命名与规则：对外统一使用「寿元」，人物与灵�
 | 大乘 | ≈4982 年 | ≈2491 天 | ≈1661 天 | ≈415.2 天 |
 | 渡劫 | ≈7982 年 | ≈3991 天 | ≈2661 天 | ≈665.2 天 |
 
-计算口径：自然衰老每天消耗 2 游戏年；每天闭关 N 年则叠加 N 年。闭关收益与年限呈线性（每年收益约 5/9/16/28/45/70/105/150/210 点），因此"每天闭关多久"直接决定账号能活多久。
+计算口径：自然衰老每天**运行**消耗 2 游戏年；每天闭关 N 年则叠加 N 年。表中的"天"按服务端 24 小时持续运行折算，停机时间不计入（v15）。闭关收益与年限呈线性（每年收益约 5/9/16/28/45/70/105/150/210 点），因此"每天闭关多久"直接决定账号能活多久。
 
 这一列比"纯闭关所需年数"更能解释玩家实际体验：寿元不足的核心原因不是闭关总量，而是自然时钟持续扣减同一笔预算。
 
@@ -461,7 +462,7 @@ v10 已定统一命名与规则：对外统一使用「寿元」，人物与灵�
 
 **结论**
 
-1. 历练按现实时间产出、不耗寿元；自然衰老按现实时间扣年、不产修为。二者同频，年龄只决定"能领多少次历练"，不决定单次收益。
+1. 历练按运行时间产出、不耗寿元；自然衰老按运行时间扣年、不产修为。二者同频，年龄只决定"能领多少次历练"，不决定单次收益。
 2. 闭关是"用未来换现在"：每闭关 1 年，少活 0.5 天，损失约 9.6% 日预算的历练收入，只换回 0.58% 日预算。除寿元本会溢出、需要短期爆发外，闭关是负期望。
 3. 突破不耗时、副本只折上限、灵兽寿元可恢复，都会进一步削弱"年"作为成本的地位。
 4. 感悟的瓶颈在历练而非寿元：完美突破需 50 感悟，闭关约需 714 年，历练约 2.8 年（现实 1.4 天）。
@@ -585,7 +586,7 @@ v10 已定统一命名与规则：对外统一使用「寿元」，人物与灵�
 
 **B1 保守曲线（压缩上限、提高消耗占比）**
 
-| 境界 | 建议境界基础寿命 | 相对上一境界净增 | 现实可存活（不操作） |
+| 境界 | 建议境界基础寿命 | 相对上一境界净增 | 运行可存活（不操作，24h 运行） |
 | --- | --- | --- | --- |
 | 炼气 | 50 | — | ≈16 天 |
 | 筑基 | 125 | +75 | ≈54 天 |
@@ -628,7 +629,7 @@ v10 已定统一命名与规则：对外统一使用「寿元」，人物与灵�
 - 静室：闭关确认显示"本次消耗 {years} 年，闭关后剩余 {remaining - years} 年"
 - 副本选项：寿元成本使用"折寿 {value} 年"
 - 突破确认：显示"本次突破消耗 1 年，突破后剩余 {remaining - 1} 年"；失败同样消耗 1 年
-- HUD：纪年旁边只显示"余寿 X 年"，不展示现实天数；玩家可自行按 12 小时 = 1 年换算
+- HUD：纪年旁边只显示"余寿 X 年"，不展示现实天数；玩家可自行按 12 小时运行 = 1 年换算
 - 寿元低于 20% 时提醒；归零即按来源判死，不再进入"寿元将尽"状态
 - 闭关确认需要显示单次年限上限、闭关后剩余寿元，以及可能触发死亡的风险提示
 
@@ -637,7 +638,7 @@ v10 已定统一命名与规则：对外统一使用「寿元」，人物与灵�
 已定决策：
 
 1. 纪年归属：**角色私有时钟**。闭关即时推进角色纪年，HUD 显示"此身纪年"，世界纪年单独展示或作为环境信息。
-2. 历练节奏：**每满 1 年由后台自动结算一次并写入日志，不再由玩家手动领取**；世界 tick 单次最多补算 24 年，超出部分留到下一 tick。
+2. 历练节奏：**每满 1 年由后台自动结算一次并写入日志，不再由玩家手动领取**；世界时钟停机暂停，正常每次 tick 结算 1 年，仅进程卡顿或 tick 被跳过时最多补算 2 年。
 3. 自然衰老保留为游戏核心机制，现实 12 小时运行时长 = 1 游戏年是既定节奏。
 4. 玩家界面只显示年/月/日，不直接显示现实可存活天数。
 
@@ -809,7 +810,7 @@ v10 已定：闭关继续推进 `age`，但必须限制各境界单次闭关年�
 | 任务 | `apps/api/src/runtime/jobs/internalCron.ts` | 与自然衰老同一 tick：先结算历练，再推进 `age`；停机暂停，卡顿时单次最多补算 2 年 |
 | 数据 | `cultivators.last_yield_at` + 新增 `cultivator_yield_logs` | 日志表字段：`cultivator_id`、`stage_year`、`location_id`、`event_key`、`summary`、`payload jsonb`、`created_at`；**永久保留**，按 `(cultivator_id, stage_year)` 建索引 |
 | 人生总结 | `GET /api/cultivator/yield/life-summary` | 按年/地点/事件聚合，统计一生历练地点、战斗次数、折寿、主要产出；死亡与转世页复用 |
-| 前端 | `YieldCard.tsx`、`useYieldViewModel` | 改为「历练日志」年表：逐年展示事件、战斗、折寿与净收益，不再有领取按钮 |
+| 前端 | `apps/web/src/components/feature/cultivator/YieldCard.tsx` | 改为「历练日志」年表：逐年展示事件、战斗、折寿与净收益，不再有领取按钮 |
 
 **验收要点**
 
@@ -862,7 +863,7 @@ interface TrainingLocation {
 
 - 复用 `/game/map-v2` 与 `DungeonMapSelector` / `MapNodeCard` 的交互（`apps/web/src/routes/game/dungeon/components/DungeonMapSelector.tsx` 第 23～44 行）：地图点选 → 地点卡 → 确认历练。
 - 地图新增「历练」模式，只高亮已注册为 `TrainingLocation` 的节点；地点卡显示境界门槛、危险度、事件倾向、预计年收益与 PVP 风险。
-- 历练页顶部显示当前地点，提供「更换地点」入口；未选地点时默认太岳山脉（新手区），并提示玩家主动选择。
+- 历练页顶部显示当前地点，提供「更换地点」入口；未选地点时默认 `越国·太岳山脉`（新手区），并提示玩家主动选择。
 - 切换规则：历练由后台自动结算，玩家随时可以换点；切换前已完成的年份按旧地点结算完毕，新地点从下一个未结算年份生效，避免中途换点套利。
 - 解锁条件：满足 `realm_requirement` 即可；危险野外可要求前置地点首次到达。
 
@@ -905,21 +906,21 @@ interface TrainingLocation {
 - 境界保护：炼气～筑基不进入夺宝池；同地点被同一对手重复击败，第 2 次起折寿减半（沿用 3.7 防滥用）。
 - 切磋全境界 ×0，实时对战仍走竞技场；历练内可拒绝应战，拒绝不产生损失。
 - 战败退回安全区（v14）：历练 PVP 败方除按 ×1.0 折寿外，自动把 `training_location_id` 切换到最近的安全区（城镇/宗门驻地），本阶段剩余预算按安全区事件池结算，不再触发战斗与 PVP；下一阶段继续留在安全区，玩家可手动返回野外。
-- 安全区选择：优先同 `region` 内标记为 `safeZone` 的城镇节点；没有则回落到太岳山脉。日志记录「败退：A → B」。
+- 安全区选择：优先同 `region` 内标记为 `safeZone` 的城镇节点；没有则回落到 `越国·太岳山脉`。日志记录「败退：A → B」。
 - 城镇、宗门驻地与安全区强制无 PVP。
 
 #### 7.9.6 对现有历练逻辑的重构
 
 | 现状 | 位置 | 重构 |
 | --- | --- | --- |
-| 玩家手动领取，按小时一次性结算，无地点概念 | `apps/api/src/cultivator/application/YieldApplicationService.ts` 第 120～138 行 | 改为后台按年自动结算并写日志，携带 `location` 上下文 |
+| 玩家手动领取，按小时一次性结算，无地点概念 | `apps/api/src/cultivator/application/YieldApplicationService.ts` 第 124～138 行 | 改为后台按年自动结算并写日志，携带 `location` 上下文 |
 | 统一公式 `YieldCalculator.calculateCultivatorYield` | `packages/game-rules/src/yield/YieldCalculator.ts` | 新增 `resolveYieldStage(location, realm, stageSeed)`；保留现有灵石/修为/感悟基线 |
 | 无事件池 | 无 | 地点事件池 + 服务端种子，事件只重分配预算 |
 | 材料数量 `floor(hours / 3)` | `YieldCalculator.calculateMaterialCount` | 改为年度 4 槽，按地点掉落池发放 |
 | 无战斗 | 无 | 事件触发 V6 战斗，战败按 3.7 PVE ×1.0 折寿；PVP 败方退回安全区 |
-| 无地点持久化 | `cultivators` 表 | 新增 `training_location_id varchar(64) null` + 迁移；旧角色默认太岳山脉 |
+| 无地点持久化 | `cultivators` 表 | 新增 `training_location_id varchar(64) null` + 迁移；旧角色默认 `越国·太岳山脉` |
 | 无历练日志 | 无 | 新增 `cultivator_yield_logs`，保存逐年事件、战斗、来源与净收益 |
-| 无选点 UI | `YieldCard` / `useYieldViewModel` | 地图历练模式、地点卡、历练日志时间线 |
+| 无选点 UI | `apps/web/src/components/feature/cultivator/YieldCard.tsx` | 地图历练模式、地点卡、历练日志时间线 |
 
 数据上复用 `last_yield_at` 作为结算锚点；新增 `cultivator_yield_logs` 保存逐年结果，`requestId` 只做幂等，不参与随机。
 
@@ -946,12 +947,12 @@ interface TrainingLocation {
 
 | 区域 | 安全城镇（safeZone） | 普通野外 | 危险野外 | 区域特产 |
 | --- | --- | --- | --- | --- |
-| 天南 | 元武国、百草集、百器集、御灵集 | 太岳山脉、云梦山脉 | 血色禁地、坠魔谷、灵石矿深处 | 灵植、矿料、低阶兽材 |
-| 慕兰 | 草原营地（新增） | 慕兰草原 | 法士秘密祭坛、圣禽祭天台 | 风属性兽材、草原灵植 |
-| 乱星海 | 天星城、魁星岛 | 奇渊岛、无名荒岛 | 虚天殿、沉船遗迹、圣山地脉秘窟 | 海产、珍珠、水属性材料 |
-| 大晋 | 晋京、白鹿书院 | 昆吾山、十万大山、北夜小极宫 | 玄黄裂渊、九幽冥海、太虚天关、飞升台 | 高阶灵矿、雷属性材料、古宝 |
+| 天南 | 元武国、天南·百草集、天南·百器集、天南·御灵集 | 越国·太岳山脉、溪国·云梦山脉 | 血色禁地、坠魔谷、灵石矿·古传送阵核心井 | 灵植、矿料、低阶兽材 |
+| 慕兰 | 草原营地（新增） | 慕兰草原 | 草原·法士秘密祭坛、慕兰草原·圣禽祭天台 | 风属性兽材、草原灵植 |
+| 乱星海 | 乱星海·天星城、魁星岛 | 外星海·奇渊岛、乱星海·无名荒岛 | 虚天殿、深海·沉船遗迹、天星城·圣山地脉秘窟 | 海产、珍珠、水属性材料 |
+| 大晋 | 大晋·晋京 | 昆吾山、南疆·十万大山、北夜小极宫、大晋·天机阁旧址 | 玄黄裂渊、九幽冥海、太虚天关、飞升台·万劫雷狱 | 高阶灵矿、雷属性材料、古宝 |
 
-- 命名与层级直接引用 `map.json`，不在历练配置里复制；慕兰没有城镇，新增「草原营地」作为安全区。
+- 命名与层级直接引用 `map.json`，上表地点名必须与其 `name` 完全一致，不在历练配置里复制；慕兰没有城镇，新增「草原营地」作为安全区，落地时需先写入 `map.json`。
 - 每个区域至少 1 个安全区、1 个普通野外、1 个危险野外；不满足时不允许上线该区域。
 - 危险野外解锁：满足地图 `realm_requirement`，且至少到访过本区域一个普通野外。
 
@@ -959,12 +960,12 @@ interface TrainingLocation {
 
 | 地点标签 | 代表地点 | 常规材料 | 区域特产 | 稀有（每年最多 1 件） |
 | --- | --- | --- | --- | --- |
-| 灵植/药园 | 百草集、废弃药园 | 灵草、丹材 | 百年灵药 | 万年灵药、丹方 |
-| 矿脉/矿洞 | 灵石矿、古传送阵核心井 | 矿石、灵石 | 灵脉碎晶 | 灵脉精华、炼器图 |
-| 兽栖地 | 太岳山脉、奇渊岛 | 兽材、兽粮 | 内丹 | 灵兽蛋、变异兽材 |
-| 遗迹/古墓 | 古修士洞府、南疆古墓 | 古物、残图 | 阵盘 | 灵印、传承、古宝 |
-| 水域/海 | 奇渊岛、九幽冥海 | 珍珠、水材 | 海兽脂 | 沉船宝、海兽内丹 |
-| 战场/雷域 | 碎空战场、劫火回廊 | 雷材、战魂 | 法则碎片 | 天劫遗物 |
+| 灵植/药园 | 天南·百草集、落日森林·废弃药园 | 灵草、丹材 | 百年灵药 | 万年灵药、丹方 |
+| 矿脉/矿洞 | 矿区·灵石矿、灵石矿·古传送阵核心井 | 矿石、灵石 | 灵脉碎晶 | 灵脉精华、炼器图 |
+| 兽栖地 | 越国·太岳山脉、外星海·奇渊岛 | 兽材、兽粮 | 内丹 | 灵兽蛋、变异兽材 |
+| 遗迹/古墓 | 太岳山·无名古修士洞府、南疆·无名古墓 | 古物、残图 | 阵盘 | 灵印、传承、古宝 |
+| 水域/海 | 外星海·奇渊岛、九幽冥海 | 珍珠、水材 | 海兽脂 | 沉船宝、海兽内丹 |
+| 战场/雷域 | 太虚天关·碎空战场、飞升台·劫火回廊 | 雷材、战魂 | 法则碎片 | 天劫遗物 |
 
 年度预算的分配口径：
 
@@ -1032,7 +1033,7 @@ interface TrainingLocation {
 
 | 层 | 文件 | 改动性质 |
 | --- | --- | --- |
-| 常量 | `packages/constants/src/realms.ts` | 境界基础寿命映射；本轮直接开放到渡劫，不改境界范围 |
+| 规则 | `packages/game-rules/src/cultivation/breakthroughCalculator.ts` | `LIFESPAN_BONUS_BY_REALM` 境界基础寿命映射；本轮直接开放到渡劫，不改 `packages/constants/src/realms.ts` 的境界范围 |
 | 内容 | `packages/game-content/src/alchemy/alchemyEffectConfig.ts` | 延寿数值、耐药递减、单世上限 |
 | 内容 | `packages/game-content/src/dungeon/cost.ts` | 副本寿元成本公式 |
 | 内容 | `packages/game-content/src/cultivation/cultivationProgress.ts`、`cultivationExpGain.ts` | 经验口径与闭关收益 |
@@ -1051,7 +1052,7 @@ interface TrainingLocation {
 | 服务 | `apps/api/src/dungeon/application/flow/DungeonFlowService.ts` | 副本折寿成本与结算 |
 | 前端 | `CultivatorIdentity.tsx`、`useRetreatViewModel.tsx`、`DungeonSettlement.tsx` | 剩余寿元展示与预警 |
 | 前端 | `GameTopHud.tsx`、`useGameHudModel.ts` | 纪年与余寿展示（不展示现实天数） |
-| 数据 | `cultivators.age/lifespan/aging_synced_at` | 无需新列；死亡来源写日志/事件，不依赖「寿元将尽」condition |
+| 数据 | `cultivators.age/lifespan/aging_synced_at` | 这三列无需改造；死亡来源写日志/事件，不依赖「寿元将尽」condition；角色纪年另加 `birth_calendar_year`（见 8.4） |
 | 内容 | 副本 LLM 提示词、寿元丹方、宗门奖励 | 文案与配置调整 |
 
 ### 8.2 验收标准
@@ -1090,6 +1091,8 @@ interface TrainingLocation {
 | --- | --- | --- |
 | 规则 | `packages/game-rules/src/world/calendar.ts` | 新增 `gameDurationFromMs`、`formatGameDuration`、`getCharacterCalendar` |
 | 规则 | `packages/game-rules/src/world/aging.ts` | 导出角色当前纪年与年内余量，统一锚点 |
+| 服务 | `apps/api/src/runtime/world-clock.service.ts`（新增） | 启动读取快照、单调时钟累加、每 5 分钟与优雅停机落盘 |
+| 数据 | `world_clock`（新增单行表） | `accumulated_ms`、`started_at`、`updated_at`，一次性迁移写入旧纪元差值 |
 | 内容 | `packages/game-content/src/cultivation/cultivationExpGain.ts` | 历练预算由小时改月/年 |
 | 规则 | `packages/game-rules/src/cultivation/exp-gain-strategies/index.ts` | `hoursElapsed` 改 `monthsElapsed` |
 | 规则 | `packages/game-rules/src/yield/YieldCalculator.ts` | 灵石/感悟/材料速率按年重新表述 |
@@ -1101,11 +1104,11 @@ interface TrainingLocation {
 
 验收补充：
 
-8. 连续 12 小时不操作：世界纪年 +1、年龄 +1，历练在该年 tick 自动结算并写入日志。
-9. 闭关达到当前境界单次上限后，角色纪年领先世界对应年数，HUD 与闭关结算一致。
-10. 不闭关角色始终满足 `角色纪年 == 世界纪年`。
-11. 停机补算时单次 tick 最多 24 年，剩余年份排到后续 tick，最终总年数与日志条数一致。
-12. 玩家可见文案中不再出现"小时""轮"。
+16. 连续运行 12 小时不操作：世界纪年 +1、年龄 +1，历练在该年 tick 自动结算并写入日志。
+17. 闭关达到当前境界单次上限后，角色纪年领先世界对应年数，HUD 与闭关结算一致。
+18. 不闭关角色始终满足 `角色纪年 == 世界纪年`。
+19. 停机 30 天后恢复：时钟从暂停点续走，不补算、不扣寿元；只有进程卡顿时单次 tick 最多补算 2 年。
+20. 玩家可见文案中不再出现"小时""轮"。
 
 ---
 
@@ -1126,7 +1129,7 @@ interface TrainingLocation {
 2. 自然衰老：保留为游戏核心机制，现实 12 小时**服务端运行时长** = 1 游戏年。
 3. 闭关：继续推进 `age`；单次年限按 7.7 按境界封顶，并保留最低余寿，避免自杀性闭关。
 4. 死亡通知：自然老死需要死亡故事、邮件/站内通知与前世记录，不再静默判死。
-5. 现实天数：不向玩家直接展示，只显示游戏年；玩家可自行按 12 小时 = 1 年换算。
+5. 现实天数：不向玩家直接展示，只显示游戏年；玩家可自行按 12 小时运行 = 1 年换算。
 6. 境界范围：本轮直接开放到渡劫，不做入口封顶。
 7. 突破失败：不折寿；已投入材料与时间就是成本。
 8. 前世加成：道友侧不做继承计算；依赖主站，目前无建设，仅预留 `generation` 参数。
@@ -1167,7 +1170,7 @@ interface TrainingLocation {
 | 修为上限与经验表 | `packages/game-content/src/cultivation/cultivationProgress.ts` |
 | 每日预算与目标天数 | `packages/game-content/src/cultivation/cultivationExpGain.ts` |
 | 修为调参 | `packages/game-content/src/cultivation/cultivationTuning.ts` |
-| 寿元耗尽与战败折寿 | `apps/api/src/lib/lifespan/handleLifespan.ts` |
+| 寿元耗尽（战败折寿待接入） | `apps/api/src/lib/lifespan/handleLifespan.ts` |
 | 寿元扣减执行 | `apps/api/src/player/application/state/ResourceEngine.ts`、`CultivatorStateRepository.ts` |
 | 闭关服务 | `apps/api/src/cultivator/application/RetreatApplicationService.ts` |
 | 副本寿元成本 | `packages/game-content/src/dungeon/cost.ts`、`apps/api/src/dungeon/application/flow/DungeonFlowService.ts` |
@@ -1178,7 +1181,7 @@ interface TrainingLocation {
 | 闭关效率与寿元提示 | `apps/web/src/components/feature/retreat/retreatEfficiency.ts` |
 | 灵气配置 | `packages/game-content/src/qi/config.ts` |
 | 历练收益计算 | `packages/game-rules/src/yield/YieldCalculator.ts`、`packages/game-rules/src/rewards/yield.ts` |
-| 历练自动结算与日志 | `apps/api/src/cultivator/application/YieldApplicationService.ts`、`apps/api/src/runtime/jobs/internalCron.ts` |
+| 历练自动结算与日志（待实现） | `apps/api/src/cultivator/application/YieldApplicationService.ts`、`apps/api/src/runtime/jobs/internalCron.ts` |
 | 历练经验预算 | `packages/game-content/src/cultivation/cultivationExpGain.ts` |
 | 灵气恢复 | `packages/game-rules/src/qi/recovery.ts` |
 | 市场刷新 | `packages/game-content/src/market.ts` |
@@ -1221,7 +1224,7 @@ interface TrainingLocation {
 | T4 | 天姿 | 单灵根（天灵根/变异灵根） | 1 | 2 | 2 | 1 本·2 层 | 5 | 65,000 | 175 |
 | T5 | 道体 | 单灵根 + 满献祭 | 1 | 2 | 3 | 1 本·3 层 | 6 | 90,000 | 210 |
 
-> OPI 是「开局战力指数」，只用于策划与验收，**不是游戏字段，不进入协议，不写入数据库**。道装领域已明确不使用 `powerScore` / `quality` 类字段，见 [compiler.ts](../packages/game-rules/src/equipment/compiler.ts)。
+> OPI 是「开局战力指数」，只用于策划与验收，**不是游戏字段，不进入协议，不写入数据库**。表中的开局灵石、道装件数与技能数量都是本轮目标值；当前代码只发 500～25,000 灵石，见 11.1。道装领域已明确不使用 `powerScore` / `quality` 类字段，见 [compiler.ts](../packages/game-rules/src/equipment/compiler.ts)。
 
 ### 10.2 三条硬约束
 
@@ -1267,7 +1270,7 @@ interface TrainingLocation {
 
 ### 11.3 安全与信任边界
 
-- 外部只传 `journeyId`、`externalUserId`、`characterName`、`gender`、`avatarId`、`combatPower`、`starterTier`。
+- 外部只传 `journeyId`、`externalUserId`、`avatarId`、`characterName`、`gender`、`element`、`combatPower`、`combatSampleDays`、`starterTier`、`generation`；字段与范围以 `CreateJourneySchema` 为准。
 - `starterTier` 只允许 1-5 的整数；越界直接拒绝，不 clamp 后继续。
 - `combatPower` 当前只用于映射固定资质档（40/55/70/85/95），不直接加六维；后续若启用「底蕴分位」，也只能落到固定档位行。
 - 随机种子只来自服务端 `journeyId`，不接受客户端随机数。
@@ -1281,7 +1284,7 @@ interface TrainingLocation {
 | --- | --- | --- |
 | 灵根生成接受偏好列表，根数上限为 1 根 95、2 根 80、3 根 65、4 根 55；变异灵根 +10 | [utils.ts](../packages/game-rules/src/character/creation/utils.ts) | 四档灵根强度天然递减；单根风/雷/冰可到 100 |
 | 含风/雷/冰的灵根会被标记为「变异灵根」 | 同上 | 原神风/雷/冰角色天然带变异标签，但强度仍按根数上限 |
-| 初始属性为六维各 15，另加 25 点自由分配，总计 115 | [character.ts](../packages/game-domain/src/character.ts) | 加点模板总和必须为 25，不能借档位加总属性 |
+| 初始属性为六维各 15（基础 10 + 炼气初期 5 级自然成长 5），另加 25 点自由分配（5 点/级），总计 115 | [attributes.ts](../packages/game-rules/src/progression/attributes.ts)、[utils.ts](../packages/game-rules/src/character/creation/utils.ts) | 加点模板总和必须为 25，不能借档位加总属性 |
 | 炼气期只有 1 个功法槽，每槽最多 6 本，默认 1 层 | [compiler.ts](../packages/game-rules/src/manuals/compiler.ts#L20-L29) | 开局只装 1 本，其余给玉简 |
 | 炼气功法共 6 本，均为被动机制 | [manual-pack.json](../packages/game-content/src/manuals/data/manual-pack.json#L287-L416) | 被动随机可先复用这 6 本 |
 | 同一大境界的道装在该境界初期开放；器阶 10 的御使门槛是 5 级（炼气初期） | [realm.ts](../packages/game-rules/src/equipment/realm.ts#L5-L9) | 开局道装用器阶 10 即可直接穿戴，不需要轻灵 |
@@ -1547,7 +1550,7 @@ OPI = 100 × (
 - 开局道法主动总数不超过 3（本命 + 随机）；
 - 道装器诀另计，但「本命 + 随机主动 + 器诀」同一场战斗的主动技能总数不超过 6；
 - 被动道法总数不超过 4；
-- 炼气功法层数不超过 3（现有炼气上限）；
+- 开局炼气功法层数不超过 3（低于现有 `maxLevel 9` 的上限，仅限制开局投放）；
 - 所有开局道法只对炼气期开放，不提前给高境界技能。
 
 ### 16.3 主动道法池
@@ -1744,7 +1747,7 @@ rngGear   = deterministicRng(sha256(`${seed}:gear`))
 
 说明：
 
-- 物资名称取自 `marketPresets.json` 的 `aux.凡品` 池；该文件只是坊市名称池，**不是物品定义**。实施时按 `consumable.v1` + `instanceData`（`name`/`type`/`quality`/`spec`）构造消耗品实例，构造方式参考 [reward-items.service.ts](../apps/api/src/admin/reward-items.service.ts#L40-L108)。
+- 物资名称取自 [marketPresets.json](../packages/game-content/src/materials/data/marketPresets.json) 的 `aux.凡品` 池；该文件只是坊市名称池，**不是物品定义**。实施时按 `consumable.v1` + `instanceData`（`name`/`type`/`quality`/`spec`）构造消耗品实例，构造方式参考 [reward-items.service.ts](../apps/api/src/admin/reward-items.service.ts#L40-L108)。
 - 功法玉简已有真实定义：`jade.character_manual.changchun` 等 6 个炼气功法，直接发放即可，见 [manual-jades.ts](../packages/game-content/src/items/manual-jades.ts)。
 - 品级全部为凡品，只覆盖炼气初期可用的修炼辅助、稳神、温养与疗伤；不使用 `aux.灵品` 中的养脉散（描述面向筑基修士），也不发 `引灵果` 这类炼气后期向筑基过渡的灵品材料，避免开局拿到用不上或过度超前的资源。
 - 丹药 `spec` 在开局路径**固定构造**，不在建号时随机炼丹，保证同一 `journeyId` 的物资完全一致。
@@ -1919,9 +1922,11 @@ T2 / T4 不单独列：按相邻档位插值（T2 ≈ (T1+T3)/2，T4 ≈ (T3+T5)
 
 ### 19.1 新增表
 
-当前迁移最新为 `0074_wanjiedaoyou_external_journeys.sql`，账本、回调、成就与计数器表已落地。本文只需新增：
+当前迁移最新为 `0074_wanjiedaoyou_external_journeys.sql`，账本、回调、成就与计数器表已落地。第二部分只需新增：
 
 - `0075_cultivator_innate_arts.sql`（开局道法快照）。
+
+第一部分 v15 的持久化改动另行编号，不占用本篇的 0075：`world_clock` 单行表、`cultivator_yield_logs` 历练日志表、`cultivators.training_location_id` 与 `cultivators.birth_calendar_year` 两列。若两部分同期上线，按 0075（开局道法）→ 0076+（寿元/历练）拆分迁移，避免一个迁移同时改动两套业务。
 
 `wanjiedaoyou_external_journeys` 已存在，实际字段以 [schema.ts](../apps/api/src/lib/drizzle/schema.ts) 与迁移 0074 为准：
 
@@ -2041,7 +2046,7 @@ type ExternalJourneyCreateInput = {
 
 | WP | 内容 | 依赖 |
 | --- | --- | --- |
-| WP1 | contracts + 两张表 + 迁移 | 无 |
+| WP1 | contracts + `cultivator_innate_arts` 表 + 迁移 | 无 |
 | WP2 | 内容包：36 本命 + 10 主动 + 12 被动 + 模板 | WP1 |
 | WP3 | 纯函数开局编译器 + `packages` 单测 | WP1、WP2 |
 | WP4 | 外部建号 Nest 模块、鉴权、幂等、审计 | WP1、WP3 |
