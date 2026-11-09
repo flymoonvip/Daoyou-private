@@ -1,5 +1,5 @@
 /**
- * 成就目录：「万界道友」活动（主站 1000009）全部 269 个成就的定义。
+ * 成就目录：「万界道友」活动（主站 1000009）全部 263 个成就的定义。
  *
  * 规范（与主站 DaoyouAchievementData.jsonc 的 ID 一一对应）：
  *   - ID 形如 <module>.<action>[.<threshold>]，小写点分隔，稳定不变；
@@ -23,20 +23,6 @@ export type AchievementCategory =
   | 'trade'
   | 'social'
   | 'journey';
-
-export const ACHIEVEMENT_CATEGORY_LABELS: Record<AchievementCategory, string> = {
-  realm: '境界与修炼',
-  breakthrough: '突破、寿元与转世',
-  sect: '宗门',
-  combat: '战斗、竞技、爬塔、猎杀',
-  explore: '探索、剧情与碑文',
-  craft: '炼丹、炼器、锻造',
-  beast: '灵兽',
-  dao: '功法、悟道、占卜、重塑',
-  trade: '交易、拍卖、黑市、声望、赞助',
-  social: '社交、社区与排行',
-  journey: '活动专属',
-};
 
 export type CounterMode = 'sum' | 'max';
 
@@ -176,17 +162,12 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
   { id: 'replay.share.1', title: '与人论道', desc: '首次分享战斗回放', category: 'combat', counter: sum('replay.share', 1) },
   { id: 'replay.share.10', title: '传阅战帖', desc: '分享战斗回放 10 次', category: 'combat', counter: sum('replay.share', 10) },
 
-  // ---------- E. 探索、剧情与碑文（35） ----------
+  // ---------- E. 探索、剧情与碑文（30） ----------
   { id: 'dungeon.clear.first', title: '初探秘境', desc: '首次通关秘境', category: 'explore', counter: sum('dungeon.clear', 1) },
   { id: 'dungeon.clear.10', title: '秘境常客', desc: '累计通关 10 次', category: 'explore', counter: sum('dungeon.clear', 10) },
   { id: 'dungeon.clear.50', title: '秘境行者', desc: '累计通关 50 次', category: 'explore', counter: sum('dungeon.clear', 50) },
   { id: 'dungeon.clear.100', title: '秘境宗师', desc: '累计通关 100 次', category: 'explore', counter: sum('dungeon.clear', 100) },
   { id: 'dungeon.clear.200', title: '秘境传说', desc: '累计通关 200 次', category: 'explore', counter: sum('dungeon.clear', 200) },
-  { id: 'wanderer.first', title: '云游四方', desc: '首次云游探秘', category: 'explore', counter: sum('wanderer.count', 1) },
-  { id: 'wanderer.count.5', title: '五方云游', desc: '累计完成 5 次云游', category: 'explore', counter: sum('wanderer.count', 5) },
-  { id: 'wanderer.count.10', title: '十方云游', desc: '累计完成 10 次云游', category: 'explore', counter: sum('wanderer.count', 10) },
-  { id: 'wanderer.count.50', title: '云游半生', desc: '累计完成 50 次云游', category: 'explore', counter: sum('wanderer.count', 50) },
-  { id: 'wanderer.count.100', title: '踏遍山河', desc: '累计完成 100 次云游', category: 'explore', counter: sum('wanderer.count', 100) },
   { id: 'wanderer.trade.1', title: '游方生意', desc: '首次与游方商人交易', category: 'explore', counter: sum('wanderer.trade', 1) },
   { id: 'wanderer.trade.10', title: '熟客', desc: '与游方商人交易 10 次', category: 'explore', counter: sum('wanderer.trade', 10) },
   { id: 'wanderer.trade.50', title: '游方大主顾', desc: '与游方商人交易 50 次', category: 'explore', counter: sum('wanderer.trade', 50) },
@@ -267,7 +248,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
   { id: 'manual.count.5', title: '五法同修', desc: '掌握 5 门功法', category: 'dao', counter: max('manual.count', 5) },
   { id: 'manual.count.10', title: '十法在身', desc: '掌握 10 门功法', category: 'dao', counter: max('manual.count', 10) },
   { id: 'manual.count.20', title: '藏经满阁', desc: '掌握 20 门功法', category: 'dao', counter: max('manual.count', 20) },
-  { id: 'manual.count.50', title: '万法归宗', desc: '掌握 50 门功法', category: 'dao', counter: max('manual.count', 50) },
+  { id: 'manual.count.40', title: '万法归宗', desc: '掌握 40 门功法', category: 'dao', counter: max('manual.count', 40) },
   { id: 'manual.max.first', title: '功法大成', desc: '首次功法满层', category: 'dao' },
   { id: 'manual.max.3', title: '三法圆满', desc: '3 门功法满层', category: 'dao', counter: max('manual.max', 3) },
   { id: 'manual.max.10', title: '十法圆满', desc: '10 门功法满层', category: 'dao', counter: max('manual.max', 10) },
@@ -289,17 +270,16 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
   { id: 'transfer.receive.first', title: '他乡故人', desc: '首次接收他处传来的角色', category: 'dao' },
   { id: 'transfer.receive.3', title: '三度接引', desc: '累计接收角色 3 次', category: 'dao', counter: sum('transfer.receive.count', 3) },
 
-  // ---------- I. 交易、拍卖、黑市、声望、赞助（24） ----------
-  { id: 'market.sell.first', title: '初开铺面', desc: '首次上架成交', category: 'trade', counter: sum('market.trade', 1) },
+  // ---------- I. 交易、拍卖、黑市、声望、赞助（23） ----------
+  { id: 'market.trade.first', title: '初开铺面', desc: '首次在市场完成交易', category: 'trade', counter: sum('market.trade', 1) },
   { id: 'market.trade.10', title: '十笔生意', desc: '累计成交 10 笔', category: 'trade', counter: sum('market.trade', 10) },
   { id: 'market.trade.100', title: '百笔生意', desc: '累计成交 100 笔', category: 'trade', counter: sum('market.trade', 100) },
   { id: 'market.trade.500', title: '五百成交', desc: '累计成交 500 笔', category: 'trade', counter: sum('market.trade', 500) },
   { id: 'market.trade.1000', title: '千笔交易', desc: '累计成交 1000 笔', category: 'trade', counter: sum('market.trade', 1000) },
-  { id: 'market.volume.1m', title: '百万流水', desc: '累计成交额达到 100 万灵石', category: 'trade', counter: sum('market.volume', 1_000_000) },
   { id: 'market.volume.10k', title: '万石流水', desc: '累计成交额达到 1 万灵石', category: 'trade', counter: sum('market.volume', 10_000) },
   { id: 'market.volume.100k', title: '十万流水', desc: '累计成交额达到 10 万灵石', category: 'trade', counter: sum('market.volume', 100_000) },
+  { id: 'market.volume.1m', title: '百万流水', desc: '累计成交额达到 100 万灵石', category: 'trade', counter: sum('market.volume', 1_000_000) },
   { id: 'market.volume.10m', title: '千万流水', desc: '累计成交额达到 1000 万灵石', category: 'trade', counter: sum('market.volume', 10_000_000) },
-  { id: 'auction.bid.first', title: '初涉拍卖', desc: '首次参与拍卖', category: 'trade' },
   { id: 'auction.list.1', title: '寄售之物', desc: '首次上架拍卖', category: 'trade', counter: sum('auction.list', 1) },
   { id: 'auction.list.10', title: '拍卖常客', desc: '累计上架拍卖 10 次', category: 'trade', counter: sum('auction.list', 10) },
   { id: 'auction.win.first', title: '拍得所爱', desc: '首次拍卖中标', category: 'trade' },
@@ -325,9 +305,9 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
   { id: 'social.chat.100', title: '健谈者', desc: '累计发送聊天 100 条', category: 'social', counter: sum('social.chat', 100) },
   { id: 'social.chat.1000', title: '话痨道友', desc: '累计发送聊天 1000 条', category: 'social', counter: sum('social.chat', 1000) },
   { id: 'tasks.completed.1', title: '初成任务', desc: '累计完成 1 个任务', category: 'social', counter: sum('tasks.completed', 1) },
-  { id: 'tasks.completed.10', title: '勤恳做事', desc: '累计完成 10 个任务', category: 'social', counter: sum('tasks.completed', 10) },
-  { id: 'tasks.completed.100', title: '事事躬亲', desc: '累计完成 100 个任务', category: 'social', counter: sum('tasks.completed', 100) },
-  { id: 'tasks.completed.500', title: '劳模道友', desc: '累计完成 500 个任务', category: 'social', counter: sum('tasks.completed', 500) },
+  { id: 'tasks.completed.3', title: '勤恳做事', desc: '累计完成 3 个任务', category: 'social', counter: sum('tasks.completed', 3) },
+  { id: 'tasks.completed.6', title: '事事躬亲', desc: '累计完成 6 个任务', category: 'social', counter: sum('tasks.completed', 6) },
+  { id: 'tasks.completed.8', title: '八关尽渡', desc: '完成全部 8 个主线突破任务', category: 'social', counter: sum('tasks.completed', 8) },
 
   // ---------- K. 活动专属（13） ----------
   { id: 'journey.enter.first', title: '初入万界', desc: '首次通过转世进入道友', category: 'journey' },

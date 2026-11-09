@@ -441,7 +441,6 @@ export class AuctionOperations {
         'reward',
         tx,
       );
-      await unlockAchievement(buyerCultivatorId, 'auction.bid.first', tx);
       await unlockAchievement(buyerCultivatorId, 'auction.win.first', tx);
       await incrementCounter(buyerCultivatorId, 'auction.win', 1, tx);
     };

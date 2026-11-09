@@ -125,7 +125,6 @@ export async function projectAchievementDomainEvent(
       const data = (event as DomainEventEnvelope<'dungeon.run.settled'>).data;
       if (data.outcome === 'completed') {
         await incrementCounter(data.cultivatorId, 'dungeon.clear', 1, tx);
-        await incrementCounter(data.cultivatorId, 'wanderer.count', 1, tx);
       }
       return DONE;
     }
