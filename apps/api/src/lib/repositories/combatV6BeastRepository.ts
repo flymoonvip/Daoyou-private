@@ -10,7 +10,7 @@ import {
   type BeastRoster,
   type SummonedBeast,
 } from '@daoyou/game-domain/beasts';
-import { getRealmStageLevel as combatCharacterLevel } from '@daoyou/game-domain/progression';
+import { getLevelRealmStage, getRealmStageLevel as combatCharacterLevel } from '@daoyou/game-domain/progression';
 import type { WildSettlement } from '@daoyou/game-domain/wild';
 import {
   carriedBeastIds,
@@ -213,6 +213,8 @@ export async function settleBeastProgress(
     carried.length,
     captured.map((beast) => beast.id),
   );
+  const capturedHasSkill = captured.some((beast) => beast.skills.length > 0);
+  let realmUpgraded = false;
   for (const beast of captured)
     await tx.insert(cultivatorBeasts).values({
       id: beast.id,
@@ -234,12 +236,25 @@ export async function settleBeastProgress(
     const beast = roster.beasts.find((b) => b.id === reward.beastId);
     if (!beast) throw new Error('经验接收灵兽不存在');
     const next = gainBeastExp(beast, reward.amount, roster.ownerLevel);
-    if (next !== beast)
+    if (next !== beast) {
+      if (
+        getLevelRealmStage(next.level).realm !==
+        getLevelRealmStage(beast.level).realm
+      )
+        realmUpgraded = true;
       await tx
         .update(cultivatorBeasts)
         .set({ individual: beastIndividualData(next) })
         .where(eq(cultivatorBeasts.id, beast.id));
+    }
   }
+  return {
+    capturedHasSkill,
+    realmUpgraded,
+    speciesCount: new Set(
+      [...roster.beasts, ...captured].map((beast) => beast.speciesId),
+    ).size,
+  };
 }
 
 /** Caller holds the character lock and claims the battle settlement in the same transaction. */

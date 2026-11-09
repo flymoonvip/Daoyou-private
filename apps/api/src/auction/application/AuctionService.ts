@@ -48,6 +48,10 @@ import {
   readBeastRoster,
 } from '@server/lib/repositories/combatV6BeastRepository.js';
 import { publicMailAttachment } from '@server/mail/attachments.js';
+import {
+  incrementCounter,
+  unlockAchievement,
+} from '@server/achievements/application/AchievementService.js';
 import type { MailDeliveryService } from '@server/mail/mail-delivery.service.js';
 import {
   assertFriend,
@@ -307,6 +311,7 @@ export class AuctionOperations {
         expiresAt: new Date(Date.now() + 48 * 60 * 60 * 1000),
         tx,
       });
+      await incrementCounter(owner, 'auction.list', 1, tx);
       return { listingId: listing.id, message: '物品已上架' };
     };
     const result = options.tx
@@ -436,6 +441,9 @@ export class AuctionOperations {
         'reward',
         tx,
       );
+      await unlockAchievement(buyerCultivatorId, 'auction.bid.first', tx);
+      await unlockAchievement(buyerCultivatorId, 'auction.win.first', tx);
+      await incrementCounter(buyerCultivatorId, 'auction.win', 1, tx);
     };
     if (options.tx) await persist(options.tx);
     else await this.database.transaction(persist);

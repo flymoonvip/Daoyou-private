@@ -1,6 +1,10 @@
 import type { StoryView } from '@daoyou/game-domain/story';
 import { playerCommandExecutor } from '@server/player/application/state/CommandExecutors.js';
 import { StoryService } from '@server/story/application/StoryService.js';
+import {
+  incrementCounter,
+  recordCounterMax,
+} from '@server/achievements/application/AchievementService.js';
 
 export function completeStoryPerformanceCommand(args: {
   userId: string;
@@ -19,6 +23,9 @@ export function completeStoryPerformanceCommand(args: {
         args.outcome,
         tx,
       );
+      if (settled.view.chapterId === 'arrival') {
+        await recordCounterMax(args.cultivatorId, 'story.chapter', 1, tx);
+      }
       return {
         result: settled.view,
         resourceChanges: settled.changes,
@@ -42,6 +49,7 @@ export function completeStoryGuideCommand(args: {
         args.lessonId,
         tx,
       );
+      await incrementCounter(args.cultivatorId, 'story.guide', 1, tx);
       return {
         result: settled.view,
         resourceChanges: settled.changes,

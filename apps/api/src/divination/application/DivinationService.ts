@@ -21,6 +21,10 @@ import { randomInt, randomUUID } from 'node:crypto';
 import { assertInventoryIdle, grantInventory } from '@server/inventory/operations.js';
 import { publishResourceEvents } from '@server/realtime/infrastructure/playerStateBroadcaster.js';
 import { ResourceEventCommitter } from '@server/player/application/state/ResourceEventCommitter.js';
+import {
+  incrementCounter,
+  unlockAchievement,
+} from '@server/achievements/application/AchievementService.js';
 
 type Actor = { userId: string; cultivatorId: string };
 type Row = typeof dailyDivinations.$inferSelect;
@@ -127,6 +131,8 @@ export async function drawDivination(
             set: values,
           })
           .returning();
+        await unlockAchievement(actor.cultivatorId, 'divination.first', tx);
+        await incrementCounter(actor.cultivatorId, 'divination.count', 1, tx);
         lease.assertHeld();
         return recordOf(row);
       }),

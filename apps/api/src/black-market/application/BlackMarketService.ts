@@ -10,6 +10,10 @@ import {
   sampleMaterialLibraryEntryByPreferences,
 } from '@server/admin/application/MaterialLibraryService.js';
 import { readCultivatorRealm } from '@server/cultivator/facts.js';
+import {
+  incrementCounter,
+  unlockAchievement,
+} from '@server/achievements/application/AchievementService.js';
 import type { ResourceChangeDescriptor } from '@daoyou/contracts/resources';
 import { MaterialFactsSchema } from '@daoyou/game-domain/inventory';
 import {
@@ -1267,6 +1271,17 @@ export async function commitBlackMarketPurchase(input: {
         idempotency: { key: requestId, fingerprint },
         command: async (tx) => {
           const purchased = await preparePurchase(session, tx);
+          await unlockAchievement(
+            input.actor.cultivatorId,
+            'black_market.buy.first',
+            tx,
+          );
+          await incrementCounter(
+            input.actor.cultivatorId,
+            'black_market.buy',
+            1,
+            tx,
+          );
           const resourceChanges: ResourceChangeDescriptor[] = [
             {
               resourceTopic: 'player.currency',

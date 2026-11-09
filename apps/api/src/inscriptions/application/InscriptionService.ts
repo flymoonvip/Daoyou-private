@@ -23,6 +23,7 @@ import {
   saveInventoryPlan,
 } from '@server/inventory/operations.js';
 import { QiService } from '@server/cultivator/application/QiService.js';
+import { incrementCounter } from '@server/achievements/application/AchievementService.js';
 
 async function characterOf(actor: ActiveCultivatorRef, tx: DbExecutor) {
   const [character] = await tx
@@ -225,6 +226,9 @@ export async function mutateInscriptions(
             operation: 'invalidate',
             eventType: 'inscription.equipment.changed',
           });
+        if (input.action === 'draw') {
+          await incrementCounter(actor.cultivatorId, 'inscriptions.count', 1, tx);
+        }
         return {
           result: {
             requestId: input.requestId,

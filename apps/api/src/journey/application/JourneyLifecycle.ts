@@ -80,12 +80,14 @@ export async function markJourneyCultivatorDead(
 ): Promise<boolean> {
   try {
     return await tx.transaction(async (sp) => {
+      await unlockAchievements(cultivatorId, ['death.first'], sp);
       const journey = await findExternalJourneyByCultivatorId(cultivatorId, sp);
       if (!journey) return false;
       if (journey.status !== 'dead') {
         await markExternalJourneyDead(cultivatorId, diedAt, sp);
       }
-      await unlockAchievements(cultivatorId, ['death.first', 'journey.death.first'], sp);
+      await unlockAchievements(cultivatorId, ['journey.death.first'], sp);
+
       const snapshot = await buildJourneySnapshot(cultivatorId, sp);
       await enqueueExternalCallback(
         {
@@ -114,6 +116,7 @@ export async function markJourneyEntered(cultivatorId: string, at = new Date()):
     const first = await markExternalJourneyEntered(cultivatorId, at, tx);
     if (!first) return;
     await unlockAchievements(cultivatorId, ['journey.enter.first'], tx);
+
     const snapshot = await buildJourneySnapshot(cultivatorId, tx);
     await enqueueExternalCallback(
       {
@@ -159,7 +162,7 @@ export async function emitJourneyProgress(
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-/** 世界衰老结算后评估「入世三十日」：在世转世角色自立世起的存活天数 */
+/** 世界衰老结算后评估「入世七日」等存活成就：在世转世角色自立世起的存活天数 */
 export async function markJourneySurvivalDays(nowMs: number): Promise<void> {
   const rows = await getExecutor()
     .select({ cultivatorId: externalJourneys.cultivatorId, createdAt: externalJourneys.createdAt })
@@ -167,7 +170,7 @@ export async function markJourneySurvivalDays(nowMs: number): Promise<void> {
     .where(eq(externalJourneys.status, 'active'));
   for (const row of rows) {
     const days = Math.floor((nowMs - row.createdAt.getTime()) / DAY_MS);
-    if (days >= 30) {
+    if (days >= 7) {
       await AchievementHooks.recordMax(row.cultivatorId, 'journey.survive.days', days);
     }
   }

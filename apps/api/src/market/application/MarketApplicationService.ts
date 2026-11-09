@@ -10,6 +10,7 @@ import {
   prepareBatchMarketPurchase,
 } from '@server/market/application/MarketService.js';
 import type { PlayerCommandExecutor } from '@server/player/application/state/CommandExecutors.js';
+import { incrementCounter } from '@server/achievements/application/AchievementService.js';
 import { eq } from 'drizzle-orm';
 
 type PreparedPurchaseCommand<T> = {
@@ -129,11 +130,24 @@ export class MarketPurchaseService {
           idempotency: { key: input.requestId, fingerprint },
           command: async (tx) => {
             if (!prepared) throw new Error('购买凭据已失效，请重新选购');
-            return executeMarketPurchaseCommand(
+            const result = await executeMarketPurchaseCommand(
               prepared,
               tx,
               actor.cultivatorId,
             );
+            await incrementCounter(
+              actor.cultivatorId,
+              'market.trade',
+              input.items.length,
+              tx,
+            );
+            await incrementCounter(
+              actor.cultivatorId,
+              'market.volume',
+              input.expectedTotal,
+              tx,
+            );
+            return result;
           },
         });
         await runAfterCommit(

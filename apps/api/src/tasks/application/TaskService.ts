@@ -4,6 +4,7 @@ import {
   type DbTransaction,
 } from '@server/lib/drizzle/db.js';
 import { findActiveCultivatorTaskProgressById } from '@server/lib/repositories/cultivatorRepository.js';
+import { incrementCounter } from '@server/achievements/application/AchievementService.js';
 import {
   createCultivatorTask,
   findCultivatorTaskByDefinition,
@@ -48,6 +49,8 @@ interface TaskServiceWriteOptions {
   tx?: DbTransaction;
   readOnly?: boolean;
   onChange?: () => void;
+  /** 任务由未完成迁移为完成时回调（只读模式不触发） */
+  onTaskCompleted?: () => void;
 }
 
 interface TaskSyncOptions extends TaskServiceWriteOptions {
@@ -860,6 +863,14 @@ async function syncTaskRecord(
         )) ?? projectedRecord)
     : preparedRecord;
   if (needsUpdate && !options.readOnly) options.onChange?.();
+  if (
+    needsUpdate &&
+    !options.readOnly &&
+    resolved.status === 'completed' &&
+    preparedRecord.status !== 'completed'
+  ) {
+    options.onTaskCompleted?.();
+  }
 
   return mapTaskInstance(nextRecord, resolved.snapshot);
 }
@@ -876,14 +887,30 @@ async function syncCultivatorTasksWithContext(
   });
   const activeRecords = records.filter((record) => record.category !== 'daily');
   const q = options.tx ?? getExecutor();
+  let completedCount = 0;
+  const syncOptions: TaskSyncOptions = {
+    ...options,
+    onTaskCompleted: () => {
+      completedCount += 1;
+      options.onTaskCompleted?.();
+    },
+  };
   const visibleTasks = (
     await runDbTasks(
       q,
       activeRecords.map(
-        (record) => () => syncTaskRecord(context, record, options),
+        (record) => () => syncTaskRecord(context, record, syncOptions),
       ),
     )
   ).filter((task): task is TaskInstance => task !== null);
+  if (completedCount > 0) {
+    await incrementCounter(
+      context.cultivatorId,
+      'tasks.completed',
+      completedCount,
+      options.tx,
+    );
+  }
 
   if (!options.currentBreakthroughOnly) {
     return visibleTasks;

@@ -23,6 +23,7 @@ import {
   type SectCommandEffects,
 } from '@server/sects/organization/SectCommandEffects.js';
 import type { SectDomainEventDispatcherFactory } from '@server/sects/organization/SectDomainEventDispatcher.js';
+import { incrementCounter } from '@server/achievements/application/AchievementService.js';
 
 export class SectEconomyApplicationService {
   constructor(
@@ -112,6 +113,7 @@ export class SectEconomyApplicationService {
       },
     });
     const result = await this.getShop(cultivatorId, context);
+    await incrementCounter(cultivatorId, 'sect.shop.purchase', 1, context.q);
     const resourceChanges: ResourceChangeDescriptor[] = [
       {
         resourceTopic: 'inventory.bag',

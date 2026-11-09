@@ -11,6 +11,7 @@ import {
 } from '@server/lib/drizzle/db.js';
 import * as schema from '@server/lib/drizzle/schema.js';
 import { and, desc, eq, inArray, ne, or, sql } from 'drizzle-orm';
+import { recordCounterMax } from '@server/achievements/application/AchievementService.js';
 
 export class FriendServiceError extends Error {
   constructor(
@@ -242,6 +243,12 @@ export async function addFriendPair(
       ])
       .onConflictDoNothing();
 
+    await recordCounterMax(
+      cultivatorId,
+      'social.friend',
+      (counts.get(cultivatorId) ?? 0) + 1,
+      tx,
+    );
     return friend;
   };
 

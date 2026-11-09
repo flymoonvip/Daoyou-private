@@ -9,6 +9,10 @@ import { invalidateActiveCultivatorRef } from '@server/lib/auth/activeCultivator
 import { createDomainEvent } from '@server/lib/mq/domainEventWriter.js';
 import { withRedisLock, redisLockKeys } from '@server/lib/redis/lock.js';
 import { InventoryError } from '@server/inventory/operations.js';
+import {
+  incrementCounter,
+  unlockAchievement,
+} from '@server/achievements/application/AchievementService.js';
 import { and, desc, eq } from 'drizzle-orm';
 import { createPublicKey, randomUUID } from 'node:crypto';
 import { isDeepStrictEqual } from 'node:util';
@@ -121,6 +125,8 @@ export class TransferService {
         realmStage: snapshot.role.realmStage,
         deduplicationKey: `transfer-departed:${exportId}`,
       });
+      await unlockAchievement(cultivatorId, 'transfer.first', tx);
+      await incrementCounter(cultivatorId, 'transfer.count', 1, tx);
       return { exportId, package: compact, preview: transferPreview(snapshot) };
     })).catch((error: unknown) => {
       if (error instanceof TransferEligibilityError || error instanceof InventoryError) return fail(error.message);
@@ -314,6 +320,8 @@ export class TransferService {
       const active = await tx.query.cultivators.findFirst({ columns: { id: true }, where: and(eq(schema.cultivators.userId, row.userId), eq(schema.cultivators.status, 'active')) });
       if (active) fail('目标账号已有有效角色');
       const cultivatorId = await importTransferSnapshot(tx, row.userId, arrivalTransferSnapshot(snapshot));
+      await unlockAchievement(cultivatorId, 'transfer.receive.first', tx);
+      await incrementCounter(cultivatorId, 'transfer.receive.count', 1, tx);
       await tx.update(schema.transferImportRequests).set({ status: 'imported', package: null, importedCultivatorId: cultivatorId, reviewedBy: adminId, reviewedAt: new Date() }).where(eq(schema.transferImportRequests.id, row.id));
       await recordBoundaryCrossing(tx, {
         direction: 'arrived',
