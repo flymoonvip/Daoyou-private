@@ -10,6 +10,18 @@ export const MYSTERY_GENERATION_THINKING = {
 } as const;
 
 /**
+ * 审校成本控制：审校只做事实比对，不需要长篇推理。
+ * - thinkingEffort 用 low，减少思考 token；
+ * - 生成阶段最多两轮，只有发现严重矛盾时才整篇复检；
+ * - 生成审校未发现问题时，跳过独立的入库审校。
+ */
+export const MYSTERY_REVIEW_POLICY = {
+  thinkingEffort: 'low',
+  maxReviewRounds: 2,
+  auditOnlyWhenIssues: true,
+} as const;
+
+/**
  * 单步总时限，含结构校验失败后的重试。开启思考后大纲一次约 1 万输出 token、
  * 耗时约 5 分钟，须容得下两次尝试；生成在后台进行，留足时间。
  */

@@ -5,6 +5,7 @@ import { stableCompactStringify } from '@server/utils/llmPayload.js';
 import { z } from 'zod';
 import {
   MYSTERY_GENERATION_THINKING,
+  MYSTERY_REVIEW_POLICY,
   MYSTERY_STAGE_TIMEOUT_MS,
 } from './mysteryGenerationSettings.js';
 
@@ -220,7 +221,11 @@ export interface MysteryReviewIssue {
 export async function reviewMysteryCase(
   caseFile: MysteryCaseFile,
   canon: MysteryCanon | undefined,
-  options: { locked?: readonly string[]; apply?: boolean } = {},
+  options: {
+    locked?: readonly string[];
+    apply?: boolean;
+    thinkingEffort?: 'low' | 'high' | 'max';
+  } = {},
 ): Promise<{ caseFile: MysteryCaseFile; issues: MysteryReviewIssue[] }> {
   const result = structuredClone(caseFile);
   const allFields = textFields(result);
@@ -278,6 +283,8 @@ export async function reviewMysteryCase(
     sceneId: 'dungeon-case-review',
     timeoutMs: MYSTERY_STAGE_TIMEOUT_MS,
     thinking: MYSTERY_GENERATION_THINKING.review,
+    thinkingEffort:
+      options.thinkingEffort ?? MYSTERY_REVIEW_POLICY.thinkingEffort,
   });
   const byPath = new Map(fields.map((f) => [f.path, f]));
   const references = names(result, false);

@@ -37,7 +37,11 @@ import {
   generateMysteryCase,
   MYSTERY_GENERATOR_VERSION,
 } from './MysteryCaseGenerator.js';
-import { reviewMysteryCase } from './MysteryCaseReview.js';
+import {
+  reviewMysteryCase,
+  type MysteryReviewIssue,
+} from './MysteryCaseReview.js';
+import { MYSTERY_REVIEW_POLICY } from './mysteryGenerationSettings.js';
 
 type JobReason = (typeof dungeonScenarioJobs.$inferInsert)['reason'];
 
@@ -516,12 +520,22 @@ async function runJob(job: {
     });
     if (generated.source !== 'generated')
       throw new Error('生成未通过校验，未入库保底案卷');
-    // 入库把关：后台生成不影响开局，用高级模型组再做一次独立审校，只计数不改写。
-    const audit = await reviewMysteryCase(
-      generated.caseFile,
-      generated.reviewContext?.canon,
-      { apply: false, locked: generated.reviewContext?.locked },
-    );
+    // 入库把关：生成审校没发现问题时跳过独立审校；有问题时再复核一次，只计数不改写。
+    const shouldAudit =
+      !generated.reviewCompleted ||
+      generated.reviewIssueCount > 0 ||
+      !MYSTERY_REVIEW_POLICY.auditOnlyWhenIssues;
+    const audit: { issues: MysteryReviewIssue[] } = shouldAudit
+      ? await reviewMysteryCase(
+          generated.caseFile,
+          generated.reviewContext?.canon,
+          {
+            apply: false,
+            locked: generated.reviewContext?.locked,
+            thinkingEffort: MYSTERY_REVIEW_POLICY.thinkingEffort,
+          },
+        )
+      : { issues: [] };
     const majorIssues = audit.issues.filter((i) => i.severity === 'major');
     if (majorIssues.length > MYSTERY_LIBRARY_POLICY.maxMajorIssuesForLibrary)
       throw new Error(

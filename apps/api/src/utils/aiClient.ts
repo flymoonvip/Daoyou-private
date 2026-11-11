@@ -222,18 +222,28 @@ export interface AiTextOptions {
    * DeepSeek 仍使用其思考开关。设置后忽略 reasoning。
    */
   thinking?: boolean;
+  /**
+   * DeepSeek V4 的思考强度；仅在 thinking 开启时生效，不设置时用供应商默认档位。
+   * 审校这类只需比对的场景用 low，可显著减少思考 token。
+   */
+  thinkingEffort?: 'low' | 'high' | 'max';
 }
 
-/** 由 reasoning 与 thinking 得出本次调用的思考设置。 */
+/** 由 reasoning、thinking 与思考强度得出本次调用的思考设置。 */
 function reasoningSettings(
-  options: Pick<AiTextOptions, 'reasoning' | 'thinking'>,
+  options: Pick<AiTextOptions, 'reasoning' | 'thinking' | 'thinkingEffort'>,
 ) {
   if (!options.thinking) return { reasoning: options.reasoning ?? 'none' };
   return {
     reasoning: 'provider-default' as const,
     providerOptions: {
       alibaba: { enableThinking: true, thinkingBudget: 4096 },
-      deepseek: { thinking: { type: 'enabled' as const } },
+      deepseek: {
+        thinking: { type: 'enabled' as const },
+        ...(options.thinkingEffort
+          ? { reasoningEffort: options.thinkingEffort }
+          : {}),
+      },
     },
   };
 }

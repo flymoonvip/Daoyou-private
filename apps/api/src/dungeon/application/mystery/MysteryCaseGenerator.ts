@@ -29,6 +29,7 @@ import {
 } from './MysteryCaseReview.js';
 import {
   MYSTERY_GENERATION_THINKING,
+  MYSTERY_REVIEW_POLICY,
   MYSTERY_STAGE_TIMEOUT_MS,
 } from './mysteryGenerationSettings.js';
 
@@ -353,7 +354,7 @@ function outlineSchema(
         ),
         title: Text(
           8,
-          `对外身份称谓；${spec.liarLabel}的称谓即其对外宣称的身份，全案提到时都用这个称谓`,
+          `对外身份称谓；${spec.liarLabel}的称谓即其对外宣称的身份，玩家在场时的对话与介绍只用这个称谓；但 truth 里必须写出其真名`,
         ),
         nature: Text(
           40,
@@ -418,7 +419,7 @@ function outlineSchema(
     title: Text(12, '案卷标题'),
     truth: Text(
       500,
-      '完整真相：以第三人称写成此地发生过的往事经过（谁、为何、如何、事后做了什么），不写玩家的调查过程，不用“你”；只用上面定下的名字，与 canon 和各线索 fact 一致',
+      `完整真相：以第三人称写成此地发生过的往事经过（谁、为何、如何、事后做了什么），不写玩家的调查过程，不用“你”；必须点出关键人物 ${spec.cast.join('、')} 的真名（即对应 npcs 的 name），不能只用称谓或代词，说谎者可写成“自称某称谓的<真名>”；只用上面定下的名字，与 canon 和各线索 fact 一致`,
     ),
     brief: z.object({
       identity: Text(100, '玩家此行的身份'),
@@ -963,6 +964,8 @@ export interface GeneratedMysteryCase {
   source: 'generated' | 'fallback';
   /** 审校修正的问题数，仅生成成功时有意义。 */
   reviewIssueCount: number;
+  /** 生成期审校是否真正跑完；失败时入库仍需独立审校兜底。 */
+  reviewCompleted?: boolean;
   reviewContext?: MysteryReviewContext;
 }
 
@@ -976,6 +979,7 @@ export async function generateMysteryCase(
   // 剧本全服共享，不带任何玩家个人信息，角色本只用第二人称“你”。
   const { template, node, setting } = request;
   let reviewIssueCount = 0;
+  let reviewCompleted = false;
   try {
     const skeleton = buildMysterySkeleton(template, request.seed);
     const { spec, summary: variantSummary } = archetypeOf(
@@ -983,73 +987,122 @@ export async function generateMysteryCase(
       skeleton.caseFile.variant,
     );
     const programFacts = mysteryCaseFacts(skeleton.caseFile);
+    const outlineContext = {
+      archetype: {
+        rules: spec.rules,
+        ...(variantSummary ? { variant: variantSummary } : {}),
+      },
+      naming: namingPalette(request.seed),
+      template: {
+        name: template.name,
+        summary: template.summary,
+        roles: template.roles.map((r) => ({
+          slot: r.slot,
+          label: r.label,
+          guidance: spec.roleOverrides?.includes(r.slot)
+            ? (skeleton.purposes[
+                skeleton.caseFile.npcs.find((n) => n.role === r.slot)?.id ?? ''
+              ] ?? r.guidance)
+            : r.guidance,
+        })),
+        writing_guidance: template.writing_guidance,
+      },
+      // 节点的结构化设定：房间、人物、往事与物件都从这里取材。
+      setting: {
+        name: node.name,
+        realm: node.realm_requirement,
+        tags: node.tags,
+        description: node.description,
+        overview: setting.setting,
+        places: setting.places,
+        inhabitants: setting.inhabitants,
+        history: setting.history,
+        objects: setting.objects,
+        factions: setting.factions,
+        forbidden: setting.forbidden,
+      },
+      structure: {
+        ...programFacts,
+        rooms: programFacts.rooms.map((r) => ({
+          ...r,
+          purpose: skeleton.purposes[r.id],
+        })),
+        npcs: programFacts.npcs.map((n) => ({
+          ...n,
+          room: n.roomId,
+          purpose: skeleton.purposes[n.id],
+        })),
+        guards: programFacts.guards.map((g) => ({
+          ...g,
+          room: g.roomId,
+          purpose: skeleton.purposes[g.id],
+        })),
+        answers: skeleton.caseFile.questions,
+      },
+    };
     const draftOutline = () =>
       callStage({
         promptId: 'dungeon-case',
         sceneId: 'dungeon-case',
         name: 'DungeonMysteryOutline',
         schema: outlineSchema(skeleton, spec),
-        context: {
-          archetype: {
-            rules: spec.rules,
-            ...(variantSummary ? { variant: variantSummary } : {}),
-          },
-          naming: namingPalette(request.seed),
-          template: {
-            name: template.name,
-            summary: template.summary,
-            roles: template.roles.map((r) => ({
-              slot: r.slot,
-              label: r.label,
-              guidance: spec.roleOverrides?.includes(r.slot)
-                ? (skeleton.purposes[
-                    skeleton.caseFile.npcs.find((n) => n.role === r.slot)?.id ??
-                      ''
-                  ] ?? r.guidance)
-                : r.guidance,
-            })),
-            writing_guidance: template.writing_guidance,
-          },
-          // 节点的结构化设定：房间、人物、往事与物件都从这里取材。
-          setting: {
-            name: node.name,
-            realm: node.realm_requirement,
-            tags: node.tags,
-            description: node.description,
-            overview: setting.setting,
-            places: setting.places,
-            inhabitants: setting.inhabitants,
-            history: setting.history,
-            objects: setting.objects,
-            factions: setting.factions,
-            forbidden: setting.forbidden,
-          },
-          structure: {
-            ...programFacts,
-            rooms: programFacts.rooms.map((r) => ({
-              ...r,
-              purpose: skeleton.purposes[r.id],
-            })),
-            npcs: programFacts.npcs.map((n) => ({
-              ...n,
-              room: n.roomId,
-              purpose: skeleton.purposes[n.id],
-            })),
-            guards: programFacts.guards.map((g) => ({
-              ...g,
-              room: g.roomId,
-              purpose: skeleton.purposes[g.id],
-            })),
-            answers: skeleton.caseFile.questions,
-          },
-        },
+        context: outlineContext,
       });
-    // 真相必须用定下的名字提到关键人物，否则后续正文会各说各话；不符则重写一次大纲。
-    const truthMissesCast = (o: Outline) =>
-      spec.cast.some((id) => !o.truth.includes(o.npcs[id]?.name ?? '\u0000'));
+    // 真相必须用定下的名字提到关键人物，否则后续正文会各说各话。
+    const missingCastNames = (o: Outline) =>
+      spec.cast
+        .map((id) => ({ id, name: o.npcs[id]?.name ?? '' }))
+        .filter(({ name }) => !name || !o.truth.includes(name));
+    // 只补写 truth，避免为了漏一个名字重生成整份大纲（约 2 万 token）。
+    const repairOutlineTruth = async (o: Outline) => {
+      const missing = missingCastNames(o);
+      if (missing.length === 0) return o;
+      const names = missing.map((m) => m.name).filter(Boolean);
+      const prompt = renderPrompt('dungeon-case', {
+        userContextJson: stableCompactStringify({
+          ...outlineContext,
+          repair: {
+            task: '上一版 truth 漏掉了关键人物的真名。只重写 truth：保留原有经过与全部事实，不新增、不改动设定，把 requiredNames 自然写进真相。',
+            requiredNames: missing.map(({ id, name }) => ({
+              slot: id,
+              name,
+              title: o.npcs[id]?.title ?? '',
+            })),
+            previous: {
+              npcs: o.npcs,
+              canon: o.canon,
+              clues: o.clues,
+              truth: o.truth,
+            },
+          },
+        }),
+      });
+      const { output } = await generateAiObject({
+        system: prompt.system,
+        prompt: prompt.user,
+        schema: z.object({
+          truth: Text(
+            500,
+            `重写后的完整真相：保留原 truth 中的经过与事实，只补写人物真名；必须点出 ${names.join('、')}，不能只用称谓或代词。`,
+          ),
+        }),
+        name: 'DungeonMysteryTruthRepair',
+        sceneId: 'dungeon-case',
+        timeoutMs: STAGE_TIMEOUT_MS,
+        thinking: MYSTERY_GENERATION_THINKING.outline,
+        thinkingEffort: 'low',
+      });
+      return { ...o, truth: output.truth };
+    };
     let outline = await draftOutline();
-    if (truthMissesCast(outline)) outline = await draftOutline();
-    if (truthMissesCast(outline)) throw new Error('真相与人物名字不一致');
+    if (missingCastNames(outline).length > 0)
+      outline = await repairOutlineTruth(outline).catch((error: unknown) => {
+        console.warn('[DungeonMystery] 真相补名失败，重写大纲:', error);
+        return outline;
+      });
+    if (missingCastNames(outline).length > 0) outline = await draftOutline();
+    if (missingCastNames(outline).length > 0)
+      throw new Error('真相与人物名字不一致');
     const structure = structureContext(skeleton, outline, spec);
     const part = <S extends z.ZodType>(key: TextPart, schema: S) =>
       callStage({
@@ -1107,18 +1160,29 @@ export async function generateMysteryCase(
       ],
     };
     // 分头撰写的正文最后统一对照事实设定审校，只改写有矛盾的字段。
-    // 改写可能引入新的不一致，有修正时再审一轮，最多两轮。
+    // 只有出现严重矛盾才再审一轮复核修正；轻微问题不再整篇复检，交给入库审校。
     let reviewed = drafted;
-    for (let round = 1; round <= 2; round++) {
+    for (
+      let round = 1;
+      round <= MYSTERY_REVIEW_POLICY.maxReviewRounds;
+      round++
+    ) {
       const result = await reviewMysteryCase(reviewed, reviewContext.canon, {
         locked: reviewContext.locked,
-      }).catch((error: unknown) => {
-        console.warn('[DungeonMystery] 一致性审校失败，沿用当前稿:', error);
-        return { caseFile: reviewed, issues: [] };
-      });
+        thinkingEffort: MYSTERY_REVIEW_POLICY.thinkingEffort,
+      })
+        .then((value) => {
+          reviewCompleted = true;
+          return value;
+        })
+        .catch((error: unknown) => {
+          console.warn('[DungeonMystery] 一致性审校失败，沿用当前稿:', error);
+          return { caseFile: reviewed, issues: [] };
+        });
       reviewed = result.caseFile;
       reviewIssueCount += result.issues.length;
-      if (result.issues.length === 0) break;
+      // 轻微问题修正后不再复检，避免为确认没有大错而整篇重审。
+      if (!result.issues.some((i) => i.severity === 'major')) break;
       console.info(`[DungeonMystery] 第 ${round} 轮审校修正:`, result.issues);
     }
     const parsed = MysteryCaseFileSchema.safeParse(reviewed);
@@ -1132,6 +1196,7 @@ export async function generateMysteryCase(
         caseFile: parsed.data,
         source: 'generated',
         reviewIssueCount,
+        reviewCompleted,
         reviewContext,
       };
     console.warn('[DungeonMystery] 案卷组装未通过校验，改用保底案卷:', issues);
