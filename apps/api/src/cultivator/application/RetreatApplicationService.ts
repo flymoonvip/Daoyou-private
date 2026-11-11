@@ -216,6 +216,7 @@ export function executeRetreatCommand(args: {
       void AchievementHooks.streak(args.cultivatorId, 'breakthrough.streak.current', 'breakthrough.streak', result.summary.success);
       if (!result.summary.success) {
         void AchievementHooks.unlock(args.cultivatorId, 'breakthrough.fail.first');
+        void AchievementHooks.increment(args.cultivatorId, 'breakthrough.fail', 1);
       }
       return {
         committed,

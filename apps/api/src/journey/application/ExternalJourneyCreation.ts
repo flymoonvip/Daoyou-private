@@ -157,8 +157,12 @@ export async function createExternalJourney(
             .from(externalJourneys)
             .where(eq(externalJourneys.externalUserId, input.externalUserId));
           await recordCounterMax(created.id, 'rebirth.count', Number(countRow?.count ?? 1), tx);
-          if ((input.generation ?? 0) >= 3) {
-            await unlockAchievements(created.id, ['journey.generation.3'], tx);
+          const generation = input.generation ?? 0;
+          if (generation > 0) {
+            await recordCounterMax(created.id, 'journey.generation', generation, tx);
+          }
+          if (generation >= 2) {
+            await unlockAchievements(created.id, ['journey.legacy.first'], tx);
           }
 
           const snapshot = await buildJourneySnapshot(created.id, tx);

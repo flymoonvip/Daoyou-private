@@ -51,6 +51,10 @@ import {
 import { ResourceEventCommitter } from '@server/player/application/state/ResourceEventCommitter.js';
 import { publishResourceEvents } from '@server/realtime/infrastructure/playerStateBroadcaster.js';
 import {
+  AchievementHooks,
+  unlockAchievement,
+} from '@server/achievements/application/AchievementService.js';
+import {
   and,
   asc,
   count,
@@ -886,6 +890,8 @@ async function fulfillOrderToCultivator(
       }),
   );
   if (outcome.status === 'fulfilled') {
+    await unlockAchievement(cultivatorId, 'sponsorship.first');
+    void AchievementHooks.increment(cultivatorId, 'sponsorship.count', 1);
     if (outcome.changes.length) {
       try {
         publishResourceEvents(outcome.changes);

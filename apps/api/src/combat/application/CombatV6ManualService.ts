@@ -35,6 +35,11 @@ import {
 } from '@server/inventory/operations.js';
 import { publishResourceEvents } from '@server/realtime/infrastructure/playerStateBroadcaster.js';
 import { ResourceEventCommitter } from '@server/player/application/state/ResourceEventCommitter.js';
+import { CHARACTER_MANUALS_V1, manualRule } from '@daoyou/game-content/manuals';
+import {
+  recordCounterMax,
+  unlockAchievement,
+} from '@server/achievements/application/AchievementService.js';
 
 async function readManualFacts(owner: string, q: DbExecutor) {
   const character = await characterIdentityRow(owner, q);
@@ -191,6 +196,18 @@ export async function mutateManuals(owner: string, action: ManualAction) {
               updatedAt: new Date(),
             })
             .where(eq(cultivators.id, owner));
+        }
+        const learned = result.state.learned;
+        await recordCounterMax(owner, 'manual.count', learned.length, tx);
+        const maxedCount = learned.filter((entry) => {
+          const def = CHARACTER_MANUALS_V1.find(
+            (manual) => manual.id === entry.manualId,
+          );
+          return def ? entry.level >= manualRule(def).maxLevel : false;
+        }).length;
+        if (maxedCount > 0) {
+          await unlockAchievement(owner, 'manual.max.first', tx);
+          await recordCounterMax(owner, 'manual.max', maxedCount, tx);
         }
         const state = await new ResourceEventCommitter().commit(tx, {
           actor: { userId: character.userId, cultivatorId: owner },

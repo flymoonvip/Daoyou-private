@@ -25,6 +25,11 @@ import { readCultivatorPublicIdentity } from '@server/cultivator/facts.js';
 import { publishResourceEvents } from '@server/realtime/infrastructure/playerStateBroadcaster.js';
 import { CombatV6RuntimeStore } from '@server/combat/application/CombatV6RuntimeStore.js';
 import { CombatV6WildStore } from '@server/combat/application/CombatV6WildStore.js';
+import {
+  incrementCounter,
+  recordCounterMax,
+  unlockAchievements,
+} from '@server/achievements/application/AchievementService.js';
 
 const store = new CombatV6WildStore();
 const common = new CombatV6RuntimeStore();
@@ -97,7 +102,29 @@ export async function projectCombatV6Condition(
             record.deadBeastIds ?? [],
             tx,
           );
-          await settleBeastProgress(s, tx);
+          const beastProgress = await settleBeastProgress(s, tx);
+          if (beastProgress.capturedHasSkill)
+            await unlockAchievements(s.cultivatorId, ['beast.skill.first'], tx);
+          if (beastProgress.realmUpgraded) {
+            await unlockAchievements(s.cultivatorId, ['beast.realm.first'], tx);
+            await incrementCounter(s.cultivatorId, 'beast.realm', 1, tx);
+          }
+          const capturedBeasts = s.capturedBeasts ?? [];
+          if (capturedBeasts.length) {
+            await unlockAchievements(s.cultivatorId, ['beast.capture.first'], tx);
+            await incrementCounter(
+              s.cultivatorId,
+              'beast.capture',
+              capturedBeasts.length,
+              tx,
+            );
+            await recordCounterMax(
+              s.cultivatorId,
+              'beast.species',
+              beastProgress.speciesCount,
+              tx,
+            );
+          }
           const mutants = (s.capturedBeasts ?? []).filter(
             (beast) => beast.isMutant,
           );

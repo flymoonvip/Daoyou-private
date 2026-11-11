@@ -2,6 +2,7 @@ import type { DbTransaction } from '@server/lib/drizzle/db.js';
 import { redisLockKeys, withRedisLock } from '@server/lib/redis/lock.js';
 import type { ResourceChangeDescriptor } from '@daoyou/contracts/resources';
 import { playerCommandExecutor } from '@server/player/application/state/CommandExecutors.js';
+import { incrementCounter } from '@server/achievements/application/AchievementService.js';
 import {
   FateReshapeService,
   prepareFateReshapeConfirmation,
@@ -80,6 +81,7 @@ export function confirmFateReshapeCommand(args: {
             prepared,
             tx,
           );
+          await incrementCounter(args.cultivatorId, 'reshape.count', 1, tx);
           afterCommit = command.afterCommit;
           return command;
         },

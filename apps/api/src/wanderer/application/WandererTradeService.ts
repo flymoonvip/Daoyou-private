@@ -24,6 +24,7 @@ import {
   wandererSuperiorBookIds,
 } from '@daoyou/game-rules/wanderer';
 import { assertBeastIdle } from '@server/combat/application/BeastMutationGuard.js';
+import { incrementCounter } from '@server/achievements/application/AchievementService.js';
 import { updateSpiritStones } from '@server/cultivator/application/readers/CultivatorStateRepository.js';
 import {
   InventoryError,
@@ -255,6 +256,7 @@ async function sellBeast(
     beastName: beast.name,
     bottles: offer.bottles,
   };
+  await incrementCounter(actor.cultivatorId, 'wanderer.trade', 1, tx);
   return { result, resourceChanges: bagChange() };
 }
 
@@ -295,6 +297,7 @@ async function buyBook(
     nextPrice: wandererBookPrice(sales + 1),
     spiritStones,
   };
+  await incrementCounter(actor.cultivatorId, 'wanderer.trade', 1, tx);
   return {
     result,
     resourceChanges: [
@@ -328,6 +331,7 @@ async function buyIncense(
     price: WANDERER_INCENSE_PRICE,
     spiritStones,
   };
+  await incrementCounter(actor.cultivatorId, 'wanderer.trade', 1, tx);
   return {
     result,
     resourceChanges: [
@@ -360,6 +364,7 @@ async function buyDew(
     price: WANDERER_DEW_PRICE,
     spiritStones,
   };
+  await incrementCounter(actor.cultivatorId, 'wanderer.trade', 1, tx);
   return {
     result,
     resourceChanges: [

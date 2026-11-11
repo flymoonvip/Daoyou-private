@@ -8,6 +8,10 @@ import {
   type SectTaskDefinition,
 } from '@daoyou/game-rules/sect-organization';
 import { z } from 'zod';
+import {
+  AchievementHooks,
+  unlockAchievement,
+} from '@server/achievements/application/AchievementService.js';
 import { ClaimSectTaskRewardHandler } from '@server/sects/organization/ClaimSectTaskRewardHandler.js';
 import { SectCapabilityAuthorizer } from '@server/sects/organization/SectCapabilityAuthorizer.js';
 import type { SectDomainEventDispatcherFactory } from '@server/sects/organization/SectDomainEventDispatcher.js';
@@ -362,6 +366,10 @@ export class ExecuteSectTaskActionHandler {
       },
       parsed.data,
     );
+    if (executor.key === 'sect.battle') {
+      await unlockAchievement(command.cultivatorId, 'sect.war.first');
+      void AchievementHooks.increment(command.cultivatorId, 'sect.war', 1);
+    }
     if (!decision.completed && decision.completionSettlement === 'claim-reward')
       invalidSectTask('未达成的宗门任务不能结算奖励', 500);
     if (decision.payload) {

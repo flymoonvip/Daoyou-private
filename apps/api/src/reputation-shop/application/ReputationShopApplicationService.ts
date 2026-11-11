@@ -2,6 +2,10 @@ import type { DbTransaction } from '@server/lib/drizzle/db.js';
 import type { ResourceChangeDescriptor } from '@daoyou/contracts/resources';
 import { playerCommandExecutor } from '@server/player/application/state/CommandExecutors.js';
 import {
+  incrementCounter,
+  unlockAchievement,
+} from '@server/achievements/application/AchievementService.js';
+import {
   buyReputationShopCart,
   buyReputationShopItem,
 } from '@server/reputation-shop/application/ReputationShopService.js';
@@ -36,6 +40,8 @@ export async function executeReputationShopPurchaseCommand(args: {
   tx: DbTransaction;
 }) {
   const purchase = await buyReputationShopItem(args);
+  await unlockAchievement(args.cultivatorId, 'reputation.exchange.first', args.tx);
+  await incrementCounter(args.cultivatorId, 'reputation.exchange', 1, args.tx);
   const resourceChanges: ResourceChangeDescriptor[] = [
     {
       resourceTopic: 'inventory.bag',
@@ -109,6 +115,8 @@ export async function executeReputationShopCartCommand(args: {
     cultivatorId: args.cultivatorId,
     tx: args.tx,
   });
+  await unlockAchievement(args.cultivatorId, 'reputation.exchange.first', args.tx);
+  await incrementCounter(args.cultivatorId, 'reputation.exchange', 1, args.tx);
   const resourceChanges: ResourceChangeDescriptor[] = [
     {
       resourceTopic: 'inventory.bag',

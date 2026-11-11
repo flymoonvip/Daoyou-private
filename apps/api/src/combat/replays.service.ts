@@ -11,6 +11,7 @@ import { combatV6ReplayView } from '@daoyou/game-rules/combat/replay';
 import { COMBAT_V6_REPLAY_ERROR_CODE } from '@daoyou/contracts/combat';
 import type { CombatV6HistoryQuerySchema } from '@daoyou/contracts/combat/replays';
 import type { z } from 'zod';
+import { AchievementHooks } from '@server/achievements/application/AchievementService.js';
 
 @Injectable()
 export class ReplaysService {
@@ -79,6 +80,7 @@ export class ReplaysService {
     );
     if (!shareCode)
       throw new HttpException({ success: false, error: '战斗回放不存在' }, 404);
+    void AchievementHooks.increment(actor.cultivatorId, 'replay.share', 1);
     return { success: true, data: { shareCode } };
   }
 

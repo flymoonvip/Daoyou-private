@@ -23,6 +23,7 @@ import { and, eq, sql } from 'drizzle-orm';
 import { findBagTalisman } from '@server/inventory/application/BagConsumables.js';
 import { playerCommandExecutor } from '@server/player/application/state/CommandExecutors.js';
 import { consumeConsumableById } from '@server/cultivator/application/readers/CultivatorInventoryRepository.js';
+import { incrementCounter } from '@server/achievements/application/AchievementService.js';
 
 function sessionKey(cultivatorId: string) {
   return `identity-reshape-session:${cultivatorId}`;
@@ -387,6 +388,7 @@ export function confirmIdentityReshape(args: {
           if (!updated) {
             throw new IdentityReshapeServiceError(404, '当前没有活跃角色');
           }
+          await incrementCounter(args.cultivatorId, 'reshape.count', 1, tx);
           const result = { ...candidate, prompt: session.description };
           return {
             result,

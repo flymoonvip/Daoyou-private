@@ -14,6 +14,7 @@ import { listMessages } from '@server/lib/repositories/worldChatRepository.js';
 import { createAndPublishWorldChatMessage } from '@server/social/application/chatDelivery.js';
 import { createCultivatorChatMessage } from '@server/social/application/chatMessageApplication.js';
 import { RedPacketService } from './application/RedPacketService.js';
+import { unlockAchievement } from '@server/achievements/application/AchievementService.js';
 
 @Injectable()
 export class WorldChatService {
@@ -56,6 +57,7 @@ export class WorldChatService {
       persist: (input) =>
         createAndPublishWorldChatMessage({ ...input, channel: 'world' }),
     });
+    await unlockAchievement(actor.cultivatorId, 'social.chat.first');
     return {
       success: true,
       data: message,

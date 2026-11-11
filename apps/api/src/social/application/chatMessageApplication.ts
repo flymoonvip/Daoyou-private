@@ -6,6 +6,7 @@ import type {
   WorldChatMessageType,
   WorldChatPayload,
 } from '@daoyou/contracts/world-chat';
+import { AchievementHooks } from '@server/achievements/application/AchievementService.js';
 import { beastTradePreview } from '@daoyou/game-domain/beasts';
 import { inventoryShowcaseSnapshot } from '@daoyou/game-domain/items/catalog';
 import { readCultivatorPublicIdentity } from '@server/cultivator/facts.js';
@@ -123,7 +124,9 @@ export async function createCultivatorChatMessage(params: {
         429,
         cooldown.remainingSeconds,
       );
-    return params.persist(input);
+    const message = await params.persist(input);
+    void AchievementHooks.increment(params.cultivatorId, 'social.chat', 1);
+    return message;
   };
 
   const senderBase = {

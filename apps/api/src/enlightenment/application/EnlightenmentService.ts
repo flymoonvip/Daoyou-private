@@ -24,6 +24,7 @@ import { db, type DbExecutor } from '@server/lib/drizzle/db.js';
 import { cultivators, inventoryItems } from '@server/lib/drizzle/schema.js';
 import type { ActiveCultivatorRef } from '@server/lib/auth/types.js';
 import { playerCommandExecutor } from '@server/player/application/state/CommandExecutors.js';
+import { incrementCounter } from '@server/achievements/application/AchievementService.js';
 import { getCultivatorPreHeavenFates } from '@server/cultivator/application/readers/CultivatorProfileRepository.js';
 import {
   assertInventoryIdle,
@@ -180,6 +181,7 @@ export async function enlightenManual(
         await saveInventoryPlan(actor.cultivatorId, before, after, tx);
         await QiService.commitReservation({ actionInstanceId, tx });
         describeJournal(tx, actor.cultivatorId, jadeDefinitionId ? '成功' : '未悟得功法');
+        await incrementCounter(actor.cultivatorId, 'enlightenment.count', 1, tx);
         return {
           result: {
             requestId: input.requestId,
